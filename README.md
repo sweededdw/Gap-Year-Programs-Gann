@@ -76,6 +76,14 @@ npm start        # starts the site on http://localhost:3001 and opens your brows
   ```
 - Opening `public/index.html` directly also works, but without accounts. Progress is then saved in that browser only.
 
+## How matching works
+
+1. **Dealbreakers** remove programs before any scoring: acceptable religious environments, setting (co-ed, men's or women's), maximum tuition, and whether a semester option is required.
+2. Every program has a **1–5 rating in 12 categories**: academics, social scene, home base vs. moving around, internships, community service, religious observance, peer mix, independence, structure, Hebrew, adventure and college credit. They live in `PROFILES` in `public/js/data.js`. Ratings marked `e` are estimates from the program type and show as ≈ on the site; `p` ratings come from what the program publishes; `-` means unknown.
+3. For each category the student picks **what they want (1–5)** and **how much they care** (skip, a little, important, very = 0–3).
+4. **Fit** per category = 1 − |want − rating| / 4. The **match %** is the weighted average, plus learning style, location and field picks (weight 2 each). An unknown rating counts as a neutral 50%.
+5. The **Top 3** page shows each match's %, "Matched on …", its weaker spots and a per-category breakdown. Students then swipe through the rest.
+
 ## Notes
 - Program data (`public/js/data.js`) is public research, so it isn't secret. The login controls who uses the tracker, not who can technically download the list.
 - Each program in `data.js` has an `app` block (`deadlines`, `portal`, `essays`, `interview`, `recs`, `fees`, `aid`, `visa`, `decision`). Leave a value `null` when the program doesn't publish it, and the page will show "Not published". Data was researched on 2026-11-24 for the 2027–28 cycle.

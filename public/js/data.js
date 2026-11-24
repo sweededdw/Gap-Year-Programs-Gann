@@ -763,7 +763,54 @@
     "shnat-netzer": { education: "Youth movement leadership", social: "Volunteering", jewish: "Progressive Jewish learning" },
   };
 
+  // ---- Program profiles: 1–5 on each matching category ----
+  // Order: academics, social, mobility, internships, service, observance, peers, independence, structure, hebrew, adventure, credit
+  // "p" = based on what the program publishes (see sources); "e" = our estimate from the program type; "-" = unknown.
+  // Scale meanings live in labels.categories below.
+  const CAT_ORDER = ["academics", "social", "mobility", "internships", "service", "observance", "peers", "independence", "structure", "hebrew", "adventure", "credit"];
+  function prof(str, learning) {
+    const out = { learning: learning };
+    str.trim().split(/\s+/).forEach(function (tok, i) {
+      out[CAT_ORDER[i]] = tok === "-" ? null : { v: +tok[0], est: tok[1] === "e" };
+    });
+    return out;
+  }
+  const YESHIVA = "5e 2e 1p 1e 1e 5p 1e 1e 5e 2e 2e -";
+  const SEMINARY = "5e 2e 1p 1e 2e 5p 1e 1e 5e 2e 1e -";
+  const PROFILES = {
+    //                    acad soc mob int srv obs peer ind str heb adv cred
+    "year-course":   prof("3p 5e 4p 4p 3p 2e 3e 4p 3e 3p 4p 5p", "academic"),
+    aardvark:        prof("2e 5e 3p 5p 3p 1e 1p 5p 2e 3p 3p 4p", "academic"),
+    nativ:           prof("3p 3e 3p 3p 3p 3p 1e 5p 3e 4p 3p 4p", "both"),
+    kivunim:         prof("5p 3e 5p 1e 2e 2e 1e 2p 4e 3p 5p 5p", "both"),
+    hevruta:         prof("4p 3e 1p 3p 3p 3p 5p 4p 4e 3e 2e 1p", "both"),
+    "kol-ami":       prof("2e 3e 3p 2p 4p 2p 5p 3p 4e 4e 5p 1p", "light"),
+    "bnei-akiva-mechina": prof("3e 2e 2p 1e 2e 4p 5p 2e 5e 5p 4p 1p", "text"),
+    "bnei-akiva-kadima":  prof("2e 4e 4p 3p 4p 4p 2e 4p 3e 3p 4p 1p", "light"),
+    "habonim-workshop":   prof("2e 4e 5p 1e 5p 1e 3e 4p 3e 3p 5p 1p", "light"),
+    "tau-eli":       prof("4p 4e 1p 3p 2p 1e 3p 4e 3e 2e 2p 5p", "academic"),
+    "huji-first-year": prof("5p 3e 1p 1p 1e 1e 2e 4e 3e 3e 1e 5p", "academic"),
+    "bar-ilan-xp":   prof("3p 3e 1p 3p 3p 3e 1p 3e 3e 3e 2e 4p", "both"),
+    maccabi:         prof("1e 4e 2e 2p 2e 2e 4p 3e 3e 2e 3e 1p", "light"),
+    "torah-tech":    prof("3e 3e 1p 5p 1e 4e 1p 3e 4e 2e 1e 3p", "both"),
+    arevim:          prof("1e 3e 1p 1e 5p 1e 3e 4p 3e 2e 2e 1p", "light"),
+    "shnat-netzer":  prof("2e 4e 3e 1e 4e 2p 3e 3e 3e 3e 3e 1p", "light"),
+    "har-etzion":    prof("5e 2e 1p 1e 1e 5p 4p 1e 5e 3e 2e -", "text"),
+    hakotel:         prof("5e 2e 1p 1e 1e 5p 3e 1e 5e 2e 2e -", "text"),
+    orayta:          prof(YESHIVA, "text"),
+    "migdal-hatorah": prof(YESHIVA, "text"),
+    kby:             prof("5e 2e 1p 1e 1e 5p 3e 1e 5e 2e 2e -", "text"),
+    ashreinu:        prof(YESHIVA, "text"),
+    "migdal-oz":     prof("5e 2e 1p 1e 2e 5p 3e 1e 5e 2e 1e 3p", "text"),
+    nishmat:         prof("5e 2e 1p 1e 2e 5p 4p 1e 5e 3e 1e -", "text"),
+    "ein-hanetziv":  prof(SEMINARY, "text"),
+    michlalah:       prof("5e 2e 1p 1e 2e 5p 1e 1e 5e 2e 1e 4p", "text"),
+    lindenbaum:      prof("5e 2e 1p 1e 2e 5p 3p 1e 5e 2e 1e -", "text"),
+  };
+
   programs.forEach(function (p) {
+    p.profile = PROFILES[p.id] || prof("- - - - - - - - - - - -", "light");
+    p.learning = p.profile.learning;
     p.type = TYPES[p.id] || "gap";
     p.fields = FIELDS[p.id] || (p.type === "yeshiva" || p.type === "seminary" ? { jewish: TEXT.jewish } : {});
     if (PHOTOS[p.id]) p.photo = PHOTOS[p.id];
@@ -780,6 +827,22 @@
     cycle: "2027–28",
     programs: programs,
     labels: {
+      // The matching categories: what 1 and 5 mean for each.
+      categories: {
+        academics:    { icon: "🎓", label: "Academics", low: "Light, mostly experiences", high: "Intense, lots of classes" },
+        internships:  { icon: "💼", label: "Internships", low: "Not part of my year", high: "Real job placements" },
+        service:      { icon: "🤝", label: "Community service", low: "A little", high: "A lot, hands-on" },
+        structure:    { icon: "🗓️", label: "Structure", low: "Lots of free time", high: "Full daily schedule" },
+        social:       { icon: "🎉", label: "Social scene", low: "Quiet, smaller, more rules", high: "Big, lively, lots of freedom" },
+        independence: { icon: "🔑", label: "Independence", low: "Dorm, meals and counselors", high: "Own apartment, cook, budget" },
+        peers:        { icon: "🇮🇱", label: "Peer mix", low: "Mostly Americans", high: "Live with Israelis" },
+        hebrew:       { icon: "🗣️", label: "Hebrew", low: "Light ulpan", high: "Intense, aim for fluency" },
+        mobility:     { icon: "🧭", label: "Home base", low: "One home base", high: "Move around Israel and the world" },
+        adventure:    { icon: "🥾", label: "Adventure", low: "Chill", high: "Hiking, army-style, travel abroad" },
+        credit:       { icon: "📜", label: "College credit", low: "Don't need it", high: "Want transferable credit" },
+        observance:   { icon: "🕯️", label: "Religious observance", low: "Little expected", high: "Full observance and daily learning" },
+      },
+      learning: { text: "Jewish text study", academic: "Regular academics", both: "Both", light: "Light on classes" },
       field: {
         business: ["💼", "Business & entrepreneurship"],
         tech: ["💻", "Tech & coding"],

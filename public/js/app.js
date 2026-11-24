@@ -172,19 +172,21 @@
     else if (parts[0] === "my-list") current = { view: "list", id: null };
     else if (parts[0] === "browse") current = { view: "finder", id: null };
     else if (parts[0] === "colleges") current = { view: "colleges", id: null };
+    else if (parts[0] === "results") current = { view: quiz().done ? "results" : "quiz", id: null };
     else if (parts[0] === "start") current = { view: "quiz", id: null };
-    else if (parts[0] === "swipe") current = { view: state.quiz && state.quiz.done ? "swipe" : "quiz", id: null };
-    else current = { view: state.quiz && state.quiz.done ? "swipe" : "quiz", id: null };
+    else if (parts[0] === "swipe") current = { view: quiz().done ? "swipe" : "quiz", id: null };
+    else current = { view: quiz().done ? "results" : "quiz", id: null };
     if (current.view !== "detail") lastListView = current.view;
     render();
   }
-  const NAV_FOR = { quiz: "discover", swipe: "discover", finder: "finder", list: "my-list", colleges: "colleges" };
+  const NAV_FOR = { quiz: "discover", swipe: "discover", results: "discover", finder: "finder", list: "my-list", colleges: "colleges" };
   function render() {
     if (current.view === "detail") renderDetail(byId[current.id]);
     else if (current.view === "list") renderList();
     else if (current.view === "quiz") renderQuiz();
     else if (current.view === "swipe") renderSwipe();
     else if (current.view === "colleges") renderColleges();
+    else if (current.view === "results") renderResults();
     else renderFinder();
     document.querySelectorAll("[data-nav]").forEach((a) => {
       a.classList.toggle("active", a.dataset.nav === NAV_FOR[current.view]);
@@ -279,6 +281,19 @@
     const nis = /₪\s?([\d,]+)/.exec(p.costText);
     if (nis) return "₪" + Math.round(+nis[1].replace(/,/g, "") / 1000) + "k";
     return "Price TBD";
+  }
+  function ratingsBox(p) {
+    const prefs = quiz().answers.prefs;
+    const keys = Object.keys(L.categories);
+    return '<div class="fields-box ratings"><h3>How it rates <span class="small muted" style="font-weight:400">· 1–5 · ≈ = our estimate from the program type</span></h3>' +
+      keys.map((k) => {
+        const c = L.categories[k], r = p.profile[k], want = prefs[k] && +prefs[k].weight ? prefs[k].want : 0;
+        const dots = [1, 2, 3, 4, 5].map((n) => '<span class="rdot' + (r && n <= r.v ? " on" : "") + (want === n ? " want" : "") + '"></span>').join("");
+        return '<div class="rrow"><span class="rl">' + c.icon + " " + esc(c.label) + '</span><span class="rdots" title="' + esc(c.low + " → " + c.high) + '">' + dots + "</span>" +
+          '<span class="rv small">' + (r ? (r.est ? "≈" : "") + r.v + " · " + esc(r.v <= 2 ? c.low : r.v >= 4 ? c.high : "In between") : '<span class="muted">Unknown</span>') + "</span></div>";
+      }).join("") +
+      '<p class="small muted" style="margin-top:6px">Learning style: <strong>' + esc(L.learning[p.learning]) + "</strong>" +
+      (Object.keys(prefs).some((k) => +(prefs[k] || {}).weight) ? ' · <span class="rdot want" style="display:inline-block;vertical-align:middle"></span> marks what you asked for' : "") + "</p></div>";
   }
   function fieldsBox(p) {
     const keys = Object.keys(p.fields || {});
@@ -582,7 +597,7 @@
       '<circle cx="32" cy="32" r="' + R + '" fill="none" stroke="var(--ok)" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + (C * (1 - pr.pct / 100)).toFixed(1) + '" transform="rotate(-90 32 32)"/></svg>';
 
     $app.innerHTML =
-      '<a class="back" href="' + ({ list: "#/my-list", finder: "#/browse" }[lastListView] || "#/swipe") + '">← ' + ({ list: "Saved programs", finder: "All programs" }[lastListView] || "Back to swiping") + "</a>" +
+      '<a class="back" href="' + ({ list: "#/my-list", finder: "#/browse", results: "#/results" }[lastListView] || "#/swipe") + '">← ' + ({ list: "Saved programs", finder: "All programs", results: "Your top 3" }[lastListView] || "Back to swiping") + "</a>" +
       (p.photo ? photoBox(p, "detail-banner", "") : "") +
       '<header class="card school-head' + (p.photo ? " with-banner" : "") + '"><span class="logo o-' + p.orientation + '">' + esc(p.short) + '</span><div class="info">' + typeBadge(p) + "<h1>" + esc(p.name) + "</h1>" +
       '<p class="muted">' + esc(p.operator) + " · " + esc(p.base) + "</p>" +
@@ -602,7 +617,7 @@
       '<div class="facts"><div class="fact"><div class="k">Community</div><div class="v">' + esc(L.orientation[p.orientation]) + '</div></div><div class="fact"><div class="k">Where</div><div class="v">' + esc(p.base) + "</div></div>" +
       '<div class="fact"><div class="k">Tuition</div><div class="v">' + esc(p.costText) + '</div></div><div class="fact"><div class="k">Focus</div><div class="v">' + esc(p.focus.map((f) => L.focus[f]).join(", ")) + "</div></div>" +
       '<div class="fact"><div class="k">College credit</div><div class="v">' + (p.credit === true ? "Yes" : p.credit === false ? "No" : "Not researched") + '</div></div><div class="fact"><div class="k">Israeli peers</div><div class="v">' + esc(L.israeliPeers[p.israeliPeers]) + "</div></div>" +
-      '<div class="fact"><div class="k">Website</div><div class="v"><a href="' + esc(p.website) + '" target="_blank" rel="noopener">' + esc(p.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")) + " ↗</a></div></div></div>" + fieldsBox(p) + "</section>" +
+      '<div class="fact"><div class="k">Website</div><div class="v"><a href="' + esc(p.website) + '" target="_blank" rel="noopener">' + esc(p.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")) + " ↗</a></div></div></div>" + fieldsBox(p) + ratingsBox(p) + "</section>" +
       '<h2 style="font-size:20px;margin:10px 0 0">Application</h2>' +
       sections.map((x, i) => section(i, SECTIONS[i][0], SECTIONS[i][1], x[0], x[1])).join("") +
       "</div>" +
@@ -690,167 +705,199 @@
     "text-study": "📚", academics: "🎓", internships: "💼", volunteering: "🤝", leadership: "🧭", "army-prep": "🪖",
     travel: "✈️", outdoors: "🥾", tech: "💻", sports: "⚽", culinary: "🍳", kibbutz: "🌾",
   };
-  const QUIZ = [
-    {
-      key: "orientation", multi: true, q: "What kind of Jewish community feels like home?", sub: "Pick any that fit.",
-      options: [
-        ["pluralistic", "🤝", "Pluralistic", "Every background, learning together"],
-        ["conservative", "🕍", "Conservative / Masorti", "Egalitarian and traditional"],
-        ["reform", "🌱", "Reform / Progressive", "Liberal, values-driven"],
-        ["mo-coed", "📖", "Modern Orthodox, co-ed", "Religious Zionist, guys and girls together"],
-        ["orthodox", "🕯️", "Yeshiva or seminary", "Full-time Torah learning"],
-        ["secular", "🇮🇱", "Secular / cultural", "Israel without the religious focus"],
-      ],
-    },
-    {
-      key: "focus", multi: true, max: 3, q: "How do you want to spend your days?", sub: "Choose up to 3.",
-      options: [
-        ["internships", "💼", "Internships", "Real work experience"],
-        ["volunteering", "🤝", "Volunteering", "Give back to communities"],
-        ["text-study", "📚", "Jewish learning", "Text study and big questions"],
-        ["academics", "🎓", "Academics", "Classes, maybe college credit"],
-        ["leadership", "🧭", "Leadership", "Grow as a leader"],
-        ["army-prep", "🪖", "Army prep", "Fitness and pre-army training"],
-        ["travel", "✈️", "Travel", "See more than Israel"],
-        ["outdoors", "🥾", "Hiking & outdoors", "Trails, nature, adventure"],
-        ["tech", "💻", "Tech", "Startups and coding"],
-        ["kibbutz", "🌾", "Kibbutz life", "Community and farm work"],
-        ["sports", "⚽", "Sports", "Train and compete"],
-        ["culinary", "🍳", "Culinary", "Cooking and food"],
-      ],
-    },
-    {
-      key: "field", multi: true, max: 3, q: "What field do you want to explore?", sub: "Pick up to 3. We'll favor programs with internships, tracks or classes in that area.",
-      options: Object.keys(L.field).map((k) => [k, L.field[k][0], L.field[k][1], ""]),
-    },
-    {
-      key: "city", multi: true, q: "Where do you picture yourself living?", sub: "Pick any.",
-      options: [
-        ["jerusalem", "🏛️", "Jerusalem", "History, culture, learning"],
-        ["tel-aviv", "🏙️", "Tel Aviv", "Beach city, startups, energy"],
-        ["kibbutz", "🌾", "A kibbutz", "Small community, farm life"],
-        ["north", "⛰️", "The North", "Galilee, hiking, small towns"],
-        ["abroad", "🌍", "Travel beyond Israel", "Trips to other countries too"],
-      ],
-    },
-    {
-      key: "israeliPeers", multi: false, q: "How much do you want to live alongside Israelis?",
-      options: [
-        ["integrated", "🇮🇱", "Live with Israelis", "Room and learn with Israeli 18-year-olds"],
-        ["some", "👋", "Some contact", "Meet Israelis through activities"],
-        ["none", "🌎", "International group", "Mostly students from abroad"],
-      ],
-    },
-    {
-      key: "gender", multi: false, q: "What setting do you want?",
-      options: [
-        ["coed", "👫", "Co-ed", "Guys and girls together"],
-        ["men", "👨", "Men's programs", "Includes yeshivot"],
-        ["women", "👩", "Women's programs", "Includes seminaries"],
-      ],
-    },
-    {
-      key: "budget", multi: false, q: "What's the most you'd spend on tuition?", sub: "In US dollars, usually after the Masa grant. Programs that don't publish prices always show up.",
-      options: [
-        ["u15", "💚", "Up to $15k", "Mechinot and lower-cost options"],
-        ["15-25", "💛", "Up to $25k", ""],
-        ["25-35", "🧡", "Up to $35k", "Most popular programs"],
-        ["o35", "💜", "Not a deciding factor", ""],
-      ],
-    },
-    {
-      key: "must", multi: true, q: "Any must-haves?", sub: "Skip if not.",
-      options: [
-        ["semester", "⏱️", "A semester option", "Not ready for a full year"],
-        ["credit", "🎓", "College credit", "Count the year toward a degree"],
-      ],
-    },
+  // ---------- Matching model ----------
+  // 1) Dealbreakers knock programs out before scoring (religious environment, setting, budget, length).
+  // 2) For each category the user picks what they want (1–5) and how much they care (weight 0–3).
+  // 3) Fit per category = 1 − |want − program rating| / 4. Match = weighted average of fits.
+  const CATS = L.categories;
+  const PREF_STEPS = [
+    { title: "Your days", sub: "What should a normal day look like?", cats: ["academics", "internships", "service", "structure"], learning: true },
+    { title: "Your life there", sub: "Who you live with and how independent you want to be.", cats: ["social", "independence", "peers", "hebrew"] },
+    { title: "Where and how", sub: "Where you're based and how much you move around.", cats: ["mobility", "adventure", "credit"], city: true },
   ];
+  const WEIGHTS = [["0", "Skip"], ["1", "A little"], ["2", "Important"], ["3", "Very"]];
   const BUDGET_MAX = { u15: 15000, "15-25": 25000, "25-35": 35000, o35: Infinity };
+  const DEAL = {
+    orientation: { q: "Which religious environments are OK for you?", sub: "Programs outside these are removed. Pick any that fit.", multi: true,
+      options: [["pluralistic", "🤝", "Pluralistic"], ["conservative", "🕍", "Conservative / Masorti"], ["reform", "🌱", "Reform / Progressive"], ["mo-coed", "📖", "Modern Orthodox, co-ed"], ["orthodox", "🕯️", "Yeshiva or seminary"], ["secular", "🇮🇱", "Secular / cultural"]] },
+    gender: { q: "Setting", multi: false, options: [["coed", "👫", "Co-ed only"], ["men", "👨", "Men's programs"], ["women", "👩", "Women's programs"]] },
+    budget: { q: "Most you'd spend on tuition", sub: "USD, usually after the Masa grant. Unpublished prices stay in.", multi: false,
+      options: [["u15", "💚", "Up to $15k"], ["15-25", "💛", "Up to $25k"], ["25-35", "🧡", "Up to $35k"], ["o35", "💜", "Not a factor"]] },
+    length: { q: "Length", multi: false, options: [["year", "📅", "Full year"], ["semester", "⏱️", "Need a semester option"]] },
+  };
+  const TOTAL_STEPS = 1 + PREF_STEPS.length + 1; // dealbreakers + preference screens + field
 
   function quiz() {
-    const q = (state.quiz = state.quiz || {});
-    q.answers = q.answers || {};
-    if (q.step == null) q.step = 0; // 0 = intro, 1..QUIZ.length = questions
+    let q = state.quiz;
+    if (!q || q.v !== 2) q = state.quiz = { v: 2, step: 0, done: false, answers: {} }; // older quiz format: start fresh
+    const a = q.answers;
+    a.deal = a.deal || {};
+    a.prefs = a.prefs || {};
+    a.field = a.field || [];
+    a.city = a.city || [];
     return q;
   }
 
-  // Hard filters drop programs; soft preferences only change the ranking.
+  function catLabel(k) {
+    if (CATS[k]) return CATS[k].label;
+    if (k === "learning") return "Learning style";
+    if (k === "city") return "Location";
+    if (k.indexOf("field:") === 0) return L.field[k.slice(6)][1];
+    return k;
+  }
+
   function matches(answers) {
     const a = answers || quiz().answers;
-    const sel = (k) => (a[k] && a[k].length ? a[k] : null);
+    const d = a.deal || {}, prefs = a.prefs || {};
     const out = [];
     D.programs.forEach((p) => {
-      if (sel("orientation") && a.orientation.indexOf(p.orientation) < 0) return;
-      if (sel("gender") && p.gender !== a.gender[0]) return;
-      if (sel("budget") && p.costUSD != null && p.costUSD > BUDGET_MAX[a.budget[0]]) return;
-      if (sel("must") && a.must.indexOf("semester") >= 0 && !p.semesterOption) return;
-      if (sel("must") && a.must.indexOf("credit") >= 0 && p.credit !== true) return;
-      let score = 0, max = 0;
-      const reasons = [];
-      if (sel("orientation")) reasons.push(L.orientation[p.orientation]);
-      if (sel("focus")) {
-        a.focus.forEach((f) => { max += 2; if (p.focus.indexOf(f) >= 0) { score += 2; reasons.push(L.focus[f]); } });
+      // --- dealbreakers ---
+      if (d.orientation && d.orientation.length && d.orientation.indexOf(p.orientation) < 0) return;
+      if (d.gender && d.gender.length && p.gender !== d.gender[0]) return;
+      if (d.budget && d.budget.length && p.costUSD != null && p.costUSD > BUDGET_MAX[d.budget[0]]) return;
+      if (d.length && d.length[0] === "semester" && !p.semesterOption) return;
+      // --- weighted fit ---
+      let totW = 0, tot = 0;
+      const parts = [];
+      const add = (k, w, fit, extra) => { totW += w; tot += w * fit; parts.push(Object.assign({ k, w, fit }, extra || {})); };
+      Object.keys(CATS).forEach((k) => {
+        const pref = prefs[k];
+        if (!pref || !pref.want || !+pref.weight) return;
+        const r = p.profile[k];
+        if (!r) return add(k, +pref.weight, 0.5, { unknown: true, want: pref.want });
+        add(k, +pref.weight, 1 - Math.abs(pref.want - r.v) / 4, { want: pref.want, have: r.v, est: r.est });
+      });
+      if (a.learning && a.learning !== "any") {
+        const fit = p.learning === a.learning ? 1 : p.learning === "both" || a.learning === "both" ? 0.6 : 0;
+        add("learning", 2, fit);
       }
-      if (sel("field")) {
-        a.field.forEach((f) => { max += 2; if (p.fields[f]) { score += 2; reasons.push(L.field[f][1]); } });
-      }
-      if (sel("city")) {
-        max += 2;
-        const hit = a.city.filter((c) => p.cities.indexOf(c) >= 0);
-        if (hit.length) { score += 2; hit.forEach((c) => reasons.push(L.city[c])); }
-      }
-      if (sel("israeliPeers")) {
-        max += 2;
-        const want = a.israeliPeers[0], has = p.israeliPeers;
-        if (want === has) { score += 2; reasons.push(L.israeliPeers[has]); }
-        else if ((want === "integrated" && has === "some") || (want === "some" && has !== "none") || (want === "none" && has === "some")) score += 1;
-      }
-      if (sel("budget") && p.costUSD != null && BUDGET_MAX[a.budget[0]] !== Infinity) reasons.push("In budget");
-      out.push({ p, score, max, pct: max ? Math.round((score / max) * 100) : null, reasons });
+      if (a.city.length) add("city", 2, a.city.some((c) => p.cities.indexOf(c) >= 0) ? 1 : 0);
+      a.field.forEach((f) => add("field:" + f, 2, p.fields[f] ? 1 : 0));
+      const score = totW ? tot / totW : 0;
+      const strong = parts.filter((x) => x.fit >= 0.75).sort((x, y) => y.w * y.fit - x.w * x.fit);
+      const weak = parts.filter((x) => x.fit <= 0.25 && x.w >= 2).sort((x, y) => y.w - x.w);
+      out.push({ p, score, pct: totW ? Math.round(score * 100) : null, parts, strong, weak,
+        reasons: strong.slice(0, 5).map((x) => catLabel(x.k)) });
     });
     const dkey = (p) => { const nd = nextDeadline(p); return nd.kind === "date" ? nd.d.date : "9999"; };
-    out.sort((x, y) => (y.max ? y.score / y.max : 0) - (x.max ? x.score / x.max : 0) || (dkey(x.p) < dkey(y.p) ? -1 : 1));
+    out.sort((x, y) => y.score - x.score || (dkey(x.p) < dkey(y.p) ? -1 : 1));
     return out;
+  }
+
+  function listPhrase(arr) {
+    const l = arr.map((s) => s.toLowerCase());
+    return l.length <= 1 ? l.join("") : l.slice(0, -1).join(", ") + " and " + l[l.length - 1];
+  }
+  function whyLine(m) {
+    if (!m.parts.length) return "Fits your dealbreakers. Add preferences to rank it.";
+    const s = m.strong.slice(0, 3).map((x) => catLabel(x.k));
+    return s.length ? "Matched on " + listPhrase(s) + "." : "A partial match on your preferences.";
+  }
+
+  function choiceGroup(key, def, picked, act) {
+    return '<div class="qgroup"><h3>' + esc(def.q) + "</h3>" + (def.sub ? '<p class="small muted">' + esc(def.sub) + "</p>" : "") +
+      '<div class="qchips">' + def.options.map((o) => {
+        const on = picked.indexOf(o[0]) >= 0;
+        return '<button class="qchip' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="' + act + '" data-key="' + key + '" data-value="' + o[0] + '">' + o[1] + " " + esc(o[2]) + "</button>";
+      }).join("") + "</div></div>";
+  }
+  function prefRow(k) {
+    const c = CATS[k];
+    const pref = quiz().answers.prefs[k] || {};
+    const w = String(pref.weight || 0);
+    return '<div class="pref' + (+w ? " active" : "") + '"><div class="pref-head"><span class="pref-icon" aria-hidden="true">' + c.icon + "</span><strong>" + esc(c.label) + "</strong></div>" +
+      '<div class="scale" role="group" aria-label="' + esc(c.label) + ': what you want">' +
+      [1, 2, 3, 4, 5].map((n) => '<button class="sdot' + (pref.want === n ? " on" : "") + '" aria-pressed="' + (pref.want === n) + '" data-act="pref-want" data-key="' + k + '" data-value="' + n + '">' + n + "</button>").join("") + "</div>" +
+      '<div class="scale-ends small muted"><span>' + esc(c.low) + "</span><span>" + esc(c.high) + "</span></div>" +
+      '<div class="weights"><span class="small muted">How much do you care?</span>' +
+      WEIGHTS.map((x) => '<button class="wchip' + (w === x[0] ? " on" : "") + '" data-act="pref-weight" data-key="' + k + '" data-value="' + x[0] + '">' + x[1] + "</button>").join("") + "</div></div>";
   }
 
   function renderQuiz() {
     const q = quiz();
-    const total = QUIZ.length;
+    const a = q.answers;
     if (q.step === 0) {
       $app.innerHTML =
         '<section class="quiz quiz-intro">' +
         '<div class="intro-emoji" aria-hidden="true">🇮🇱</div>' +
         "<h1>Find your year in Israel</h1>" +
-        "<p class=\"muted\">Answer " + total + " quick questions, then swipe through the gap years that fit you. Save the ones you like ♥ and pass on the rest.</p>" +
+        '<p class="muted">First your dealbreakers, then what you want in ' + Object.keys(CATS).length + " areas (academics, social scene, peer mix, independence and more) and how much each matters. We'll show your top 3 and why they fit.</p>" +
         '<button class="btn primary big" data-act="quiz-next">Let\'s go →</button>' +
-        '<p class="small muted">or <a href="#/browse">browse all ' + D.programs.length + " programs</a>" +
-        (q.done ? ' · <a href="#/swipe">back to my matches</a>' : "") + "</p></section>";
+        '<p class="small muted">About 2 minutes · or <a href="#/browse">browse all ' + D.programs.length + " programs</a>" +
+        (q.done ? ' · <a href="#/results">back to my top 3</a>' : "") + "</p></section>";
       return;
     }
-    const step = QUIZ[q.step - 1];
-    const picked = q.answers[step.key] || [];
     const count = matches().length;
-    const last = q.step === total;
+    const last = q.step === TOTAL_STEPS;
+    let body = "";
+    if (q.step === 1) {
+      body = "<h1>Dealbreakers first</h1>" +
+        '<p class="muted">Programs that fail any of these are taken out before we score anything. Leave a group blank if it doesn\'t matter.</p>' +
+        Object.keys(DEAL).map((k) => choiceGroup(k, DEAL[k], a.deal[k] || [], "deal-pick")).join("") +
+        '<div class="qgroup">' + prefRow("observance") + "</div>";
+    } else if (q.step <= 1 + PREF_STEPS.length) {
+      const ps = PREF_STEPS[q.step - 2];
+      body = "<h1>" + esc(ps.title) + '</h1><p class="muted">' + esc(ps.sub) + " Pick what you want (1–5), then how much you care. Skip anything you don't care about.</p>" +
+        '<div class="prefs">' + ps.cats.map(prefRow).join("") + "</div>" +
+        (ps.learning ? choiceGroup("learning", { q: "What kind of learning?", options: [["text", "📚", "Jewish text study"], ["academic", "🎓", "Regular academics"], ["both", "⚖️", "Both"], ["any", "🤷", "No preference"]] }, a.learning ? [a.learning] : [], "learning-pick") : "") +
+        (ps.city ? choiceGroup("city", { q: "Where would you like to be based? (optional)", options: [["jerusalem", "🏛️", "Jerusalem"], ["tel-aviv", "🏙️", "Tel Aviv"], ["kibbutz", "🌾", "Kibbutz"], ["north", "⛰️", "The North / periphery"], ["abroad", "🌍", "Travel abroad too"]] }, a.city, "city-pick") : "");
+    } else {
+      body = "<h1>What field do you want to explore?</h1>" +
+        '<p class="muted">Pick up to 3. Programs with tracks, internships or classes in these areas rank higher.</p>' +
+        '<div class="qopts many" role="group">' + Object.keys(L.field).map((k) => {
+          const on = a.field.indexOf(k) >= 0;
+          return '<button class="qopt' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="field-pick" data-value="' + k + '"><span class="qe" aria-hidden="true">' + L.field[k][0] + '</span><span class="qt"><strong>' + esc(L.field[k][1]) + '</strong></span><span class="qcheck" aria-hidden="true">✓</span></button>';
+        }).join("") + "</div>";
+    }
     $app.innerHTML =
       '<section class="quiz">' +
       '<div class="quiz-top"><button class="btn ghost sm" data-act="quiz-back">← Back</button>' +
-      '<div class="quiz-dots" aria-label="Question ' + q.step + " of " + total + '">' +
-      QUIZ.map((_, i) => '<span class="' + (i < q.step - 1 ? "done" : i === q.step - 1 ? "now" : "") + '"></span>').join("") +
-      '</div><span class="small muted">' + q.step + " / " + total + "</span></div>" +
-      "<h1>" + esc(step.q) + "</h1>" + (step.sub ? '<p class="muted">' + esc(step.sub) + "</p>" : "") +
-      '<div class="qopts' + (step.options.length > 6 ? " many" : "") + '" role="group">' +
-      step.options.map((o) => {
-        const on = picked.indexOf(o[0]) >= 0;
-        return '<button class="qopt' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="quiz-pick" data-value="' + o[0] + '">' +
-          '<span class="qe" aria-hidden="true">' + o[1] + '</span><span class="qt"><strong>' + esc(o[2]) + "</strong>" + (o[3] ? "<small>" + esc(o[3]) + "</small>" : "") + "</span>" +
-          '<span class="qcheck" aria-hidden="true">✓</span></button>';
-      }).join("") + "</div>" +
-      '<div class="quiz-foot"><button class="btn ghost" data-act="quiz-skip">' + (picked.length ? "Clear" : "No preference") + "</button>" +
-      '<span class="live-count"><strong>' + count + "</strong> match" + (count === 1 ? "" : "es") + "</span>" +
+      '<div class="quiz-dots" aria-label="Step ' + q.step + " of " + TOTAL_STEPS + '">' +
+      Array.from({ length: TOTAL_STEPS }, (_, i) => '<span class="' + (i < q.step - 1 ? "done" : i === q.step - 1 ? "now" : "") + '"></span>').join("") +
+      '</div><span class="small muted">' + q.step + " / " + TOTAL_STEPS + "</span></div>" +
+      body +
+      '<div class="quiz-foot"><span class="live-count"><strong>' + count + "</strong> program" + (count === 1 ? "" : "s") + " pass your dealbreakers</span>" +
       '<button class="btn primary" data-act="' + (last ? "quiz-finish" : "quiz-next") + '"' + (last && !count ? " disabled" : "") + ">" +
-      (last ? "Show my " + count + " match" + (count === 1 ? "" : "es") + " →" : "Next →") + "</button></div>" +
-      (count === 0 ? '<div class="callout warn" style="margin-top:14px">No programs fit every answer so far. Try loosening one, like adding another community or budget.</div>' : "") +
+      (last ? "See my top 3 →" : "Next →") + "</button></div>" +
+      (count === 0 ? '<div class="callout warn" style="margin-top:14px">No programs pass all your dealbreakers. Try allowing another religious environment or a higher budget.</div>' : "") +
+      "</section>";
+  }
+
+  // ---------- Results: top 3 with breakdown ----------
+  function breakdownRows(m) {
+    return m.parts.filter((x) => CATS[x.k]).sort((x, y) => y.w - x.w).map((x) => {
+      const c = CATS[x.k];
+      const pct = Math.round(x.fit * 100);
+      const cls = x.fit >= 0.75 ? "good" : x.fit >= 0.5 ? "ok" : "bad";
+      return '<div class="brow"><span class="bl">' + c.icon + " " + esc(c.label) + '</span><span class="bbar"><span class="' + cls + '" style="width:' + pct + '%"></span></span>' +
+        '<span class="bv small muted">' + (x.unknown ? "unknown" : "you " + x.want + " · " + (x.est ? "≈" : "") + x.have) + "</span></div>";
+    }).join("");
+  }
+  function renderResults() {
+    const all = matches();
+    const top = all.slice(0, 3);
+    if (!top.length) { $app.innerHTML = '<section class="quiz quiz-intro"><div class="intro-emoji">🤔</div><h1>No programs pass your dealbreakers</h1><button class="btn primary" data-act="retake">Change my answers</button></section>'; return; }
+    $app.innerHTML =
+      '<section class="results">' +
+      '<div class="results-head"><div><h1>Your top 3</h1><p class="muted">Out of ' + all.length + " programs that pass your dealbreakers, ranked by how closely they fit what you want, weighted by what you care about most.</p></div>" +
+      '<button class="btn ghost sm" data-act="retake">Change answers</button></div>' +
+      '<div class="top3">' + top.map((m, i) => {
+        const p = m.p, saved = !!state.saved[p.id];
+        return '<article class="card topcard">' +
+          photoBox(p, "top-photo", '<span class="rank">#' + (i + 1) + "</span>" + typeBadge(p) +
+            '<button class="heart' + (saved ? " on" : "") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '" aria-label="Save">' + (saved ? "♥" : "♡") + "</button>") +
+          '<div class="topcard-body"><div class="tc-title"><h2><a href="#/program/' + p.id + '">' + esc(p.name) + "</a></h2>" +
+          (m.pct != null ? '<span class="match-pill">' + m.pct + "% match</span>" : "") + "</div>" +
+          '<p class="why">' + esc(whyLine(m)) + "</p>" +
+          (m.weak.length ? '<p class="small weak">Weaker on ' + esc(listPhrase(m.weak.slice(0, 2).map((x) => catLabel(x.k)))) + ".</p>" : "") +
+          '<div class="breakdown">' + breakdownRows(m) + "</div>" +
+          (m.parts.some((x) => x.k === "learning" || x.k === "city" || x.k.indexOf("field:") === 0)
+            ? '<div class="chips" style="margin-top:8px">' + m.parts.filter((x) => !CATS[x.k]).map((x) => '<span class="chip' + (x.fit >= 0.75 ? " ok" : "") + '">' + (x.fit >= 0.75 ? "✓ " : "✕ ") + esc(catLabel(x.k)) + "</span>").join("") + "</div>" : "") +
+          '<div class="bcard-actions">' + websiteLink(p, "btn sm") + '<a class="btn sm primary" href="#/program/' + p.id + '">Details →</a></div>' +
+          "</div></article>";
+      }).join("") + "</div>" +
+      '<div class="results-foot"><a class="btn primary big" href="#/swipe">Swipe through all ' + all.length + " matches →</a>" +
+      '<p class="small muted">≈ means our estimate from the type of program; the rest come from what programs publish. You 3 · ≈4 means you wanted 3 and the program rates about 4.</p></div>' +
       "</section>";
   }
 
@@ -903,7 +950,7 @@
     $app.innerHTML =
       '<section class="swipe">' +
       '<div class="swipe-head"><div><h1>Your matches</h1><p class="small muted">' + (seen + 1) + " of " + all.length + " · " + savedHere + ' saved</p></div>' +
-      '<button class="btn ghost sm" data-act="retake">Change answers</button></div>' +
+      '<div class="swipe-head-actions"><a class="btn ghost sm" href="#/results">🏆 Top 3</a><button class="btn ghost sm" data-act="retake">Change answers</button></div></div>' +
       '<div class="swipe-stage">' + d.slice(0, 3).map(swipeCard).reverse().join("") + "</div>" +
       '<div class="swipe-actions">' +
       '<button class="sbtn small" data-act="swipe-undo"' + (hist ? "" : " disabled") + ' aria-label="Undo last swipe" title="Undo">↺</button>' +
@@ -1020,40 +1067,41 @@
 
   function quizAct(act, el) {
     const q = quiz();
-    const step = QUIZ[q.step - 1];
-    if (act === "quiz-pick") {
-      const v = el.dataset.value;
-      let arr = (q.answers[step.key] || []).slice();
-      if (step.multi) {
-        const i = arr.indexOf(v);
-        if (i >= 0) arr.splice(i, 1);
-        else { if (step.max && arr.length >= step.max) arr.shift(); arr.push(v); }
-        q.answers[step.key] = arr;
-      } else {
-        q.answers[step.key] = arr[0] === v ? [] : [v];
-        if (q.answers[step.key].length && q.step < QUIZ.length) {
-          save(); render();
-          setTimeout(() => { if (current.view === "quiz" && quiz().step === q.step) { q.step++; save(); render(); } }, 260);
-          return;
-        }
-      }
-    } else if (act === "quiz-skip") {
-      if ((q.answers[step.key] || []).length) q.answers[step.key] = [];
-      else if (q.step < QUIZ.length) q.step++;
-      else return quizAct("quiz-finish");
-    } else if (act === "quiz-next") q.step = Math.min(QUIZ.length, q.step + 1);
-    else if (act === "quiz-back") q.step = Math.max(0, q.step - 1);
+    const a = q.answers;
+    const k = el && el.dataset.key, v = el && el.dataset.value;
+    if (act === "deal-pick") {
+      const def = DEAL[k];
+      let arr = (a.deal[k] || []).slice();
+      const i = arr.indexOf(v);
+      if (def.multi) { if (i >= 0) arr.splice(i, 1); else arr.push(v); }
+      else arr = i >= 0 ? [] : [v];
+      a.deal[k] = arr;
+    } else if (act === "pref-want") {
+      const pref = (a.prefs[k] = a.prefs[k] || {});
+      if (pref.want === +v) { pref.want = 0; pref.weight = 0; }
+      else { pref.want = +v; if (!+pref.weight) pref.weight = 2; }
+    } else if (act === "pref-weight") {
+      const pref = (a.prefs[k] = a.prefs[k] || {});
+      pref.weight = +v;
+      if (+v && !pref.want) pref.want = 3;
+      if (!+v) pref.want = 0;
+    } else if (act === "learning-pick") a.learning = a.learning === v ? "" : v;
+    else if (act === "city-pick") { const i = a.city.indexOf(v); if (i >= 0) a.city.splice(i, 1); else a.city.push(v); }
+    else if (act === "field-pick") { const i = a.field.indexOf(v); if (i >= 0) a.field.splice(i, 1); else { if (a.field.length >= 3) a.field.shift(); a.field.push(v); } }
+    else if (act === "quiz-next") { q.step = Math.min(TOTAL_STEPS, q.step + 1); save(); render(); window.scrollTo(0, 0); return; }
+    else if (act === "quiz-back") { q.step = Math.max(0, q.step - 1); save(); render(); window.scrollTo(0, 0); return; }
     else if (act === "quiz-finish") {
       q.done = true; q.step = 0;
       state.passed = {}; state.swipeHistory = [];
       save();
-      if (location.hash === "#/swipe") route(); else location.hash = "#/swipe";
+      if (location.hash === "#/results") route(); else location.hash = "#/results";
       window.scrollTo(0, 0);
       return;
     }
     save();
+    const y = window.scrollY;
     render();
-    window.scrollTo(0, 0);
+    window.scrollTo(0, y); // keep your place while tapping options
   }
 
   // ---------- Events ----------
@@ -1083,7 +1131,7 @@
     const s = current.id ? ps(current.id) : null;
     e.preventDefault();
     e.stopPropagation();
-    if (act.indexOf("quiz-") === 0) return quizAct(act, el);
+    if (/^(quiz-|deal-pick|pref-|learning-pick|city-pick|field-pick)/.test(act)) return quizAct(act, el);
     if (act === "swipe-like") return decide("like");
     if (act === "swipe-pass") return decide("pass");
     if (act === "swipe-undo") return undoSwipe();
