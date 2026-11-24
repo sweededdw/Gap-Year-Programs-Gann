@@ -677,6 +677,63 @@
     };
   }
 
+  // Official websites confirmed 2026-11-24 (homepage fetched). Where no official site could be
+  // confirmed, the link is a web search instead of a guessed address, and the button says so.
+  const WEBSITES = {
+    "har-etzion": { url: "https://www.etzion.org.il" },
+    hakotel: { url: "https://www.hakotel.org.il" },
+    orayta: { url: "https://www.orayta.org" },
+    "migdal-hatorah": { url: "https://www.migdalhatorah.org" },
+    ashreinu: { url: "https://ashreinu.org.il" },
+    nishmat: { url: "https://nishmat.co.il/en/home/" },
+    "migdal-oz": { url: "https://www.google.com/search?q=Midreshet+Migdal+Oz+overseas+program", label: "Find official site" },
+    "ein-hanetziv": { url: "https://www.google.com/search?q=Midreshet+Ein+HaNetziv+gap+year", label: "Find official site" },
+    michlalah: { url: "https://www.google.com/search?q=Michlalah+Jerusalem+College+overseas+program+Machal", label: "Find official site" },
+    kby: { label: "Masa program page" },
+    maccabi: { label: "Masa program page" },
+  };
+  programs.forEach(function (p) {
+    const w = WEBSITES[p.id];
+    if (!w) return;
+    if (w.url) p.website = w.url;
+    if (w.label) p.websiteLabel = w.label;
+    if (w.url && !w.label && p.sources.indexOf(w.url) < 0) p.sources.push(w.url);
+  });
+
+  // What kind of program each one is, shown up front so a yeshiva or seminary is never a surprise.
+  const TYPES = {
+    "year-course": "gap", aardvark: "gap", nativ: "gap", kivunim: "gap", hevruta: "gap", "bnei-akiva-kadima": "gap", maccabi: "gap",
+    "kol-ami": "mechina", "bnei-akiva-mechina": "mechina",
+    "habonim-workshop": "movement", "shnat-netzer": "movement",
+    arevim: "service",
+    "tau-eli": "university", "huji-first-year": "university", "bar-ilan-xp": "university",
+    "torah-tech": "yeshiva",
+    "har-etzion": "yeshiva", hakotel: "yeshiva", orayta: "yeshiva", "migdal-hatorah": "yeshiva", kby: "yeshiva", ashreinu: "yeshiva",
+    "migdal-oz": "seminary", nishmat: "seminary", "ein-hanetziv": "seminary", michlalah: "seminary", lindenbaum: "seminary",
+  };
+
+  // Photos published by each program on its own website (its share image or a homepage photo),
+  // loaded from the program's site. Programs without a real photo get an illustrated header instead.
+  const PHOTOS = {
+    aardvark: "https://aardvarkisrael-media.nyc3.digitaloceanspaces.com/aardvark-home.jpg",
+    hevruta: "https://www.hartman.org.il/wp-content/uploads/2023/09/Hevruta-Homepage-2-scaled.jpg",
+    "tau-eli": "https://international.tau.ac.il/sites/english.register.tau.ac.il/files/styles/og_image/public/floodin_images/website-flooding-image.jpg?itok=VHEEUKAv",
+    "huji-first-year": "https://overseas.huji.ac.il/wp-content/uploads/2016/06/ris-general045_2_PS.jpg",
+    "torah-tech": "https://torahtech.co/assets/images/82f4918dd8_Adi_edited.avif",
+    "migdal-hatorah": "https://static.wixstatic.com/media/190ac2_4220b1c4775d4e3ea6d12bc617902659%7Emv2.png/v1/fit/w_2500,h_1330,al_c/190ac2_4220b1c4775d4e3ea6d12bc617902659%7Emv2.png",
+    ashreinu: "https://ashreinu.org.il/wp-content/uploads/2024/12/torah-study-thumbnail.jpg",
+    "year-course": "https://cdn.prod.website-files.com/5f6a6806cad13d77e6ac1bb3/677180202dcc180ccc259442_%D7%A0%D7%97%D7%9C%20%D7%A2%D7%95%D7%92-32.jpg",
+    nativ: "https://aardvarkisrael-media.nyc3.digitaloceanspaces.com/Nativ-3-scaled.jpg",
+    kivunim: "https://images.squarespace-cdn.com/content/v1/664b714f81d4b81c4c14f51f/1716305315369-YCJV0QO631T9QAL81PSN/image-asset.jpeg",
+    "shnat-netzer": "https://wupj.org/wp-content/uploads/2023/09/shnat_netzer_bg-1024x772-1.jpg",
+    orayta: "https://www.orayta.org/cache/widgetkit/gallery/1/02-Spiritually-Uplifting-Inspirational-and-invigorating-ca3b7fc445.jpg",
+    lindenbaum: "https://www.midreshet-lindenbaum.org.il/wp-content/uploads/IMG_4730e-s-1024x683.jpg",
+  };
+  programs.forEach(function (p) {
+    p.type = TYPES[p.id] || "gap";
+    if (PHOTOS[p.id]) p.photo = PHOTOS[p.id];
+  });
+
   // Every program gets the standard documents list and the dual-citizen visa note.
   programs.forEach(function (p) {
     p.app.documents = p.app.documents || DOCS_STANDARD.map(function (d) { return Object.assign({}, d); });
@@ -688,6 +745,15 @@
     cycle: "2027–28",
     programs: programs,
     labels: {
+      type: {
+        yeshiva: ["📖", "Yeshiva"],
+        seminary: ["📖", "Seminary (midrasha)"],
+        mechina: ["🪖", "Mechina · pre-army"],
+        university: ["🎓", "University program"],
+        gap: ["🌍", "Gap year program"],
+        movement: ["⛺", "Youth movement year"],
+        service: ["🤝", "Service year"],
+      },
       orientation: {
         pluralistic: "Pluralistic",
         conservative: "Conservative / Masorti",

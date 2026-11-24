@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Israel Gap Year Finder</title>
   <meta name="description" content="Find and track Israel gap year programs for Jewish high school seniors: program details, deadlines, essays, aid, visas and college deferral in one place." />
-  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
   <header class="topbar">
@@ -15,8 +15,10 @@
         <span>Israel Gap Year Finder</span>
       </a>
       <nav class="topnav" aria-label="Main">
-        <a href="#/" data-nav="finder">Programs</a>
-        <a href="#/my-list" data-nav="my-list">My list <span id="saved-count" class="count-pill">0</span></a>
+        <a href="#/swipe" data-nav="discover">Discover</a>
+        <a href="#/browse" data-nav="finder">Browse all</a>
+        <a href="#/colleges" data-nav="colleges">Colleges</a>
+        <a href="#/my-list" data-nav="my-list">Saved <span id="saved-count" class="count-pill">0</span></a>
         <span id="account" class="account" hidden>
           <span id="user-name" class="user-name"></span>
           <button id="logout" class="btn ghost sm" type="button">Log out</button>
@@ -34,8 +36,9 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <script src="/js/sb.js"></script>
-  <script src="/js/data.js"></script>
-  <script src="/js/app.js"></script>
+  <script src="js/sb.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/colleges.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

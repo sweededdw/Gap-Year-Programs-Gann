@@ -27,7 +27,7 @@ http
     if (!file.startsWith(PUBLIC + path.sep)) { res.writeHead(403); return res.end("Forbidden"); }
     fs.readFile(file, (err, buf) => {
       if (err) { res.writeHead(404, { "Content-Type": "text/plain" }); return res.end("Not found"); }
-      res.writeHead(200, { "Content-Type": TYPES[path.extname(file)] || "application/octet-stream" });
+      res.writeHead(200, { "Content-Type": TYPES[path.extname(file)] || "application/octet-stream", "Cache-Control": "no-store" });
       res.end(buf);
     });
   })
