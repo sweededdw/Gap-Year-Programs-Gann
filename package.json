@@ -1,0 +1,12 @@
+{
+  "name": "israel-gap-year-finder",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Find and track Israel gap year programs, with Supabase accounts. Deployed on Vercel.",
+  "scripts": {
+    "dev": "node dev-server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

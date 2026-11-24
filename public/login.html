@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Log in · Israel Gap Year Finder</title>
+  <meta name="description" content="Create an account or log in to see every Israel gap year program and track your applications." />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body class="auth-body">
+  <main class="auth-wrap">
+    <a class="brand auth-brand" href="/login"><span class="brand-mark" aria-hidden="true">✡</span><span>Israel Gap Year Finder</span></a>
+
+    <form id="auth-form" class="card auth-card" novalidate>
+      <h1 id="title">Log in</h1>
+      <p id="subtitle" class="muted">Welcome back. Log in to see all the programs.</p>
+
+      <div id="msg" class="callout" role="status" hidden></div>
+
+      <label class="field" data-show="signup">Name
+        <input class="input" id="name" name="name" autocomplete="name" maxlength="80" />
+      </label>
+      <label class="field" data-show="login signup forgot">Email
+        <input class="input" id="email" type="email" name="email" autocomplete="email" />
+      </label>
+      <label class="field" data-show="login signup reset"><span id="pw-label">Password</span>
+        <input class="input" id="password" type="password" name="password" autocomplete="current-password" />
+      </label>
+
+      <button class="btn primary auth-submit" id="submit" type="submit">Log in</button>
+
+      <p class="small muted auth-switch" data-show="login"><a href="#" data-mode="forgot">Forgot password?</a></p>
+      <p class="small muted auth-switch" data-show="login">New here? <a href="#" data-mode="signup">Create an account</a></p>
+      <p class="small muted auth-switch" data-show="signup">Already have an account? <a href="#" data-mode="login">Log in</a></p>
+      <p class="small muted auth-switch" data-show="forgot reset"><a href="#" data-mode="login">Back to log in</a></p>
+    </form>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+  <script src="/js/sb.js"></script>
+  <script src="/js/auth.js"></script>
+</body>
+</html>
