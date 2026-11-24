@@ -741,8 +741,31 @@
     michlalah: "https://static.wixstatic.com/media/0e1622_85d4d93cd2f741c7a5242f49b03c4615~mv2.jpg/v1/fill/w_960,h_640,al_c,q_80/0e1622_85d4d93cd2f741c7a5242f49b03c4615~mv2.jpg",
     "bar-ilan-xp": "https://biuinternational.com/wp-content/uploads/2022/07/7-744X496.jpg",
   };
+  // Academic / career fields each program lets you explore, with HOW (track, internship, course...).
+  // Based only on what the program publishes (see each program's blurb and sources).
+  const TEXT = { jewish: "Torah and Jewish text study" };
+  const FIELDS = {
+    "year-course": { business: "Internship track and Business package", tech: "Coding bootcamp track", medicine: "MDA (Magen David Adom) volunteer track", military: "IDF experience track", jewish: "Pardes Jewish learning package", culinary: "Culinary package", sports: "Fitness package", agriculture: "Kibbutz track" },
+    aardvark: { business: "Classic track: internships at Tel Aviv and Jerusalem companies", tech: "Tech track: hi-tech training and internships", social: "Service track: volunteering", culinary: "Culinary track: culinary course and internships", medicine: "MDA add-on", military: "Marva add-on (IDF experience)", sports: "Sea Sports add-on", advocacy: "StandWithUs add-on" },
+    nativ: { jewish: "Masorti learning and US-accredited courses", social: "Volunteering and internship placements", education: "Leadership training" },
+    kivunim: { global: "Arabic, Hebrew and Middle East studies, with travel to up to 12 countries", arts: "Art course with an artist-in-residence", jewish: "Jewish civilization core curriculum" },
+    hevruta: { jewish: "Talmud at several levels, plus Jewish thought seminars", advocacy: "Seminars on contemporary Israel, the conflict and shared society", social: "Weekly nonprofit internship and volunteering" },
+    "kol-ami": { military: "Pre-IDF training, including Krav Maga", agriculture: "Hiking Israel and environmental volunteering", social: "Community volunteering", jewish: "Jewish Peoplehood classes" },
+    "bnei-akiva-mechina": { military: "IDF preparation: ethics, structure, fitness, Tzahal Week", jewish: "Religious Zionist learning", education: "Leadership training alongside Israeli peers" },
+    "bnei-akiva-kadima": { business: "Professional work-experience module", medicine: "MDA ambulance elective", military: "Marva IDF elective", agriculture: "Kibbutz module and eco village", social: "Volunteering in underserved areas", jewish: "Optional Torah enrichment track" },
+    "habonim-workshop": { education: "Volunteering with Israeli youth, and camp counselors in South Africa", agriculture: "Farm work on Kibbutz Ravid", advocacy: "Conflict seminar week", social: "Community volunteering" },
+    "tau-eli": { tech: "Cybersecurity and AI workshops", business: "Entrepreneurship and startup mentors", science: "Hands-on research in TAU labs" },
+    "huji-first-year": { science: "University courses for transferable credit" },
+    "bar-ilan-xp": { advocacy: "Israel advocacy training", medicine: "MDA training", business: "Internship opportunities", social: "Community service" },
+    maccabi: { sports: "Maccabi sports program", education: "Training as madrichim (youth counselors)" },
+    "torah-tech": { business: "Business and startup internships in Tel Aviv", tech: "Startup and tech internships", jewish: "Morning beit midrash" },
+    arevim: { social: "Long-term volunteer placements", medicine: "Volunteering at Ichilov Hospital" },
+    "shnat-netzer": { education: "Youth movement leadership", social: "Volunteering", jewish: "Progressive Jewish learning" },
+  };
+
   programs.forEach(function (p) {
     p.type = TYPES[p.id] || "gap";
+    p.fields = FIELDS[p.id] || (p.type === "yeshiva" || p.type === "seminary" ? { jewish: TEXT.jewish } : {});
     if (PHOTOS[p.id]) p.photo = PHOTOS[p.id];
   });
 
@@ -757,6 +780,22 @@
     cycle: "2027–28",
     programs: programs,
     labels: {
+      field: {
+        business: ["💼", "Business & entrepreneurship"],
+        tech: ["💻", "Tech & coding"],
+        medicine: ["🩺", "Medicine & health"],
+        science: ["🔬", "Science & research"],
+        education: ["🧑‍🏫", "Education & youth leadership"],
+        social: ["🤝", "Social impact & nonprofits"],
+        advocacy: ["🗣️", "Politics, advocacy & Israel studies"],
+        global: ["🌍", "Languages & Middle East studies"],
+        jewish: ["📚", "Jewish studies & Torah"],
+        arts: ["🎨", "Arts & media"],
+        sports: ["⚽", "Sports & fitness"],
+        culinary: ["🍳", "Culinary"],
+        military: ["🪖", "Army & security"],
+        agriculture: ["🌾", "Environment & agriculture"],
+      },
       type: {
         yeshiva: ["📖", "Yeshiva"],
         seminary: ["📖", "Seminary"],

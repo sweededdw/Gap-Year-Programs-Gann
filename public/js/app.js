@@ -196,6 +196,7 @@
   const FILTER_GROUPS = [
     { key: "orientation", title: "Jewish community", options: L.orientation, match: (p, v) => p.orientation === v },
     { key: "focus", title: "Focus", options: L.focus, match: (p, v) => p.focus.indexOf(v) >= 0 },
+    { key: "field", title: "Field", options: Object.keys(L.field).reduce((o, k) => ((o[k] = L.field[k][0] + " " + L.field[k][1]), o), {}), match: (p, v) => !!p.fields[v] },
     { key: "city", title: "Where", options: L.city, match: (p, v) => p.cities.indexOf(v) >= 0 },
     { key: "israeliPeers", title: "Israeli peers", options: L.israeliPeers, match: (p, v) => p.israeliPeers === v },
     { key: "gender", title: "Setting", options: L.gender, match: (p, v) => p.gender === v },
@@ -278,6 +279,15 @@
     const nis = /₪\s?([\d,]+)/.exec(p.costText);
     if (nis) return "₪" + Math.round(+nis[1].replace(/,/g, "") / 1000) + "k";
     return "Price TBD";
+  }
+  function fieldsBox(p) {
+    const keys = Object.keys(p.fields || {});
+    if (!keys.length) return "";
+    const picked = (quiz().answers.field || []);
+    return '<div class="fields-box"><h3>Fields you can explore</h3><ul>' +
+      keys.map((k) => '<li class="' + (picked.indexOf(k) >= 0 ? "match" : "") + '"><span class="fe" aria-hidden="true">' + L.field[k][0] + "</span><div><strong>" + esc(L.field[k][1]) + "</strong>" +
+        (picked.indexOf(k) >= 0 ? ' <span class="chip ok">✓ your pick</span>' : "") + '<div class="small muted">' + esc(p.fields[k]) + "</div></div></li>").join("") +
+      "</ul></div>";
   }
   function websiteLink(p, cls, extra) {
     return '<a class="' + cls + '" href="' + esc(p.website) + '" target="_blank" rel="noopener"' + (extra || "") + ">" +
@@ -592,7 +602,7 @@
       '<div class="facts"><div class="fact"><div class="k">Community</div><div class="v">' + esc(L.orientation[p.orientation]) + '</div></div><div class="fact"><div class="k">Where</div><div class="v">' + esc(p.base) + "</div></div>" +
       '<div class="fact"><div class="k">Tuition</div><div class="v">' + esc(p.costText) + '</div></div><div class="fact"><div class="k">Focus</div><div class="v">' + esc(p.focus.map((f) => L.focus[f]).join(", ")) + "</div></div>" +
       '<div class="fact"><div class="k">College credit</div><div class="v">' + (p.credit === true ? "Yes" : p.credit === false ? "No" : "Not researched") + '</div></div><div class="fact"><div class="k">Israeli peers</div><div class="v">' + esc(L.israeliPeers[p.israeliPeers]) + "</div></div>" +
-      '<div class="fact"><div class="k">Website</div><div class="v"><a href="' + esc(p.website) + '" target="_blank" rel="noopener">' + esc(p.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")) + " ↗</a></div></div></div></section>" +
+      '<div class="fact"><div class="k">Website</div><div class="v"><a href="' + esc(p.website) + '" target="_blank" rel="noopener">' + esc(p.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")) + " ↗</a></div></div></div>" + fieldsBox(p) + "</section>" +
       '<h2 style="font-size:20px;margin:10px 0 0">Application</h2>' +
       sections.map((x, i) => section(i, SECTIONS[i][0], SECTIONS[i][1], x[0], x[1])).join("") +
       "</div>" +
@@ -710,6 +720,10 @@
       ],
     },
     {
+      key: "field", multi: true, max: 3, q: "What field do you want to explore?", sub: "Pick up to 3. We'll favor programs with internships, tracks or classes in that area.",
+      options: Object.keys(L.field).map((k) => [k, L.field[k][0], L.field[k][1], ""]),
+    },
+    {
       key: "city", multi: true, q: "Where do you picture yourself living?", sub: "Pick any.",
       options: [
         ["jerusalem", "🏛️", "Jerusalem", "History, culture, learning"],
@@ -777,6 +791,9 @@
       if (sel("orientation")) reasons.push(L.orientation[p.orientation]);
       if (sel("focus")) {
         a.focus.forEach((f) => { max += 2; if (p.focus.indexOf(f) >= 0) { score += 2; reasons.push(L.focus[f]); } });
+      }
+      if (sel("field")) {
+        a.field.forEach((f) => { max += 2; if (p.fields[f]) { score += 2; reasons.push(L.field[f][1]); } });
       }
       if (sel("city")) {
         max += 2;

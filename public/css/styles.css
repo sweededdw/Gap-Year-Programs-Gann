@@ -482,3 +482,12 @@ html, body { overscroll-behavior-x: none; }
 .bcard-actions .btn { min-width: 0; white-space: nowrap; }
 /* keep the type label clear of the save heart */
 .bcard-photo .type-badge { max-width: calc(100% - 64px); }
+
+/* ================= Fields you can explore ================= */
+.fields-box { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+.fields-box h3 { font-size: 15px; margin-bottom: 10px; }
+.fields-box ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.fields-box li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); }
+.fields-box li.match { background: var(--ok-soft); }
+.fields-box .fe { font-size: 22px; line-height: 1.2; }
+.qopts.many .qt small:empty { display: none; }
