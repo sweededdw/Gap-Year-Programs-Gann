@@ -578,3 +578,20 @@ html, body { overscroll-behavior-x: none; }
   .prow-opts { grid-template-columns: repeat(3, 1fr); }
   .popt.dc { grid-column: 1 / -1; }
 }
+
+/* ================= Concise Top 3 cards ================= */
+.topcard-body { gap: 6px; }
+.why { font-weight: 600; font-size: 15px; }
+.more { margin-top: 2px; }
+.more summary { cursor: pointer; font-size: 13px; color: var(--accent); font-weight: 600; list-style: none; }
+.more summary::-webkit-details-marker { display: none; }
+.more summary::after { content: " ▾"; }
+.more[open] summary::after { content: " ▴"; }
+.blist { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.blist li { display: flex; align-items: center; gap: 6px; }
+.blist .bm { width: 16px; text-align: center; font-weight: 800; }
+.blist .good .bm { color: var(--ok); }
+.blist .ok .bm { color: var(--warn); }
+.blist .bad .bm { color: var(--bad); }
+.blist .bv { margin-left: auto; color: var(--muted); font-size: 12px; }
+.topcard .bcard-actions { padding-top: 6px; }

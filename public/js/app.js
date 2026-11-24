@@ -791,13 +791,14 @@
     return out;
   }
 
+  const PROPER = /^(Jewish|Hebrew|Israel|Middle|Tel|Jerusalem|Torah|Kibbutz)\b/;
   function listPhrase(arr) {
-    const l = arr.map((s) => s.toLowerCase());
+    const l = arr.map((s) => (PROPER.test(s) ? s : s.charAt(0).toLowerCase() + s.slice(1)));
     return l.length <= 1 ? l.join("") : l.slice(0, -1).join(", ") + " and " + l[l.length - 1];
   }
   function whyLine(m) {
     if (!m.parts.length) return "Fits your dealbreakers. Add preferences to rank it.";
-    const s = m.strong.slice(0, 3).map((x) => catLabel(x.k));
+    const s = m.strong.slice(0, 2).map((x) => catLabel(x.k));
     return s.length ? "Matched on " + listPhrase(s) + "." : "A partial match on your preferences.";
   }
 
@@ -869,12 +870,13 @@
 
   // ---------- Results: top 3 with breakdown ----------
   function breakdownRows(m) {
-    return m.parts.filter((x) => CATS[x.k]).sort((x, y) => y.w - x.w).map((x) => {
+    return m.parts.slice().sort((x, y) => y.w - x.w || y.fit - x.fit).map((x) => {
       const c = CATS[x.k];
-      const pct = Math.round(x.fit * 100);
+      const icon = c ? c.icon : x.k === "city" ? "📍" : x.k.indexOf("field:") === 0 ? L.field[x.k.slice(6)][0] : "•";
       const cls = x.fit >= 0.75 ? "good" : x.fit >= 0.5 ? "ok" : "bad";
-      return '<div class="brow"><span class="bl">' + c.icon + " " + esc(c.label) + '</span><span class="bbar"><span class="' + cls + '" style="width:' + pct + '%"></span></span>' +
-        '<span class="bv small muted">' + (x.unknown ? "unknown" : "you " + x.want + " · " + (x.est ? "≈" : "") + x.have) + "</span></div>";
+      const mark = x.fit >= 0.75 ? "✓" : x.fit >= 0.5 ? "~" : "✕";
+      return '<li class="' + cls + '"><span class="bm">' + mark + "</span>" + icon + " " + esc(catLabel(x.k)) +
+        (c && !x.unknown ? '<span class="bv">you ' + x.want + " · " + (x.est ? "≈" : "") + x.have + "</span>" : "") + "</li>";
     }).join("");
   }
   function renderResults() {
@@ -883,7 +885,7 @@
     if (!top.length) { $app.innerHTML = '<section class="quiz quiz-intro"><div class="intro-emoji">🤔</div><h1>No programs pass your dealbreakers</h1><button class="btn primary" data-act="retake">Change my answers</button></section>'; return; }
     $app.innerHTML =
       '<section class="results">' +
-      '<div class="results-head"><div><h1>Your top 3</h1><p class="muted">Out of ' + all.length + " programs that pass your dealbreakers, ranked by how closely they fit what you want, weighted by what you care about most.</p></div>" +
+      '<div class="results-head"><div><h1>Your top 3</h1><p class="muted">Best fits out of ' + all.length + " programs.</p></div>" +
       '<button class="btn ghost sm" data-act="retake">Change answers</button></div>' +
       '<div class="top3">' + top.map((m, i) => {
         const p = m.p, saved = !!state.saved[p.id];
@@ -893,15 +895,13 @@
           '<div class="topcard-body"><div class="tc-title"><h2><a href="#/program/' + p.id + '">' + esc(p.name) + "</a></h2>" +
           (m.pct != null ? '<span class="match-pill">' + m.pct + "% match</span>" : "") + "</div>" +
           '<p class="why">' + esc(whyLine(m)) + "</p>" +
-          (m.weak.length ? '<p class="small weak">Weaker on ' + esc(listPhrase(m.weak.slice(0, 2).map((x) => catLabel(x.k)))) + ".</p>" : "") +
-          '<div class="breakdown">' + breakdownRows(m) + "</div>" +
-          (m.parts.some((x) => x.k === "learning" || x.k === "city" || x.k.indexOf("field:") === 0)
-            ? '<div class="chips" style="margin-top:8px">' + m.parts.filter((x) => !CATS[x.k]).map((x) => '<span class="chip' + (x.fit >= 0.75 ? " ok" : "") + '">' + (x.fit >= 0.75 ? "✓ " : "✕ ") + esc(catLabel(x.k)) + "</span>").join("") + "</div>" : "") +
+          (m.weak.length ? '<p class="small weak">Weaker on ' + esc(listPhrase(m.weak.slice(0, 1).map((x) => catLabel(x.k)))) + ".</p>" : "") +
+          (m.parts.length ? '<details class="more"><summary>See breakdown</summary><ul class="blist">' + breakdownRows(m) + "</ul></details>" : "") +
           '<div class="bcard-actions">' + websiteLink(p, "btn sm") + '<a class="btn sm primary" href="#/program/' + p.id + '">Details →</a></div>' +
           "</div></article>";
       }).join("") + "</div>" +
       '<div class="results-foot"><a class="btn primary big" href="#/swipe">Swipe through all ' + all.length + " matches →</a>" +
-      '<p class="small muted">Ratings are 1–5. "you 5 · ≈4" means you wanted 5 and the program rates about 4 (≈ = our estimate from the type of program).</p></div>' +
+      '<p class="small muted">In a breakdown, "you 5 · ≈4" = you wanted 5, the program rates about 4 (≈ = our estimate).</p></div>' +
       "</section>";
   }
 
