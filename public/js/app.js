@@ -886,7 +886,7 @@
     $app.innerHTML =
       '<section class="results">' +
       '<div class="results-head"><div><h1>Your top 3</h1><p class="muted">Best fits out of ' + all.length + " programs.</p></div>" +
-      '<button class="btn ghost sm" data-act="retake">Change answers</button></div>' +
+      '<div class="swipe-head-actions"><button class="btn ghost sm" data-act="retake">Change answers</button><button class="btn sm" data-act="restart">↺ Retake quiz</button></div></div>' +
       '<div class="top3">' + top.map((m, i) => {
         const p = m.p, saved = !!state.saved[p.id];
         return '<article class="card topcard">' +
@@ -947,7 +947,7 @@
         '<div class="end-actions">' +
         (savedHere ? '<a class="btn primary big" href="#/my-list">See my saved programs ♥</a>' : "") +
         (all.length > savedHere ? '<button class="btn" data-act="swipe-reset">Review the ones I passed</button>' : "") +
-        '<button class="btn" data-act="retake">Retake the quiz</button><a class="btn ghost" href="#/browse">Browse all programs</a></div>' +
+        '<button class="btn" data-act="retake">Change answers</button><button class="btn" data-act="restart">↺ Retake quiz</button><a class="btn ghost" href="#/browse">Browse all programs</a></div>' +
         (hist ? '<p class="small"><button class="btn ghost sm" data-act="swipe-undo">↺ Undo last swipe</button></p>' : "") + "</section>";
       return;
     }
@@ -1141,6 +1141,15 @@
     if (act === "swipe-undo") return undoSwipe();
     if (act === "swipe-info") { const c = $app.querySelector(".scard.top"); if (c) location.hash = "#/program/" + c.dataset.id; return; }
     if (act === "swipe-reset") { state.passed = {}; save(); return render(); }
+    if (act === "restart") {
+      if (!confirm("Start the quiz over? Your answers will be cleared. Saved programs stay saved.")) return;
+      state.quiz = { v: 3, step: 1, done: false, answers: {} };
+      state.passed = {}; state.swipeHistory = [];
+      save();
+      if (location.hash === "#/start") render(); else location.hash = "#/start";
+      window.scrollTo(0, 0);
+      return;
+    }
     if (act === "retake") {
       quiz().step = 1;
       save();
