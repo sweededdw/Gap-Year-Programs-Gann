@@ -595,3 +595,23 @@ html, body { overscroll-behavior-x: none; }
 .blist .bad .bm { color: var(--bad); }
 .blist .bv { margin-left: auto; color: var(--muted); font-size: 12px; }
 .topcard .bcard-actions { padding-top: 6px; }
+
+/* ================= 1–5 scale rows ================= */
+.prow { grid-template-columns: 160px 1fr auto; }
+.prow-scale { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.pend { font-size: 12.5px; color: var(--muted); width: 92px; flex: none; }
+.pend:first-child { text-align: right; }
+.pnums { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; flex: 1; min-width: 0; }
+.pnum { height: 38px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-weight: 700; font-size: 15px; cursor: pointer; }
+.pnum:hover { border-color: var(--accent); }
+.pnum.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+@media (max-width: 700px) {
+  .prow { grid-template-columns: 1fr auto; }
+  .prow-scale { grid-column: 1 / -1; grid-row: 2; flex-wrap: wrap; }
+  .pnums { order: 1; flex-basis: 100%; }
+  .pend { order: 2; width: auto; flex: 1; }
+  .pend:first-child { text-align: left; }
+  .pend:last-child { text-align: right; }
+  .prow .popt.dc { grid-column: 2; grid-row: 1; }
+}
+@media (min-width: 701px) { .prow { grid-template-columns: 150px 1fr auto; } .pend { width: 78px; } .pnum { min-width: 40px; } }

@@ -710,17 +710,16 @@
   // 2) For each category the user picks what they want (1–5) and how much they care (weight 0–3).
   // 3) Fit per category = 1 − |want − program rating| / 4. Match = weighted average of fits.
   const CATS = L.categories;
-  // Screen 2: one row per category, three simple answers → want 1 / 3 / 5 (equal weight).
+  // Screen 2: one row per category, a 1–5 scale (with short end labels) or "Don't care".
   const PREF_ROWS = [
-    ["academics", ["Light", "Balanced", "Intense"]],
-    ["social", ["Quiet", "In between", "Lively"]],
-    ["internships", ["Not needed", "Some", "A big part"]],
-    ["service", ["A little", "Some", "A lot"]],
-    ["independence", ["Dorm & meals", "In between", "Own apartment"]],
-    ["peers", ["Mostly Americans", "A mix", "Live with Israelis"]],
-    ["adventure", ["Chill", "Some", "Hiking & travel"]],
+    ["academics", "Light", "Intense"],
+    ["social", "Quiet", "Lively"],
+    ["internships", "None", "A big part"],
+    ["service", "A little", "A lot"],
+    ["independence", "Dorm & meals", "Own apartment"],
+    ["peers", "Americans", "Israelis"],
+    ["adventure", "Chill", "Lots"],
   ];
-  const WANT = [1, 3, 5];
   const BUDGET_MAX = { u15: 15000, "15-25": 25000, "25-35": 35000, o35: Infinity };
   // Screen 1: dealbreakers. Anything left blank doesn't filter.
   const DEAL = {
@@ -815,13 +814,14 @@
     const k = row[0], c = CATS[k];
     const pref = quiz().answers.prefs[k] || {};
     return '<div class="prow' + (pref.want ? " active" : "") + '"><span class="prow-label"><span aria-hidden="true">' + c.icon + "</span> " + esc(c.label) + "</span>" +
-      '<div class="prow-opts" role="group" aria-label="' + esc(c.label) + '">' +
-      row[1].map((label, i) => {
-        const on = pref.want === WANT[i];
-        return '<button class="popt' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="pref-pick" data-key="' + k + '" data-value="' + WANT[i] + '">' + esc(label) + "</button>";
+      '<div class="prow-scale"><span class="pend">' + esc(row[1]) + '</span><div class="pnums" role="group" aria-label="' + esc(c.label) + ': 1 = ' + esc(row[1]) + ", 5 = " + esc(row[2]) + '">' +
+      [1, 2, 3, 4, 5].map((n) => {
+        const on = pref.want === n;
+        return '<button class="pnum' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="pref-pick" data-key="' + k + '" data-value="' + n + '">' + n + "</button>";
       }).join("") +
+      '</div><span class="pend">' + esc(row[2]) + "</span></div>" +
       '<button class="popt dc' + (!pref.want ? " on" : "") + '" aria-pressed="' + !pref.want + '" data-act="pref-pick" data-key="' + k + '" data-value="0">Don\'t care</button>' +
-      "</div></div>";
+      "</div>";
   }
 
   function renderQuiz() {
@@ -847,7 +847,7 @@
         Object.keys(DEAL).map((k) => choiceGroup(k, DEAL[k], a.deal[k] || [], "deal-pick")).join("");
     } else {
       body = "<h1>What matters to you?</h1>" +
-        '<p class="muted">Tap one answer per row, or "Don\'t care".</p>' +
+        '<p class="muted">Rate each from 1 to 5, or "Don\'t care".</p>' +
         '<div class="prows">' + PREF_ROWS.map(prefRow).join("") + "</div>" +
         '<details class="extras"' + (a.field.length || a.city.length ? " open" : "") + "><summary>Optional: a field or city you have in mind</summary>" +
         choiceGroup("field", { q: "Field (up to 3)", anyLabel: "Don't care", options: Object.keys(L.field).map((k) => [k, L.field[k][0], L.field[k][1]]) }, a.field, "field-pick") +
