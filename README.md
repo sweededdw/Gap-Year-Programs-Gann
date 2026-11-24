@@ -30,22 +30,25 @@ Browser ──► Supabase Auth (sign up / log in / reset password)
 
 ## One-time setup checklist
 
-### Supabase
-1. **Run the schema:** Supabase dashboard → SQL Editor → New query → paste `supabase/schema.sql` → Run. It's safe to run again.
-2. **URLs:** Authentication → URL Configuration.
-   - Add `https://<your-vercel-domain>/login` to **Redirect URLs**. Also add `https://*-sweededdws-projects.vercel.app/login` if you want preview deployments to work.
-   - If this Supabase project is used **only** by this site, set **Site URL** to `https://<your-vercel-domain>`. If it is shared with another app, leave Site URL alone. This site sends its own redirect.
-3. **Email confirmation:** Authentication → Sign In / Providers → Email.
+This site has its **own** Supabase project, so its accounts are separate from any other app.
+
+### Create and connect the database (Vercel)
+1. Go to Vercel → project **israel-gap-year-finder** → **Storage** tab → **Create Database** → **Supabase**. Choose the free plan and name it `gap-year-finder`. When asked which project to connect, pick **israel-gap-year-finder** with all environments.
+   This creates a new Supabase project and adds its URL and keys to this Vercel project as environment variables automatically. `api/config.js` reads `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_URL` and the publishable or anon key. It never reads the service-role key.
+2. **Redeploy** (Deployments → ⋯ → Redeploy). Env changes only apply to new deployments.
+
+### Supabase (open it from the Storage tab → "Open in Supabase")
+3. **Run the schema:** SQL Editor → New query → paste `supabase/schema.sql` → Run. It's safe to run again.
+4. **URLs:** Authentication → URL Configuration.
+   - **Site URL:** `https://israel-gap-year-finder.vercel.app`
+   - **Redirect URLs:** add `https://israel-gap-year-finder.vercel.app/login`. Also add `https://*-sweededdws-projects.vercel.app/login` if you want preview deployments to work.
+5. **Email confirmation:** Authentication → Sign In / Providers → Email.
    - **Confirm email ON** (recommended): new users must click a link before logging in. The site handles this ("check your email", "resend").
    - **OFF:** users get in immediately after signing up.
-4. **Emails that actually arrive:** Supabase's built-in email is rate-limited and meant for testing. For real users, add SMTP (for example Resend, Postmark or SendGrid) under Authentication → Emails → SMTP Settings, and customize the Confirm signup and Reset password templates.
+6. **Emails that actually arrive:** Supabase's built-in email is rate-limited and meant for testing. For real users, add SMTP (for example Resend, Postmark or SendGrid) under Authentication → Emails → SMTP Settings, and customize the Confirm signup and Reset password templates.
 
 ### Vercel
-5. **Environment variables:** Project → Settings → Environment Variables. Add both to Production, Preview and Development:
-   - `NEXT_PUBLIC_SUPABASE_URL` = your Supabase project URL
-   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = the **publishable** (or anon) key. **Never** the service-role or secret key.
-6. **Redeploy** after adding or changing variables (Deployments → ⋯ → Redeploy). Env changes only apply to new deployments.
-7. **Deployment Protection:** Settings → Deployment Protection. Make sure the production domain is public, or visitors will hit a Vercel login wall.
+7. **Deployment Protection:** Settings → Deployment Protection. Make sure the production domain is public, or visitors will hit a Vercel login wall. `israel-gap-year-finder.vercel.app` is public today.
 
 ### GitHub
 8. The Vercel project is linked to `sweededdw/Gap-Year-Programs-Gann`. Every push to `main` deploys to production, and every other branch or PR gets a preview URL.
