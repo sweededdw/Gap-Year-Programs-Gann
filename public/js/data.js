@@ -680,16 +680,16 @@
   // Official websites confirmed 2026-11-24 (homepage fetched). Where no official site could be
   // confirmed, the link is a web search instead of a guessed address, and the button says so.
   const WEBSITES = {
-    "har-etzion": { url: "https://www.etzion.org.il" },
+    "har-etzion": { url: "https://www.haretzion.org/prospective-students/overseas-program" },
     hakotel: { url: "https://www.hakotel.org.il" },
     orayta: { url: "https://www.orayta.org" },
     "migdal-hatorah": { url: "https://www.migdalhatorah.org" },
     ashreinu: { url: "https://ashreinu.org.il" },
-    nishmat: { url: "https://nishmat.co.il/en/home/" },
-    "migdal-oz": { url: "https://www.google.com/search?q=Midreshet+Migdal+Oz+overseas+program", label: "Find official site" },
-    "ein-hanetziv": { url: "https://www.google.com/search?q=Midreshet+Ein+HaNetziv+gap+year", label: "Find official site" },
-    michlalah: { url: "https://www.google.com/search?q=Michlalah+Jerusalem+College+overseas+program+Machal", label: "Find official site" },
-    kby: { label: "Masa program page" },
+    kby: { url: "https://www.kby.org/english/students/" },
+    nishmat: { url: "https://nishmat.co.il/en/program/shana-baaretz/" },
+    "migdal-oz": { url: "https://skamigdaloz.org/en/english-homepage/" },
+    "ein-hanetziv": { url: "https://www.midrasha.co.il/en/" },
+    michlalah: { url: "https://www.michlalahmachal.com/" },
     maccabi: { label: "Masa program page" },
   };
   programs.forEach(function (p) {
@@ -728,6 +728,18 @@
     "shnat-netzer": "https://wupj.org/wp-content/uploads/2023/09/shnat_netzer_bg-1024x772-1.jpg",
     orayta: "https://www.orayta.org/cache/widgetkit/gallery/1/02-Spiritually-Uplifting-Inspirational-and-invigorating-ca3b7fc445.jpg",
     lindenbaum: "https://www.midreshet-lindenbaum.org.il/wp-content/uploads/IMG_4730e-s-1024x683.jpg",
+    "bnei-akiva-kadima": "https://static.wixstatic.com/media/387b52_153e283883904e26acbf8d058e3e439f~mv2.jpg/v1/fill/w_960,h_640,al_c,q_80/387b52_153e283883904e26acbf8d058e3e439f~mv2.jpg",
+    "bnei-akiva-mechina": "https://static.wixstatic.com/media/9925fe_6390a69cf5a14d4c8d1b11d956696370~mv2.jpg/v1/fill/w_960,h_640,al_c,q_80/9925fe_6390a69cf5a14d4c8d1b11d956696370~mv2.jpg",
+    "kol-ami": "https://static.wixstatic.com/media/71579b_f4b9e96cf155428ca7c671bd062269d4~mv2.jpeg/v1/fill/w_960,h_640,al_c,q_80/71579b_f4b9e96cf155428ca7c671bd062269d4~mv2.jpeg",
+    "habonim-workshop": "https://static.wixstatic.com/media/c88b76_499ecfc3873d426c83535d3204a4ba20~mv2.jpg/v1/fill/w_960,h_640,al_c,q_80/c88b76_499ecfc3873d426c83535d3204a4ba20~mv2.jpg",
+    arevim: "https://s3.eu-west-2.amazonaws.com/masaisrael/Document%20Records/Doc%20-%20111966/Ichilov.jpeg",
+    "har-etzion": "https://www.haretzion.org/images/stories/YHE/prospective_students/gush_Community194x346.jpg",
+    hakotel: "https://www.hakotel.org.il/wp-content/uploads/2023/06/WhatsApp-Image-2023-05-30-at-13.51.07.jpeg",
+    kby: "https://www.kby.org/uploads/images/Do%2D%2DX3ZXgAApEv_(1).jpg",
+    nishmat: "https://nishmat.co.il/wp-content/uploads/2026/05/SHLOMI-150-scaled.jpg",
+    "ein-hanetziv": "https://www.midrasha.co.il/wp-content/webp-express/webp-images/uploads/2026/10/Group-13.png.webp",
+    michlalah: "https://static.wixstatic.com/media/0e1622_85d4d93cd2f741c7a5242f49b03c4615~mv2.jpg/v1/fill/w_960,h_640,al_c,q_80/0e1622_85d4d93cd2f741c7a5242f49b03c4615~mv2.jpg",
+    "bar-ilan-xp": "https://biuinternational.com/wp-content/uploads/2022/07/7-744X496.jpg",
   };
   programs.forEach(function (p) {
     p.type = TYPES[p.id] || "gap";
@@ -747,7 +759,7 @@
     labels: {
       type: {
         yeshiva: ["📖", "Yeshiva"],
-        seminary: ["📖", "Seminary (midrasha)"],
+        seminary: ["📖", "Seminary"],
         mechina: ["🪖", "Mechina · pre-army"],
         university: ["🎓", "University program"],
         gap: ["🌍", "Gap year program"],

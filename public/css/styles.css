@@ -480,3 +480,5 @@ html, body { overscroll-behavior-x: none; }
 .bcard-body > p.small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bcard-actions { flex-wrap: wrap; }
 .bcard-actions .btn { min-width: 0; white-space: nowrap; }
+/* keep the type label clear of the save heart */
+.bcard-photo .type-badge { max-width: calc(100% - 64px); }
