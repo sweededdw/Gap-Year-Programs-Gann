@@ -30,18 +30,18 @@ Browser ──► Supabase Auth (sign up / log in / reset password)
 
 ## One-time setup checklist
 
-This site has its **own** Supabase project, so its accounts are separate from any other app.
+This site **shares a Supabase project with ApplicationMaxer** (project ID `rvpsclbnepthfrkjlqjk`), so one account logs in to both. Everything below happens in that project.
 
-### Create and connect the database (Vercel)
-1. Go to Vercel → project **israel-gap-year-finder** → **Storage** tab → **Create Database** → **Supabase**. Choose the free plan and name it `gap-year-finder`. When asked which project to connect, pick **israel-gap-year-finder** with all environments.
-   This creates a new Supabase project and adds its URL and keys to this Vercel project as environment variables automatically. `api/config.js` reads `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_URL` and the publishable or anon key. It never reads the service-role key.
-2. **Redeploy** (Deployments → ⋯ → Redeploy). Env changes only apply to new deployments.
+### Vercel environment variables (already set)
+1. `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are set for Production, Preview and Development. They are the same values ApplicationMaxer uses. `api/config.js` reads them (or `SUPABASE_URL` and the anon key) and never reads the service-role key.
+2. After changing them, **redeploy** (Deployments → ⋯ → Redeploy). Env changes only apply to new deployments.
 
-### Supabase (open it from the Storage tab → "Open in Supabase")
-3. **Run the schema:** SQL Editor → New query → paste `supabase/schema.sql` → Run. It's safe to run again.
+### Supabase (https://supabase.com/dashboard/project/rvpsclbnepthfrkjlqjk)
+3. **Run the schema:** SQL Editor → New query → paste `supabase/schema.sql` → Run. Choose "Run query" if it warns about destructive operations; it only touches this site's table. It's safe to run again.
 4. **URLs:** Authentication → URL Configuration.
-   - **Site URL:** `https://israel-gap-year-finder.vercel.app`
+   - **Site URL:** leave it as ApplicationMaxer's. This site passes its own return link.
    - **Redirect URLs:** add `https://israel-gap-year-finder.vercel.app/login`. Also add `https://*-sweededdws-projects.vercel.app/login` if you want preview deployments to work.
+   - Email templates and the sender name are shared with ApplicationMaxer, so keep their wording neutral.
 5. **Email confirmation:** Authentication → Sign In / Providers → Email.
    - **Confirm email ON** (recommended): new users must click a link before logging in. The site handles this ("check your email", "resend").
    - **OFF:** users get in immediately after signing up.
