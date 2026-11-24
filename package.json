@@ -4,7 +4,8 @@
   "private": true,
   "description": "Find and track Israel gap year programs, with Supabase accounts. Deployed on Vercel.",
   "scripts": {
-    "dev": "node dev-server.js"
+    "dev": "node dev-server.js",
+    "start": "node dev-server.js --open"
   },
   "engines": {
     "node": ">=18"

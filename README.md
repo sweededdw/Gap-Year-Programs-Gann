@@ -62,14 +62,19 @@ This site **shares a Supabase project with ApplicationMaxer** (project ID `rvpsc
 ## Local preview
 
 ```bash
-# .env.local (git-ignored)
-NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
-
-npm run dev   # → http://localhost:3000
+cd "/Users/adamfarb/Desktop/Gap Year Programs Gann/Gap Year Programs Gann"
+npm start        # starts the site on http://localhost:3001 and opens your browser
 ```
 
-Add `http://localhost:3000/login` to Supabase Redirect URLs if you test email links locally. Opening `public/index.html` directly as a file still works, with no accounts and progress saved in that browser only.
+- If it's already running, `npm start` just opens it. Press **Ctrl+C** in that Terminal to stop it.
+- It uses port **3001**, so it doesn't clash with other apps on 3000.
+- Supabase settings come from `.env.local` (git-ignored):
+  `NEXT_PUBLIC_SUPABASE_URL=…` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=…`
+- **Optional one-word shortcut:** paste this once into Terminal, then open a new Terminal window. After that, typing `gapyear` from anywhere starts and opens the site.
+  ```bash
+  echo 'alias gapyear="cd \"/Users/adamfarb/Desktop/Gap Year Programs Gann/Gap Year Programs Gann\" && npm start"' >> ~/.zshrc
+  ```
+- Opening `public/index.html` directly also works, but without accounts. Progress is then saved in that browser only.
 
 ## Notes
 - Program data (`public/js/data.js`) is public research, so it isn't secret. The login controls who uses the tracker, not who can technically download the list.

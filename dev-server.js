@@ -31,6 +31,17 @@ http
       res.end(buf);
     });
   })
-  .listen(Number(process.env.PORT) || 3000, function () {
-    console.log("Preview running at http://localhost:" + this.address().port);
+  .listen(Number(process.env.PORT) || 3001, function () {
+    // 3001 by default so it doesn't collide with other local apps on 3000.
+    const url = "http://localhost:" + this.address().port;
+    console.log("Gap Year Finder running at " + url + "  (press Ctrl+C to stop)");
+    if (process.argv.includes("--open") && process.platform === "darwin") require("node:child_process").exec('open "' + url + '"');
+  })
+  .on("error", (err) => {
+    if (err.code === "EADDRINUSE") {
+      console.log("Gap Year Finder is already running — opening it.");
+      if (process.argv.includes("--open") && process.platform === "darwin") require("node:child_process").exec('open "http://localhost:' + (Number(process.env.PORT) || 3001) + '"');
+      process.exit(0);
+    }
+    throw err;
   });
