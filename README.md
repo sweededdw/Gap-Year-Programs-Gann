@@ -78,11 +78,12 @@ npm start        # starts the site on http://localhost:3001 and opens your brows
 
 ## How matching works
 
-1. **Dealbreakers** remove programs before any scoring: acceptable religious environments, setting (co-ed, men's or women's), maximum tuition, and whether a semester option is required.
-2. Every program has a **1–5 rating in 12 categories**: academics, social scene, home base vs. moving around, internships, community service, religious observance, peer mix, independence, structure, Hebrew, adventure and college credit. They live in `PROFILES` in `public/js/data.js`. Ratings marked `e` are estimates from the program type and show as ≈ on the site; `p` ratings come from what the program publishes; `-` means unknown.
-3. For each category the student picks **what they want (1–5)** and **how much they care** (skip, a little, important, very = 0–3).
-4. **Fit** per category = 1 − |want − rating| / 4. The **match %** is the weighted average, plus learning style, location and field picks (weight 2 each). An unknown rating counts as a neutral 50%.
-5. The **Top 3** page shows each match's %, "Matched on …", its weaker spots and a per-category breakdown. Students then swipe through the rest.
+The quiz has two short screens.
+
+1. **The basics** are dealbreakers that remove programs before any scoring: community, tuition budget, setting, and must-haves (semester option, college credit). Each group defaults to "Any".
+2. **What matters to you** has seven rows: academics, social scene, internships, service, independence, peer mix and adventure. Each row has three answers (low, middle, high, mapped to 1, 3 or 5) or "Don't care". An optional section adds field and city.
+
+Every program has a **1–5 rating in 12 categories** (`PROFILES` in `public/js/data.js`). `e` ratings are estimates from the program type and show as ≈; `p` ratings come from what the program publishes; `-` means unknown. Fit per answered row = 1 − |want − rating| / 4. The match % is the average fit, plus field and city picks. The **Top 3** page explains each match ("Matched on …", weaker spots, a per-category bar), and program pages show all 12 ratings under "How it rates".
 
 ## Notes
 - Program data (`public/js/data.js`) is public research, so it isn't secret. The login controls who uses the tracker, not who can technically download the list.

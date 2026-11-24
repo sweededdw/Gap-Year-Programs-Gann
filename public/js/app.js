@@ -710,26 +710,32 @@
   // 2) For each category the user picks what they want (1–5) and how much they care (weight 0–3).
   // 3) Fit per category = 1 − |want − program rating| / 4. Match = weighted average of fits.
   const CATS = L.categories;
-  const PREF_STEPS = [
-    { title: "Your days", sub: "What should a normal day look like?", cats: ["academics", "internships", "service", "structure"], learning: true },
-    { title: "Your life there", sub: "Who you live with and how independent you want to be.", cats: ["social", "independence", "peers", "hebrew"] },
-    { title: "Where and how", sub: "Where you're based and how much you move around.", cats: ["mobility", "adventure", "credit"], city: true },
+  // Screen 2: one row per category, three simple answers → want 1 / 3 / 5 (equal weight).
+  const PREF_ROWS = [
+    ["academics", ["Light", "Balanced", "Intense"]],
+    ["social", ["Quiet", "In between", "Lively"]],
+    ["internships", ["Not needed", "Some", "A big part"]],
+    ["service", ["A little", "Some", "A lot"]],
+    ["independence", ["Dorm & meals", "In between", "Own apartment"]],
+    ["peers", ["Mostly Americans", "A mix", "Live with Israelis"]],
+    ["adventure", ["Chill", "Some", "Hiking & travel"]],
   ];
-  const WEIGHTS = [["0", "Skip"], ["1", "A little"], ["2", "Important"], ["3", "Very"]];
+  const WANT = [1, 3, 5];
   const BUDGET_MAX = { u15: 15000, "15-25": 25000, "25-35": 35000, o35: Infinity };
+  // Screen 1: dealbreakers. Anything left blank doesn't filter.
   const DEAL = {
-    orientation: { q: "Which religious environments are OK for you?", sub: "Programs outside these are removed. Pick any that fit.", multi: true,
-      options: [["pluralistic", "🤝", "Pluralistic"], ["conservative", "🕍", "Conservative / Masorti"], ["reform", "🌱", "Reform / Progressive"], ["mo-coed", "📖", "Modern Orthodox, co-ed"], ["orthodox", "🕯️", "Yeshiva or seminary"], ["secular", "🇮🇱", "Secular / cultural"]] },
-    gender: { q: "Setting", multi: false, options: [["coed", "👫", "Co-ed only"], ["men", "👨", "Men's programs"], ["women", "👩", "Women's programs"]] },
-    budget: { q: "Most you'd spend on tuition", sub: "USD, usually after the Masa grant. Unpublished prices stay in.", multi: false,
-      options: [["u15", "💚", "Up to $15k"], ["15-25", "💛", "Up to $25k"], ["25-35", "🧡", "Up to $35k"], ["o35", "💜", "Not a factor"]] },
-    length: { q: "Length", multi: false, options: [["year", "📅", "Full year"], ["semester", "⏱️", "Need a semester option"]] },
+    orientation: { q: "Which communities feel right?", multi: true,
+      options: [["pluralistic", "🤝", "Pluralistic"], ["conservative", "🕍", "Conservative"], ["reform", "🌱", "Reform"], ["mo-coed", "📖", "Modern Orthodox"], ["orthodox", "🕯️", "Yeshiva / seminary"], ["secular", "🇮🇱", "Secular"]] },
+    budget: { q: "Tuition budget", multi: false,
+      options: [["u15", "💚", "Up to $15k"], ["15-25", "💛", "Up to $25k"], ["25-35", "🧡", "Up to $35k"], ["o35", "💜", "No limit"]] },
+    gender: { q: "Setting", multi: false, options: [["coed", "👫", "Co-ed"], ["men", "👨", "Men's"], ["women", "👩", "Women's"]] },
+    must: { q: "Must-haves", multi: true, options: [["semester", "⏱️", "Semester option"], ["credit", "🎓", "College credit"]] },
   };
-  const TOTAL_STEPS = 1 + PREF_STEPS.length + 1; // dealbreakers + preference screens + field
+  const TOTAL_STEPS = 2;
 
   function quiz() {
     let q = state.quiz;
-    if (!q || q.v !== 2) q = state.quiz = { v: 2, step: 0, done: false, answers: {} }; // older quiz format: start fresh
+    if (!q || q.v !== 3) q = state.quiz = { v: 3, step: 0, done: false, answers: {} }; // older quiz format: start fresh
     const a = q.answers;
     a.deal = a.deal || {};
     a.prefs = a.prefs || {};
@@ -755,7 +761,8 @@
       if (d.orientation && d.orientation.length && d.orientation.indexOf(p.orientation) < 0) return;
       if (d.gender && d.gender.length && p.gender !== d.gender[0]) return;
       if (d.budget && d.budget.length && p.costUSD != null && p.costUSD > BUDGET_MAX[d.budget[0]]) return;
-      if (d.length && d.length[0] === "semester" && !p.semesterOption) return;
+      if (d.must && d.must.indexOf("semester") >= 0 && !p.semesterOption) return;
+      if (d.must && d.must.indexOf("credit") >= 0 && p.credit !== true) return;
       // --- weighted fit ---
       let totW = 0, tot = 0;
       const parts = [];
@@ -796,21 +803,24 @@
 
   function choiceGroup(key, def, picked, act) {
     return '<div class="qgroup"><h3>' + esc(def.q) + "</h3>" + (def.sub ? '<p class="small muted">' + esc(def.sub) + "</p>" : "") +
-      '<div class="qchips">' + def.options.map((o) => {
+      '<div class="qchips">' +
+      '<button class="qchip any' + (!picked.length ? " on" : "") + '" aria-pressed="' + !picked.length + '" data-act="' + act + '" data-key="' + key + '" data-value="__any">' + (def.anyLabel || "Any") + "</button>" +
+      def.options.map((o) => {
         const on = picked.indexOf(o[0]) >= 0;
         return '<button class="qchip' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="' + act + '" data-key="' + key + '" data-value="' + o[0] + '">' + o[1] + " " + esc(o[2]) + "</button>";
       }).join("") + "</div></div>";
   }
-  function prefRow(k) {
-    const c = CATS[k];
+  function prefRow(row) {
+    const k = row[0], c = CATS[k];
     const pref = quiz().answers.prefs[k] || {};
-    const w = String(pref.weight || 0);
-    return '<div class="pref' + (+w ? " active" : "") + '"><div class="pref-head"><span class="pref-icon" aria-hidden="true">' + c.icon + "</span><strong>" + esc(c.label) + "</strong></div>" +
-      '<div class="scale" role="group" aria-label="' + esc(c.label) + ': what you want">' +
-      [1, 2, 3, 4, 5].map((n) => '<button class="sdot' + (pref.want === n ? " on" : "") + '" aria-pressed="' + (pref.want === n) + '" data-act="pref-want" data-key="' + k + '" data-value="' + n + '">' + n + "</button>").join("") + "</div>" +
-      '<div class="scale-ends small muted"><span>' + esc(c.low) + "</span><span>" + esc(c.high) + "</span></div>" +
-      '<div class="weights"><span class="small muted">How much do you care?</span>' +
-      WEIGHTS.map((x) => '<button class="wchip' + (w === x[0] ? " on" : "") + '" data-act="pref-weight" data-key="' + k + '" data-value="' + x[0] + '">' + x[1] + "</button>").join("") + "</div></div>";
+    return '<div class="prow' + (pref.want ? " active" : "") + '"><span class="prow-label"><span aria-hidden="true">' + c.icon + "</span> " + esc(c.label) + "</span>" +
+      '<div class="prow-opts" role="group" aria-label="' + esc(c.label) + '">' +
+      row[1].map((label, i) => {
+        const on = pref.want === WANT[i];
+        return '<button class="popt' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="pref-pick" data-key="' + k + '" data-value="' + WANT[i] + '">' + esc(label) + "</button>";
+      }).join("") +
+      '<button class="popt dc' + (!pref.want ? " on" : "") + '" aria-pressed="' + !pref.want + '" data-act="pref-pick" data-key="' + k + '" data-value="0">Don\'t care</button>' +
+      "</div></div>";
   }
 
   function renderQuiz() {
@@ -821,33 +831,27 @@
         '<section class="quiz quiz-intro">' +
         '<div class="intro-emoji" aria-hidden="true">🇮🇱</div>' +
         "<h1>Find your year in Israel</h1>" +
-        '<p class="muted">First your dealbreakers, then what you want in ' + Object.keys(CATS).length + " areas (academics, social scene, peer mix, independence and more) and how much each matters. We'll show your top 3 and why they fit.</p>" +
-        '<button class="btn primary big" data-act="quiz-next">Let\'s go →</button>' +
-        '<p class="small muted">About 2 minutes · or <a href="#/browse">browse all ' + D.programs.length + " programs</a>" +
+        '<p class="muted">Two quick screens, then your top 3 matches.</p>' +
+        '<button class="btn primary big" data-act="quiz-next">Start →</button>' +
+        '<p class="small muted">or <a href="#/browse">browse all ' + D.programs.length + " programs</a>" +
         (q.done ? ' · <a href="#/results">back to my top 3</a>' : "") + "</p></section>";
       return;
     }
     const count = matches().length;
     const last = q.step === TOTAL_STEPS;
-    let body = "";
+    let body;
     if (q.step === 1) {
-      body = "<h1>Dealbreakers first</h1>" +
-        '<p class="muted">Programs that fail any of these are taken out before we score anything. Leave a group blank if it doesn\'t matter.</p>' +
-        Object.keys(DEAL).map((k) => choiceGroup(k, DEAL[k], a.deal[k] || [], "deal-pick")).join("") +
-        '<div class="qgroup">' + prefRow("observance") + "</div>";
-    } else if (q.step <= 1 + PREF_STEPS.length) {
-      const ps = PREF_STEPS[q.step - 2];
-      body = "<h1>" + esc(ps.title) + '</h1><p class="muted">' + esc(ps.sub) + " Pick what you want (1–5), then how much you care. Skip anything you don't care about.</p>" +
-        '<div class="prefs">' + ps.cats.map(prefRow).join("") + "</div>" +
-        (ps.learning ? choiceGroup("learning", { q: "What kind of learning?", options: [["text", "📚", "Jewish text study"], ["academic", "🎓", "Regular academics"], ["both", "⚖️", "Both"], ["any", "🤷", "No preference"]] }, a.learning ? [a.learning] : [], "learning-pick") : "") +
-        (ps.city ? choiceGroup("city", { q: "Where would you like to be based? (optional)", options: [["jerusalem", "🏛️", "Jerusalem"], ["tel-aviv", "🏙️", "Tel Aviv"], ["kibbutz", "🌾", "Kibbutz"], ["north", "⛰️", "The North / periphery"], ["abroad", "🌍", "Travel abroad too"]] }, a.city, "city-pick") : "");
+      body = "<h1>The basics</h1>" +
+        '<p class="muted">These rule programs out. Leave a group on "Any" if it doesn\'t matter.</p>' +
+        Object.keys(DEAL).map((k) => choiceGroup(k, DEAL[k], a.deal[k] || [], "deal-pick")).join("");
     } else {
-      body = "<h1>What field do you want to explore?</h1>" +
-        '<p class="muted">Pick up to 3. Programs with tracks, internships or classes in these areas rank higher.</p>' +
-        '<div class="qopts many" role="group">' + Object.keys(L.field).map((k) => {
-          const on = a.field.indexOf(k) >= 0;
-          return '<button class="qopt' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="field-pick" data-value="' + k + '"><span class="qe" aria-hidden="true">' + L.field[k][0] + '</span><span class="qt"><strong>' + esc(L.field[k][1]) + '</strong></span><span class="qcheck" aria-hidden="true">✓</span></button>';
-        }).join("") + "</div>";
+      body = "<h1>What matters to you?</h1>" +
+        '<p class="muted">Tap one answer per row, or "Don\'t care".</p>' +
+        '<div class="prows">' + PREF_ROWS.map(prefRow).join("") + "</div>" +
+        '<details class="extras"' + (a.field.length || a.city.length ? " open" : "") + "><summary>Optional: a field or city you have in mind</summary>" +
+        choiceGroup("field", { q: "Field (up to 3)", anyLabel: "Don't care", options: Object.keys(L.field).map((k) => [k, L.field[k][0], L.field[k][1]]) }, a.field, "field-pick") +
+        choiceGroup("city", { q: "Where", anyLabel: "Don't care", options: [["jerusalem", "🏛️", "Jerusalem"], ["tel-aviv", "🏙️", "Tel Aviv"], ["kibbutz", "🌾", "Kibbutz"], ["north", "⛰️", "The North"], ["abroad", "🌍", "Travel abroad"]] }, a.city, "city-pick") +
+        "</details>";
     }
     $app.innerHTML =
       '<section class="quiz">' +
@@ -856,10 +860,10 @@
       Array.from({ length: TOTAL_STEPS }, (_, i) => '<span class="' + (i < q.step - 1 ? "done" : i === q.step - 1 ? "now" : "") + '"></span>').join("") +
       '</div><span class="small muted">' + q.step + " / " + TOTAL_STEPS + "</span></div>" +
       body +
-      '<div class="quiz-foot"><span class="live-count"><strong>' + count + "</strong> program" + (count === 1 ? "" : "s") + " pass your dealbreakers</span>" +
+      '<div class="quiz-foot"><span class="live-count"><strong>' + count + "</strong> program" + (count === 1 ? "" : "s") + " fit your basics</span>" +
       '<button class="btn primary" data-act="' + (last ? "quiz-finish" : "quiz-next") + '"' + (last && !count ? " disabled" : "") + ">" +
       (last ? "See my top 3 →" : "Next →") + "</button></div>" +
-      (count === 0 ? '<div class="callout warn" style="margin-top:14px">No programs pass all your dealbreakers. Try allowing another religious environment or a higher budget.</div>' : "") +
+      (count === 0 ? '<div class="callout warn" style="margin-top:14px">No programs fit all of these. Try adding a community or raising the budget.</div>' : "") +
       "</section>";
   }
 
@@ -897,7 +901,7 @@
           "</div></article>";
       }).join("") + "</div>" +
       '<div class="results-foot"><a class="btn primary big" href="#/swipe">Swipe through all ' + all.length + " matches →</a>" +
-      '<p class="small muted">≈ means our estimate from the type of program; the rest come from what programs publish. You 3 · ≈4 means you wanted 3 and the program rates about 4.</p></div>' +
+      '<p class="small muted">Ratings are 1–5. "you 5 · ≈4" means you wanted 5 and the program rates about 4 (≈ = our estimate from the type of program).</p></div>' +
       "</section>";
   }
 
@@ -1069,6 +1073,12 @@
     const q = quiz();
     const a = q.answers;
     const k = el && el.dataset.key, v = el && el.dataset.value;
+    if (v === "__any") { // "Any" / "No preference" clears that group
+      if (act === "deal-pick") a.deal[k] = [];
+      else if (act === "field-pick") a.field = [];
+      else if (act === "city-pick") a.city = [];
+      save(); const y0 = window.scrollY; render(); window.scrollTo(0, y0); return;
+    }
     if (act === "deal-pick") {
       const def = DEAL[k];
       let arr = (a.deal[k] || []).slice();
@@ -1076,16 +1086,10 @@
       if (def.multi) { if (i >= 0) arr.splice(i, 1); else arr.push(v); }
       else arr = i >= 0 ? [] : [v];
       a.deal[k] = arr;
-    } else if (act === "pref-want") {
-      const pref = (a.prefs[k] = a.prefs[k] || {});
-      if (pref.want === +v) { pref.want = 0; pref.weight = 0; }
-      else { pref.want = +v; if (!+pref.weight) pref.weight = 2; }
-    } else if (act === "pref-weight") {
-      const pref = (a.prefs[k] = a.prefs[k] || {});
-      pref.weight = +v;
-      if (+v && !pref.want) pref.want = 3;
-      if (!+v) pref.want = 0;
-    } else if (act === "learning-pick") a.learning = a.learning === v ? "" : v;
+    } else if (act === "pref-pick") {
+      const cur = a.prefs[k] && a.prefs[k].want;
+      a.prefs[k] = !+v || cur === +v ? { want: 0, weight: 0 } : { want: +v, weight: 2 };
+    }
     else if (act === "city-pick") { const i = a.city.indexOf(v); if (i >= 0) a.city.splice(i, 1); else a.city.push(v); }
     else if (act === "field-pick") { const i = a.field.indexOf(v); if (i >= 0) a.field.splice(i, 1); else { if (a.field.length >= 3) a.field.shift(); a.field.push(v); } }
     else if (act === "quiz-next") { q.step = Math.min(TOTAL_STEPS, q.step + 1); save(); render(); window.scrollTo(0, 0); return; }
@@ -1131,7 +1135,7 @@
     const s = current.id ? ps(current.id) : null;
     e.preventDefault();
     e.stopPropagation();
-    if (/^(quiz-|deal-pick|pref-|learning-pick|city-pick|field-pick)/.test(act)) return quizAct(act, el);
+    if (/^(quiz-|deal-pick|pref-pick|city-pick|field-pick)/.test(act)) return quizAct(act, el);
     if (act === "swipe-like") return decide("like");
     if (act === "swipe-pass") return decide("pass");
     if (act === "swipe-undo") return undoSwipe();
