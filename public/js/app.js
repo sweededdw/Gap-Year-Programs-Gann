@@ -738,7 +738,6 @@
     ["service", "A little", "A lot"],
     ["independence", "Dorm & meals", "Own apartment"],
     ["peers", "Americans", "Israelis"],
-    ["hebrew", "English-friendly", "Full immersion"],
     ["adventure", "Chill", "Lots"],
   ];
   const BUDGET_MAX = { u15: 15000, "15-25": 25000, "25-35": 35000, o35: Infinity };
@@ -749,9 +748,16 @@
     budget: { q: "Tuition budget", multi: false,
       options: [["u15", "💚", "Up to $15k"], ["15-25", "💛", "Up to $25k"], ["25-35", "🧡", "Up to $35k"], ["o35", "💜", "No limit"]] },
     gender: { q: "Setting", multi: false, options: [["coed", "👫", "Co-ed"], ["men", "👨", "Men's"], ["women", "👩", "Women's"]] },
+    hebrew: { q: "Your Hebrew right now", multi: false, anyLabel: "Skip",
+      options: [["none", "🌱", "None yet"], ["basic", "🔤", "Basics"], ["conversational", "💬", "Conversational"], ["fluent", "🗣️", "Fluent"]] },
     must: { q: "Must-haves", multi: true, options: [["semester", "⏱️", "Semester option"], ["credit", "🎓", "College credit"]] },
   };
   const TOTAL_STEPS = 2;
+  // Hebrew level → the program Hebrew rating (1–5) that suits it. Programs far above your level score lower;
+  // English-friendly programs cost a fluent speaker a little. A beginner skips programs taught fully in Hebrew (rating 5).
+  const HEB_TARGET = { none: 2, basic: 3, conversational: 4, fluent: 5 };
+  const HEB_NAME = { none: "none yet", basic: "basics", conversational: "conversational", fluent: "fluent" };
+  function hebrewFit(level, r) { const t = HEB_TARGET[level]; return r > t ? Math.max(0, 1 - (r - t) / 3) : 1 - (t - r) / 6; }
 
   function quiz() {
     let q = state.quiz;
@@ -768,6 +774,7 @@
     if (CATS[k]) return CATS[k].label;
     if (k === "learning") return "Learning style";
     if (k === "city") return "Location";
+    if (k === "hebrewLevel") return "Hebrew level";
     if (k.indexOf("field:") === 0) return L.field[k.slice(6)][1];
     return k;
   }
@@ -783,17 +790,21 @@
       if (d.budget && d.budget.length && p.costUSD != null && p.costUSD > BUDGET_MAX[d.budget[0]]) return;
       if (d.must && d.must.indexOf("semester") >= 0 && !p.semesterOption) return;
       if (d.must && d.must.indexOf("credit") >= 0 && p.credit !== true) return;
+      const heb = d.hebrew && d.hebrew[0], hr = p.profile.hebrew;
+      if (heb === "none" && hr && hr.v >= 5) return;
       // --- weighted fit ---
       let totW = 0, tot = 0;
       const parts = [];
       const add = (k, w, fit, extra) => { totW += w; tot += w * fit; parts.push(Object.assign({ k, w, fit }, extra || {})); };
       Object.keys(CATS).forEach((k) => {
         const pref = prefs[k];
+        if (k === "hebrew") return; // asked as your current level on screen 1 instead
         if (!pref || !pref.want || !+pref.weight) return;
         const r = p.profile[k];
         if (!r) return add(k, +pref.weight, 0.5, { unknown: true, want: pref.want });
         add(k, +pref.weight, 1 - Math.abs(pref.want - r.v) / 4, { want: pref.want, have: r.v, est: r.est });
       });
+      if (heb && hr) add("hebrewLevel", 2, hebrewFit(heb, hr.v), { level: heb, have: hr.v, est: hr.est });
       if (a.learning && a.learning !== "any") {
         const fit = p.learning === a.learning ? 1 : p.learning === "both" || a.learning === "both" ? 0.6 : 0;
         add("learning", 2, fit);
@@ -893,11 +904,12 @@
   function breakdownRows(m) {
     return m.parts.slice().sort((x, y) => y.w - x.w || y.fit - x.fit).map((x) => {
       const c = CATS[x.k];
-      const icon = c ? c.icon : x.k === "city" ? "📍" : x.k.indexOf("field:") === 0 ? L.field[x.k.slice(6)][0] : "•";
+      const icon = c ? c.icon : x.k === "hebrewLevel" ? "🗣️" : x.k === "city" ? "📍" : x.k.indexOf("field:") === 0 ? L.field[x.k.slice(6)][0] : "•";
       const cls = x.fit >= 0.75 ? "good" : x.fit >= 0.5 ? "ok" : "bad";
       const mark = x.fit >= 0.75 ? "✓" : x.fit >= 0.5 ? "~" : "✕";
       return '<li class="' + cls + '"><span class="bm">' + mark + "</span>" + icon + " " + esc(catLabel(x.k)) +
-        (c && !x.unknown ? '<span class="bv">you ' + x.want + " · " + (x.est ? "≈" : "") + x.have + "</span>" : "") + "</li>";
+        (c && !x.unknown ? '<span class="bv">you ' + x.want + " · " + (x.est ? "≈" : "") + x.have + "</span>" : "") +
+        (x.k === "hebrewLevel" ? '<span class="bv">you: ' + HEB_NAME[x.level] + " · program " + (x.est ? "≈" : "") + x.have + "/5</span>" : "") + "</li>";
     }).join("");
   }
   function renderResults() {
