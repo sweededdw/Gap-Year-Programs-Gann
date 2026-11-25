@@ -831,3 +831,7 @@ table.cmp { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 
 .cmp-more .cmp { min-width: 720px; }
 .cmp-more .rowh { width: 170px; }
 table.cmp { table-layout: fixed; } .cmp .rowh { width: 170px; }
+
+/* Selected "Any" / "Skip" / "Don't care" look selected, same blue as any other choice */
+.qchip.any.on { background: var(--accent-soft); border-color: var(--accent); color: var(--text); font-weight: 600; }
+.popt.dc.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }

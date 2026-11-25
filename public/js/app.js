@@ -1166,7 +1166,7 @@
   function prefRow(row) {
     const k = row[0], c = CATS[k];
     const pref = quiz().answers.prefs[k] || {};
-    return '<div class="prow' + (pref.want ? " active" : "") + '"><span class="prow-label">' + esc(c.label) + "</span>" +
+    return '<div class="prow' + (pref.want || pref.dc ? " active" : "") + '"><span class="prow-label">' + esc(c.label) + "</span>" +
       '<div class="prow-scale"><span class="pend">' + esc(row[1]) + '</span><div class="pnums" role="group" aria-label="' + esc(c.label) + ': 1 = ' + esc(row[1]) + ", 5 = " + esc(row[2]) + '">' +
       [1, 2, 3, 4, 5].map((n) => {
         const on = pref.want === n;
