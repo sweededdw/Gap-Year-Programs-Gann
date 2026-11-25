@@ -262,8 +262,8 @@
   }
 
   // ---------- Shared visuals: type badge + photo header ----------
-  const TYPE_ORDER = ["gap", "mechina", "university", "movement", "service", "yeshiva", "seminary"];
-  const TYPE_PLURAL = { gap: "Gap year programs", mechina: "Mechinot", university: "University", movement: "Youth movement", service: "Service", yeshiva: "Yeshivot", seminary: "Seminaries" };
+  const TYPE_ORDER = ["gap", "mechina", "university", "movement", "service", "aliyah", "yeshiva", "seminary"];
+  const TYPE_PLURAL = { gap: "Gap year programs", mechina: "Mechinot", university: "University", movement: "Youth movement", service: "Service", aliyah: "Aliyah & IDF", yeshiva: "Yeshivot", seminary: "Seminaries" };
   // Small line icons (inline SVG, inherit text color). Used instead of emoji.
   const SVG = {
     heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
@@ -276,6 +276,15 @@
     clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
     chev: '<path d="m6 9 6 6 6-6"/>',
     alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/>',
+    home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1Z"/>',
+    meals: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+    candle: '<path d="M12 2c1 2 2 3 2 4.5a2 2 0 0 1-4 0C10 5 11 4 12 2Z"/><rect x="9" y="10" width="6" height="12" rx="1"/>',
+    map: '<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3Z"/><path d="M9 3v15M15 6v15"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    work: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>',
+    quote: '<path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.5-1.5 4-4 5M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.5-1.5 4-4 5"/>',
+    mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
     sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
   };
   function I(name, filled) {
@@ -298,6 +307,8 @@
     if (p.costUSD != null) return "$" + String(Math.round(p.costUSD / 100) / 10).replace(/\.0$/, "") + "k";
     const nis = /₪\s?([\d,]+)/.exec(p.costText);
     if (nis) return "₪" + Math.round(+nis[1].replace(/,/g, "") / 1000) + "k";
+    const gbp = /£\s?([\d,]+)/.exec(p.costText);
+    if (gbp) return "£" + String(Math.round(+gbp[1].replace(/,/g, "") / 100) / 10).replace(/\.0$/, "") + "k";
     return "Price TBD";
   }
   function ratingsBox(p) {
@@ -393,6 +404,7 @@
         '<button class="heart' + (saved ? " on" : "") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '" aria-label="' + (saved ? "Remove from" : "Save to") + ' my list">' + I("heart", saved) + "</button>") +
       '<div class="bcard-body">' +
       '<h3><a href="#/program/' + p.id + '">' + esc(p.name) + "</a></h3>" +
+      (p.audienceTag ? '<p class="aud-tag">' + I("users") + " " + esc(p.audienceTag) + "</p>" : "") +
       '<p class="small muted">' + I("pin") + " " + esc(p.base) + "</p>" +
       '<div class="bcard-facts"><span title="' + esc(p.costText) + '">' + I("cost") + " " + esc(compactCost(p)) + "</span><span>" + I("cal") + " " + esc(p.length.split(" · ")[0].split(" (")[0]) + "</span><span>" + I("clock") + " " + dl + "</span></div>" +
       (saved && pr.done > 0 ? '<div class="progress-bar" title="Your application: ' + pr.pct + '%"><span style="width:' + pr.pct + '%"></span></div>' : "") +
@@ -442,6 +454,41 @@
   function aidItems(p) {
     return p.app.aid.program.map((name) => ({ key: "program:" + name, name, amount: null, deadline: null, url: null, kind: "Program" }))
       .concat(p.app.aid.outside.map((a) => ({ key: "outside:" + a.name, name: a.name, amount: a.amount, deadline: a.deadline, url: a.url, kind: "Outside" })));
+  }
+
+  // ---------- "The year" sections: daily life, internships & tracks, student stories ----------
+  const DETAILS = (window.GYF_DETAILS && window.GYF_DETAILS.programs) || {};
+  const STORIES = window.GYF_STORIES || {};
+  function infoSection(key, title, body, sub) {
+    return '<section class="card sec" id="sec-' + key + '"><div class="sec-head"><h2>' + esc(title) + "</h2>" + (sub ? '<span class="small muted">' + sub + "</span>" : "") + "</div>" + body + "</section>";
+  }
+  function yearSections(p) {
+    const d = DETAILS[p.id] || {};
+    const out = [];
+    const life = [["cal", "A typical week", d.week], ["clock", "A typical day", d.day], ["home", "Housing", d.housing], ["meals", "Meals", d.meals],
+      ["candle", "Shabbat & holidays", d.shabbat], ["map", "Trips & travel", d.trips], ["users", "Staff & support", d.staff], ["check", "Included in the price", d.included]].filter((x) => x[2]);
+    if (life.length) out.push(["life", "Daily life", '<div class="life-grid">' + life.map((x) =>
+      '<div class="life-item"><span class="life-ic">' + I(x[0]) + "</span><div><h4>" + x[1] + "</h4><p>" + esc(x[2]) + "</p></div></div>").join("") + "</div>"]);
+    const it = d.internships, tracks = d.tracks || [];
+    if ((it && it.offered) || tracks.length) {
+      const title = it && it.offered && tracks.length ? "Internships & tracks" : it && it.offered ? "Internships" : "Tracks";
+      out.push(["tracks", title,
+        (it && it.offered
+          ? '<div class="intern"><h4>' + I("work") + " How internships work</h4>" + (it.how ? "<p>" + esc(it.how) + "</p>" : "") +
+            (it.hours ? '<p class="small"><strong>Time:</strong> ' + esc(it.hours) + "</p>" : "") +
+            (it.sectors && it.sectors.length ? '<div class="chips" style="margin-top:8px">' + it.sectors.map((x) => '<span class="chip">' + esc(x) + "</span>").join("") + "</div>" : "") + "</div>"
+          : "") +
+        (tracks.length ? '<div class="track-grid">' + tracks.map((t) => '<div class="track"><h4>' + esc(t.name) + "</h4>" + (t.desc ? "<p>" + esc(t.desc) + "</p>" : "") + "</div>").join("") + "</div>" : "")]);
+    }
+    const st = STORIES[p.id] || {}, tm = st.testimonials || [], ct = st.contacts || [];
+    out.push(["stories", "Student stories",
+      (tm.length ? '<div class="quotes">' + tm.map((q) => '<figure class="quote">' + I("quote") + "<blockquote>" + esc(q.quote) + "</blockquote><figcaption>" + esc([q.name, q.year, q.school].filter(Boolean).join(" · ")) + "</figcaption></figure>").join("") + "</div>"
+        : '<div class="placeholder">' + I("quote") + "<div><strong>Testimonials coming soon</strong><p class=\"small muted\">We're collecting short write-ups from students who did " + esc(p.short.length > 4 ? p.name : p.name) + ".</p></div></div>") +
+      '<h4 class="contacts-h">Talk to someone who went</h4>' +
+      (ct.length ? '<div class="contacts">' + ct.map((c) => '<div class="contact"><div><strong>' + esc(c.name) + "</strong>" + (c.role ? '<div class="small muted">' + esc(c.role) + "</div>" : "") + (c.note ? '<p class="small">' + esc(c.note) + "</p>" : "") + "</div>" +
+          (c.email ? '<a class="btn sm" href="mailto:' + esc(c.email) + '">' + I("mail") + " Email</a>" : "") + "</div>").join("") + "</div>"
+        : '<div class="placeholder">' + I("users") + '<div><strong>Alumni contacts coming soon</strong><p class="small muted">Past participants who are happy to answer questions will be listed here.</p></div></div>')]);
+    return out;
   }
 
   function renderDetail(p) {
@@ -518,7 +565,9 @@
     // ---- 6. Documents
     const passportItem = (d) => {
       let check = "";
-      if (s.passportExpiry) {
+      if (s.passportExpiry && !p.endDate) {
+        check = '<div class="callout warn small" style="margin-top:6px">' + I("alert") + " This program hasn't published its end date. Keep your passport valid at least 6 months past the end of the year.</div>";
+      } else if (s.passportExpiry) {
         const end = parseDate(p.endDate);
         const need = new Date(end.getFullYear(), end.getMonth() + 6, end.getDate());
         const exp = parseDate(s.passportExpiry);
@@ -613,6 +662,9 @@
       [dc.release ? badge("verified") : dc.note ? badge("partial") : badge("missing"), decisionBody],
     ];
 
+    const yearSecs = yearSections(p);
+    const det = DETAILS[p.id];
+    const allSources = p.sources.concat(det && det.sources ? det.sources.filter((u) => p.sources.indexOf(u) < 0) : []);
     // ---- Sidebar: progress, checklist, timeline, sources
     const status = sectionStatus(p);
     const tl = [];
@@ -638,19 +690,23 @@
       '<div class="actions"><button class="btn' + (saved ? "" : " primary") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '">' + (saved ? I("heart", true) + " On my list" : I("heart") + " Add to my list") + "</button>" +
       '<a class="btn" href="' + esc(p.website) + '" target="_blank" rel="noopener">' + (p.websiteLabel ? esc(p.websiteLabel) : "Official website") + " ↗</a></div></header>" +
       '<div class="card stats">' +
-      '<div class="stat"><div class="label">Tuition</div><div class="value">' + esc(p.costUSD != null ? money(p.costUSD) : p.costText.indexOf("₪") >= 0 ? shortCost(p) : "—") + '</div><div class="sub">' + esc(p.costUSD != null ? shortCost(p) : p.costText.indexOf("₪") >= 0 ? "Priced in shekels" : p.costText) + "</div></div>" +
+      '<div class="stat"><div class="label">Tuition</div><div class="value">' + esc(p.costUSD != null ? money(p.costUSD) : /[₪£]/.test(p.costText) ? shortCost(p) : "—") + '</div><div class="sub">' + esc(p.costUSD != null ? shortCost(p) : p.costText.indexOf("₪") >= 0 ? "Priced in shekels" : p.costText.indexOf("£") >= 0 ? "Priced in pounds" : p.costText) + "</div></div>" +
       '<div class="stat"><div class="label">Length</div><div class="value">' + esc(p.length.split(" · ")[0].split(" (")[0]) + '</div><div class="sub">' + esc(p.semesterOption ? "Semester option available" : "Full year") + "</div></div>" +
       '<div class="stat"><div class="label">Next deadline</div><div class="value">' + (nd.kind === "date" ? fmtDate(nd.d.date, { month: "short", day: "numeric" }) : nd.kind === "rolling" ? "Rolling" : "Not posted") + '</div><div class="sub">' + (nd.kind === "date" ? esc(nd.d.label) + " · " + countdown(nd.d.date) : nd.kind === "rolling" ? "Apply early, it can fill" : "Confirm with program") + "</div></div>" +
       '<div class="stat"><div class="label">Your application</div><div class="value">' + pr.pct + '%</div><div class="sub"><div class="progress-bar" style="margin-top:6px"><span style="width:' + pr.pct + '%"></span></div></div></div>' +
       "</div>" +
-      '<nav class="tabs" aria-label="Page sections"><a href="#sec-overview" data-jump="sec-overview">Overview</a>' + SECTIONS.map((x) => '<a href="#sec-' + x[0] + '" data-jump="sec-' + x[0] + '">' + x[1] + "</a>").join("") + "</nav>" +
+      '<nav class="tabs" aria-label="Page sections"><a href="#sec-overview" data-jump="sec-overview">Overview</a>' +
+      yearSecs.map((x) => '<a href="#sec-' + x[0] + '" data-jump="sec-' + x[0] + '">' + x[1] + "</a>").join("") + SECTIONS.map((x) => '<a href="#sec-' + x[0] + '" data-jump="sec-' + x[0] + '">' + x[1] + "</a>").join("") + "</nav>" +
       '<div class="detail"><div class="sections">' +
-      '<section class="card sec" id="sec-overview"><div class="sec-head"><h2>Overview</h2></div><p>' + esc(p.blurb) + "</p>" +
+      '<section class="card sec" id="sec-overview"><div class="sec-head"><h2>Overview</h2></div>' +
+      (p.audience ? '<div class="callout warn" style="margin-bottom:12px"><span aria-hidden="true">' + I("users") + '</span><div><strong>Who it\'s for:</strong> ' + esc(p.audience) + "</div></div>" : "") +
+      "<p>" + esc(p.blurb) + "</p>" +
       '<div class="facts"><div class="fact"><div class="k">Community</div><div class="v">' + esc(L.orientation[p.orientation]) + '</div></div><div class="fact"><div class="k">Where</div><div class="v">' + esc(p.base) + "</div></div>" +
       '<div class="fact"><div class="k">Tuition</div><div class="v">' + esc(p.costText) + '</div></div><div class="fact"><div class="k">Focus</div><div class="v">' + esc(p.focus.map((f) => L.focus[f]).join(", ")) + "</div></div>" +
       '<div class="fact"><div class="k">College credit</div><div class="v">' + (p.credit === true ? "Yes" : p.credit === false ? "No" : "Not researched") + '</div></div><div class="fact"><div class="k">Israeli peers</div><div class="v">' + esc(L.israeliPeers[p.israeliPeers]) + "</div></div>" +
       '<div class="fact"><div class="k">Website</div><div class="v"><a href="' + esc(p.website) + '" target="_blank" rel="noopener">' + esc(p.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")) + " ↗</a></div></div></div>" + fieldsBox(p) + ratingsBox(p) + "</section>" +
-      '<h2 style="font-size:20px;margin:10px 0 0">Application</h2>' +
+      '<h2 class="group-h">The year</h2>' + yearSecs.map((x) => infoSection(x[0], x[1], x[2])).join("") +
+      '<h2 class="group-h">Application</h2>' +
       sections.map((x, i) => section(i, SECTIONS[i][0], SECTIONS[i][1], x[0], x[1])).join("") +
       "</div>" +
       '<aside class="side">' +
@@ -663,7 +719,7 @@
         '<div class="tl-item' + (daysUntil(t.date) < 0 ? " past" : "") + '"><div class="tl-date">' + fmtDate(t.date, { month: "short", day: "numeric" }) + '</div><div class="tl-what">' + esc(t.what) + "<br>" + countdown(t.date) + "</div></div>"
       ).join("") + "</div>" : '<p class="small muted">No dated deadlines yet. Add your interview, commit and college deferral dates and they will show up here.</p>') + "</div>" +
       '<div class="card"><h3>Sources</h3><p class="small muted">Researched ' + fmtDate(D.asOf) + ". Confirm details with the program.</p><div class=\"sources\">" +
-      p.sources.map((u) => '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(u.replace(/^https?:\/\/(www\.)?/, "")) + "</a>").join("") + "</div></div>" +
+      allSources.map((u) => '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(u.replace(/^https?:\/\/(www\.)?/, "")) + "</a>").join("") + "</div></div>" +
       "</aside></div>";
   }
 
@@ -1006,6 +1062,7 @@
             '<button class="heart' + (saved ? " on" : "") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '" aria-label="Save">' + I("heart", saved) + "</button>") +
           '<div class="topcard-body"><div class="tc-title"><h2><a href="#/program/' + p.id + '">' + esc(p.name) + "</a></h2>" +
           (m.pct != null ? '<span class="match-pill">' + m.pct + "% match</span>" : "") + "</div>" +
+          (p.audienceTag ? '<p class="aud-tag">' + I("users") + " " + esc(p.audienceTag) + "</p>" : "") +
           '<p class="why">' + esc(whyLine(m)) + "</p>" +
           (m.weak.length ? '<p class="small weak">Weaker on ' + esc(listPhrase(m.weak.slice(0, 1).map((x) => catLabel(x.k)))) + ".</p>" : "") +
           (m.parts.length ? '<details class="more"><summary>See breakdown</summary><ul class="blist">' + breakdownRows(m) + "</ul></details>" : "") +
@@ -1033,7 +1090,8 @@
       '<span class="stamp like" aria-hidden="true">SAVE</span><span class="stamp nope" aria-hidden="true">PASS</span>' +
       (m.pct != null ? '<span class="scard-match">' + m.pct + "% match</span>" : "") +
       '<div class="scard-mark ph-mark" aria-hidden="true">' + esc(p.short) + "</div>" +
-      '<div class="scard-title">' + typeBadge(p) + ' <span class="scard-tag">' + esc(L.orientation[p.orientation]) + "</span><h2>" + esc(p.name) + "</h2>" +
+      '<div class="scard-title">' + typeBadge(p) + ' <span class="scard-tag">' + esc(L.orientation[p.orientation]) + "</span>" +
+      (p.audienceTag ? ' <span class="scard-tag aud">' + esc(p.audienceTag) + "</span>" : "") + "<h2>" + esc(p.name) + "</h2>" +
       "<p>" + I("pin") + " " + esc(p.base) + "</p></div></div>" +
       '<div class="scard-body">' +
       '<div class="scard-stats"><div>' + I("cost") + "<strong>" + esc(shortCost(p)) + "</strong></div><div>" + I("cal") + "<strong>" + esc(p.length.split(" · ")[0]) + '</strong></div><div>' + I("clock") + "<strong>" + deadline + "</strong></div></div>" +

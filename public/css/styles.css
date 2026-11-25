@@ -680,3 +680,29 @@ html, body { overscroll-behavior-x: none; }
 .range { width: 100%; accent-color: var(--accent); cursor: pointer; margin: 4px 0; }
 .bs-ends { display: flex; justify-content: space-between; }
 .filters-panel .budget-slider { max-width: none; }
+
+/* Program page: "The year" */
+.group-h { font-size: 20px; margin: 10px 0 0; }
+.life-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px 18px; }
+.life-item { display: flex; gap: 12px; align-items: flex-start; }
+.life-ic { flex: none; width: 34px; height: 34px; border-radius: 9px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: 17px; }
+.life-item h4, .track h4, .intern h4, .contacts-h { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+.life-item p, .track p, .intern p { font-size: 14px; line-height: 1.5; color: var(--text); }
+.intern { padding: 14px 16px; border-radius: 10px; background: var(--surface-2); margin-bottom: 14px; }
+.intern h4 { display: flex; align-items: center; gap: 6px; }
+.track-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.track { padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; }
+.placeholder { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border: 1px dashed var(--border); border-radius: 10px; color: var(--muted); }
+.placeholder > .ic { font-size: 20px; margin-top: 2px; }
+.placeholder strong { color: var(--text); }
+.contacts-h { margin: 16px 0 8px; }
+.quotes { display: grid; gap: 12px; }
+.quote { margin: 0; padding: 14px 16px; border-radius: 10px; background: var(--surface-2); }
+.quote > .ic { color: var(--accent); font-size: 18px; }
+.quote blockquote { margin: 6px 0; font-size: 15px; line-height: 1.55; }
+.quote figcaption { font-size: 13px; color: var(--muted); }
+.contacts { display: grid; gap: 8px; }
+.contact { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; }
+
+.aud-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--warn); background: var(--warn-soft); padding: 2px 8px; border-radius: 6px; margin: 2px 0 4px; }
+.scard-tag.aud { background: rgba(255, 196, 92, .92); color: #3d2a00; }
