@@ -645,3 +645,31 @@ html, body { overscroll-behavior-x: none; }
 @media (max-width: 560px) { .dbar .ds { display: none; } .dl-list a { grid-template-columns: 56px 1fr; } .dl-list .cd { grid-column: 2; } }
 .dl-list { max-width: 720px; }
 .fchip.on .muted { color: inherit; opacity: .75; }
+
+/* Colleges: my list + search */
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 6px 0 10px; }
+.sec-head h2 { font-size: 18px; }
+.mycols { margin-bottom: 28px; }
+.mycol-list { display: grid; gap: 12px; }
+.mycol { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.mycol-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.mycol-head h3 { font-size: 17px; }
+.mycol-head .chips { margin-top: 6px; }
+.mycol-next { padding: 8px 12px; border-radius: 8px; background: var(--surface-2); }
+.mycol-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px 12px; }
+.mycol-grid .field { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.mycol-grid .field > span { font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.mycol-grid .field.wide { grid-column: 1 / -1; }
+.mycol-grid select, .mycol-grid .input { width: 100%; }
+.mycol-policy summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent); }
+.mycol-policy[open] summary { margin-bottom: 10px; }
+.mycol-policy .college-facts { margin-bottom: 8px; }
+.college-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.colsearch .search { width: 100%; }
+.nf-list { display: grid; gap: 8px; margin-top: 12px; }
+.nf-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+@media (max-width: 860px) { .mycol-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .mycol-grid { grid-template-columns: 1fr 1fr; gap: 8px 10px; } .nf-row { flex-direction: column; align-items: flex-start; } .mycol { padding: 14px; } }
+.mycol-grid .textarea { min-height: 44px; height: 44px; resize: vertical; }
+.mycol-grid select, .mycol-grid .input { height: 38px; box-sizing: border-box; }
+.mycol { gap: 10px; }

@@ -701,53 +701,103 @@
   function collegeSummary(c) {
     return [DEFER_LABEL[c.deferral] ? DEFER_LABEL[c.deferral][1] : "", c.deadline ? "request by " + c.deadline : "", c.credit || ""].filter(Boolean).join(" · ");
   }
-  const COLLEGE_TABS = [["all", "All"], ["public", "Public"], ["private", "Private"], ["defer", "Allows deferral"], ["nocredit", "No college credit"]];
   function hillelLine(c) {
     const h = c.hillel;
     if (!h) return "";
     return '<p class="hillel-line small">' + (h.rank ? "Hillel #" + h.rank + " · " : "") + Number(h.jewish).toLocaleString("en-US") + " Jewish undergrads · " + esc(h.type) + "</p>";
   }
+  const APP_STATUS = [["", "Planning to apply"], ["applied", "Applied"], ["accepted", "Accepted"], ["waiting", "Waitlisted / deferred"], ["rejected", "Not accepted"], ["committed", "Committed"]];
+  const APP_PLAN = [["", "Choose a plan"], ["ed", "Early Decision"], ["ed2", "Early Decision II"], ["ea", "Early Action"], ["rea", "Restrictive Early Action"], ["rd", "Regular Decision"], ["rolling", "Rolling"]];
+  const notFoundList = () => (COLLEGES.notFound || []).map((n) => (typeof n === "string" ? { name: n } : n));
+  const myIndex = (name) => state.colleges.findIndex((c) => norm(c.name) === norm(name));
+  function policyFacts(c) {
+    return '<dl class="college-facts">' +
+      "<div><dt>Request deferral by</dt><dd>" + (c.deadline ? esc(c.deadline) + (c.deadlineDate ? " " + countdown(c.deadlineDate) : "") : '<span class="muted">Not stated</span>') + "</dd></div>" +
+      "<div><dt>How long</dt><dd>" + esc(c.length || "Not stated") + "</dd></div>" +
+      '<div class="wide"><dt>How to ask</dt><dd>' + esc(c.how || "Not stated") + (c.deposit ? " Requires your enrollment deposit." : "") + "</dd></div>" +
+      '<div class="wide"><dt>Credit during the gap year</dt><dd>' + esc(c.credit || "Not stated. Ask admissions.") + "</dd></div>" +
+      (c.grades ? '<div class="wide"><dt>Grades & credits from the gap year</dt><dd>' + esc(c.grades) + "</dd></div>" : "") +
+      (c.israel ? '<div class="wide"><dt>Israel programs</dt><dd>' + esc(c.israel) + "</dd></div>" : "") +
+      "</dl>" +
+      (c.quote ? '<blockquote class="college-quote">“' + esc(c.quote) + "”</blockquote>" : "") +
+      (c.note ? '<p class="small" style="color:var(--warn)">' + I("alert") + " " + esc(c.note) + "</p>" : "") +
+      (c.source ? '<a class="small" href="' + esc(c.source) + '" target="_blank" rel="noopener">Source: ' + esc(c.source.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]) + " ↗</a>" : "");
+  }
+  function addButton(name) {
+    return myIndex(name) >= 0
+      ? '<span class="pbadge ok">In my colleges</span>'
+      : '<button class="btn sm primary" data-act="col-add" data-name="' + esc(name) + '">+ Add to my colleges</button>';
+  }
+  // What to do next for one college, from its application and deferral status.
+  function nextStep(c, ci) {
+    const by = (d) => (d ? " by " + fmtDate(d, { month: "short", day: "numeric" }) + " " + countdown(d) : "");
+    if (!c.app) return "Next: submit your application" + by(c.appDeadline);
+    if (c.app === "applied") return "Waiting on a decision.";
+    if (c.app === "waiting") return "Waitlisted or deferred. Send any update the college asks for.";
+    if (c.app === "rejected") return "";
+    if (ci && ci.deferral === "no") return "This college doesn't allow gap year deferrals. Ask admissions about reapplying.";
+    if (!c.status) return "Next: request your gap year deferral" + by(c.deadline);
+    if (c.status === "requested") return "Deferral requested. Waiting to hear back.";
+    if (c.status === "approved") return "Deferral approved." + (ci && ci.creditLevel === "none" ? " Don't take college-credit courses during the year." : "");
+    return "Deferral denied. Talk to admissions about your options.";
+  }
+  function myCollegeCard(c, i) {
+    const ci = collegeInfo(c.name);
+    const step = nextStep(c, ci);
+    return '<article class="card mycol">' +
+      '<div class="mycol-head"><div><h3>' + esc(c.name || "College") + "</h3>" + (ci ? hillelLine(ci) : "") +
+      '<div class="chips">' + (ci ? deferBadge(ci) + creditBadge(ci) + (ci.noApplyingElsewhere ? '<span class="pbadge warn">Can\'t apply elsewhere</span>' : "") : '<span class="pbadge muted">No published gap year policy</span>') + "</div></div>" +
+      '<button class="btn ghost sm" data-act="del-college" data-i="' + i + '" aria-label="Remove ' + esc(c.name) + '">' + I("x") + "</button></div>" +
+      (step ? '<p class="mycol-next small">' + step + "</p>" : "") +
+      '<div class="mycol-grid">' +
+      '<label class="field"><span>Plan</span>' + statusSelect(["colleges", i, "plan"], c.plan, APP_PLAN, "g", "Application plan") + "</label>" +
+      '<label class="field"><span>Application</span>' + statusSelect(["colleges", i, "app"], c.app, APP_STATUS, "g", "Application status") + "</label>" +
+      '<label class="field"><span>Application due</span><input class="input" type="date" value="' + esc(c.appDeadline || "") + '"' + bindAttr(["colleges", i, "appDeadline"], "g") + "></label>" +
+      '<label class="field"><span>Gap year deferral</span>' + statusSelect(["colleges", i, "status"], c.status, DEFER_STATUS, "g", "Deferral status") + "</label>" +
+      '<label class="field"><span>Request deferral by</span><input class="input" type="date" value="' + esc(c.deadline || "") + '"' + bindAttr(["colleges", i, "deadline"], "g") + "></label>" +
+      '<label class="field wide"><span>Notes</span><textarea class="textarea" rows="2" placeholder="Portal login, essays, who to email about the deferral…"' + bindAttr(["colleges", i, "notes"], "g") + ">" + esc(c.notes || "") + "</textarea></label>" +
+      "</div>" +
+      (ci ? '<details class="mycol-policy"><summary>Gap year policy</summary>' + policyFacts(ci) + "</details>" : "") +
+      "</article>";
+  }
   function renderColleges() {
-    const q = norm(state.collegeQuery || "");
-    const tab = state.collegeTab || "all";
+    const raw = (state.collegeQuery || "").trim();
+    const q = norm(raw);
     const rank = (c) => (c.hillel && c.hillel.rank) || 999;
-    const list = COLLEGES.colleges.filter((c) => {
-      if (q && norm(c.name).indexOf(q) < 0) return false;
-      const t = c.hillel && c.hillel.type;
-      if (tab === "public" && t !== "Public") return false;
-      if (tab === "private" && t !== "Private") return false;
-      if (tab === "defer" && !(c.deferral === "yes" || c.deferral === "case" || c.deferral === "open")) return false;
-      if (tab === "nocredit" && c.creditLevel !== "none") return false;
-      return true;
-    }).sort((x, y) => rank(x) - rank(y) || x.name.localeCompare(y.name));
-    const notFound = (COLLEGES.notFound || []).map((n) => (typeof n === "string" ? { name: n } : n))
-      .filter((n) => (!q || norm(n.name).indexOf(q) >= 0) && (tab === "all" || (tab === "public" && n.hillel && n.hillel.type === "Public") || (tab === "private" && n.hillel && n.hillel.type === "Private")))
-      .sort((x, y) => rank(x) - rank(y));
+    const mine = state.colleges;
+    const count = (k, v) => mine.filter((c) => c[k] === v).length;
+    const summary = mine.length
+      ? [mine.length + " college" + (mine.length === 1 ? "" : "s"), count("app", "applied") + " applied", count("app", "accepted") + count("app", "committed") + " accepted", count("status", "approved") + " deferral" + (count("status", "approved") === 1 ? "" : "s") + " approved"].join(" · ")
+      : "";
+    let results = "";
+    if (q.length >= 2) {
+      const hits = COLLEGES.colleges.filter((c) => norm(c.name).indexOf(q) >= 0).sort((x, y) => rank(x) - rank(y) || x.name.localeCompare(y.name));
+      const nf = notFoundList().filter((n) => norm(n.name).indexOf(q) >= 0).sort((x, y) => rank(x) - rank(y));
+      const exact = hits.concat(nf).some((c) => norm(c.name) === q) || myIndex(raw) >= 0;
+      results =
+        '<p class="results-count" style="margin:2px 0 12px">' + (hits.length + nf.length ? hits.length + nf.length + " match" + (hits.length + nf.length === 1 ? "" : "es") : "No colleges in our list match “" + esc(raw) + "”.") + "</p>" +
+        (hits.length ? '<div class="college-grid">' + hits.slice(0, 12).map((c) =>
+          '<article class="card college"><div class="college-head"><div class="college-title"><h3>' + esc(c.name) + "</h3>" + addButton(c.name) + "</div>" + hillelLine(c) +
+          '<div class="chips">' + deferBadge(c) + creditBadge(c) + (c.noApplyingElsewhere ? '<span class="pbadge warn">Can\'t apply elsewhere</span>' : "") + "</div></div>" +
+          policyFacts(c) + "</article>").join("") + "</div>" + (hits.length > 12 ? '<p class="small muted" style="margin-top:8px">Showing 12 of ' + hits.length + ". Keep typing to narrow it down.</p>" : "") : "") +
+        (nf.length ? '<div class="nf-list">' + nf.map((n) =>
+          '<div class="nf-row"><div><strong>' + esc(n.name) + "</strong>" + (n.hillel && n.hillel.rank ? ' <span class="muted small">Hillel #' + n.hillel.rank + "</span>" : "") +
+          '<p class="small muted">No published gap year policy found. Ask the admissions office directly.</p></div>' + addButton(n.name) + "</div>").join("") + "</div>" : "") +
+        (!exact ? '<p style="margin-top:12px"><button class="btn sm" data-act="col-add" data-name="' + esc(raw) + '">+ Add “' + esc(raw) + "” as my own college</button></p>" : "");
+    }
     $app.innerHTML =
-      '<div class="browse-head"><div><h1>College gap year policies</h1>' +
-      '<p class="muted">The ' + (COLLEGES.top || 100) + ' colleges with the most Jewish students (Hillel International, 2025): whether you can defer for a gap year, when to ask, and how gap-year credits and grades are treated. Researched ' + fmtDate(COLLEGES.asOf) + " from each college's own website. Always confirm with the college.</p></div></div>" +
-      '<div class="callout info" style="margin-bottom:14px"><span aria-hidden="true">' + I("info") + '</span><div><strong>Why credit matters:</strong> Israel programs that give college credit (Year Course, Kivunim, Aardvark/JTS, TAU, Hebrew U, Bar-Ilan) can clash with colleges marked <span class="pbadge bad">No college credit</span>. Skip the credit option or get written approval first.</div></div>' +
-      '<div class="type-tabs" role="tablist">' + COLLEGE_TABS.map((t) => '<button class="ttab' + (tab === t[0] ? " on" : "") + '" data-act="college-tab" data-value="' + t[0] + '">' + t[1] + "</button>").join("") + "</div>" +
-      '<div class="toolbar"><input class="search" type="search" placeholder="Search colleges…" aria-label="Search colleges" data-act="college-search" value="' + esc(state.collegeQuery || "") + '"><span class="results-count">' + list.length + " with published policies</span></div>" +
-      '<div class="college-grid">' + list.map((c) =>
-        '<article class="card college">' +
-        '<div class="college-head"><h3>' + esc(c.name) + "</h3>" + hillelLine(c) + '<div class="chips">' + deferBadge(c) + creditBadge(c) + (c.noApplyingElsewhere ? '<span class="pbadge warn">Can\'t apply elsewhere</span>' : "") + "</div></div>" +
-        '<dl class="college-facts">' +
-        "<div><dt>Request by</dt><dd>" + (c.deadline ? esc(c.deadline) + (c.deadlineDate ? " " + countdown(c.deadlineDate) : "") : '<span class="muted">Not stated</span>') + "</dd></div>" +
-        "<div><dt>How long</dt><dd>" + esc(c.length || "Not stated") + "</dd></div>" +
-        '<div class="wide"><dt>How to ask</dt><dd>' + esc(c.how || "Not stated") + (c.deposit ? " Requires your enrollment deposit." : "") + "</dd></div>" +
-        '<div class="wide"><dt>Credit during the gap year</dt><dd>' + esc(c.credit || "Not stated. Ask admissions.") + "</dd></div>" +
-        (c.grades ? '<div class="wide"><dt>Grades & credits from the gap year</dt><dd>' + esc(c.grades) + "</dd></div>" : "") +
-        (c.israel ? '<div class="wide"><dt>Israel programs</dt><dd>' + esc(c.israel) + "</dd></div>" : "") +
-        "</dl>" +
-        (c.quote ? '<blockquote class="college-quote">“' + esc(c.quote) + "”</blockquote>" : "") +
-        (c.note ? '<p class="small" style="color:var(--warn)">' + I("alert") + ' ' + esc(c.note) + "</p>" : "") +
-        (c.source ? '<a class="small" href="' + esc(c.source) + '" target="_blank" rel="noopener">Source: ' + esc(c.source.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]) + " ↗</a>" : "") + "</article>"
-      ).join("") + "</div>" +
-      (notFound.length
-        ? '<section class="card" style="padding:16px;margin-top:16px"><h3 style="font-size:15px">No published policy found (' + notFound.length + ')</h3><p class="small muted" style="margin-top:4px">We couldn\'t find a current official gap year policy for these. Ask the college\'s admissions office directly:</p><p class="small" style="margin-top:8px">' +
-          notFound.map((n) => esc(n.name) + (n.hillel && n.hillel.rank ? ' <span class="muted">(#' + n.hillel.rank + ")</span>" : "")).join(" · ") + "</p></section>"
-        : "");
+      '<div class="browse-head"><div><h1>Colleges</h1>' +
+      '<p class="muted">Track the colleges you\'re applying to and their gap year deferral rules. Policies come from each college\'s own website (researched ' + fmtDate(COLLEGES.asOf) + "). Always confirm with the college.</p></div></div>" +
+      '<section class="mycols"><div class="sec-head"><h2>My colleges</h2>' + (summary ? '<span class="small muted">' + summary + "</span>" : "") + "</div>" +
+      (mine.length ? '<div class="mycol-list">' + mine.map(myCollegeCard).join("") + "</div>"
+        : '<div class="card empty">No colleges yet. Search below and add the schools you\'re applying to. Each one gets its own tracker for the application and the gap year deferral.</div>') +
+      "</section>" +
+      '<section class="colsearch"><div class="sec-head"><h2>Find a college</h2></div>' +
+      '<input class="search" type="search" placeholder="Search by college name, e.g. Michigan" aria-label="Search colleges" data-act="college-search" value="' + esc(raw) + '">' +
+      (q.length >= 2 ? results
+        : '<p class="small muted" style="margin-top:10px">Type at least 2 letters. We have sourced policies for ' + COLLEGES.colleges.length + " colleges, including " + COLLEGES.colleges.filter((c) => c.hillel).length + " of the " + (COLLEGES.top || 100) + " with the most Jewish students (Hillel International).</p>" +
+          '<div class="callout info" style="margin-top:12px"><span aria-hidden="true">' + I("info") + '</span><div><strong>Why credit matters:</strong> Israel programs that give college credit (Year Course, Kivunim, Aardvark/JTS, TAU, Hebrew U, Bar-Ilan) can clash with colleges marked <span class="pbadge bad">No college credit</span>. Skip the credit option or get written approval first.</div></div>') +
+      "</section>";
   }
 
   // ---------- Discover: quick quiz ----------
@@ -1212,7 +1262,6 @@
       if (location.hash === "#/start") render(); else location.hash = "#/start";
       return;
     }
-    if (act === "college-tab") { state.collegeTab = el.dataset.value; save(); return render(); }
     if (act === "type-tab") { filters().type = el.dataset.value || ""; save(); return render(); }
     if (act === "toggle-filters") { filters().open = !filters().open; save(); return render(); }
     if (act === "toggle-deadlines") { filters().dlOpen = !filters().dlOpen; save(); return render(); }
@@ -1239,6 +1288,12 @@
         deadline: ci && ci.deadlineDate ? ci.deadlineDate : "",
         status: "",
       });
+    } else if (act === "col-add") {
+      const name = (el.dataset.name || "").trim();
+      if (!name || myIndex(name) >= 0) return;
+      const ci = collegeInfo(name);
+      const nf = notFoundList().find((n) => norm(n.name) === norm(name));
+      state.colleges.push({ name: ci ? ci.name : nf ? nf.name : name, policy: ci ? collegeSummary(ci) : "", deadline: ci && ci.deadlineDate ? ci.deadlineDate : "", status: "", app: "", plan: "", appDeadline: "", notes: "" });
     } else if (act === "del-college") {
       if (!confirm("Remove this college from every program page?")) return;
       state.colleges.splice(+el.dataset.i, 1);
