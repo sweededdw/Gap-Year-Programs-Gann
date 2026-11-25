@@ -30,18 +30,17 @@ Browser ──► Supabase Auth (sign up / log in / reset password)
 
 ## One-time setup checklist
 
-This site **shares a Supabase project with ApplicationMaxer** (project ID `rvpsclbnepthfrkjlqjk`), so one account logs in to both. Everything below happens in that project.
+This site has **its own Supabase project, "Gap Year Finder"** (project ID `boeoagusepvnpuhtdagy`). Accounts are separate from ApplicationMaxer, so students create a login here. Everything below happens in that project.
 
 ### Vercel environment variables (already set)
-1. `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are set for Production, Preview and Development. They are the same values ApplicationMaxer uses. `api/config.js` reads them (or `SUPABASE_URL` and the anon key) and never reads the service-role key.
+1. `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are set for Production, Preview and Development. They point at the Gap Year Finder project. `api/config.js` reads them (or `SUPABASE_URL` and the anon key) and never reads the service-role key.
 2. After changing them, **redeploy** (Deployments → ⋯ → Redeploy). Env changes only apply to new deployments.
 
-### Supabase (https://supabase.com/dashboard/project/rvpsclbnepthfrkjlqjk)
-3. **Run the schema:** SQL Editor → New query → paste `supabase/schema.sql` → Run. Choose "Run query" if it warns about destructive operations; it only touches this site's table. It's safe to run again.
+### Supabase (https://supabase.com/dashboard/project/boeoagusepvnpuhtdagy)
+3. **Run the schema:** SQL Editor → New query → paste `supabase/schema.sql` → Run. Choose "Run query" if it warns about destructive operations; it only touches this site's table. It's safe to run again. (Done on 2026-11-24.)
 4. **URLs:** Authentication → URL Configuration.
-   - **Site URL:** leave it as ApplicationMaxer's. This site passes its own return link.
+   - **Site URL:** `https://israel-gap-year-finder.vercel.app`
    - **Redirect URLs:** add `https://israel-gap-year-finder.vercel.app/login`. Also add `https://*-sweededdws-projects.vercel.app/login` if you want preview deployments to work.
-   - Email templates and the sender name are shared with ApplicationMaxer, so keep their wording neutral.
 5. **Email confirmation:** Authentication → Sign In / Providers → Email.
    - **Confirm email ON** (recommended): new users must click a link before logging in. The site handles this ("check your email", "resend").
    - **OFF:** users get in immediately after signing up.
