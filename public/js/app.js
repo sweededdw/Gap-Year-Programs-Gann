@@ -224,14 +224,14 @@
     if (current.view !== "detail") lastListView = current.view;
     render();
   }
-  const NAV_FOR = { quiz: "discover", swipe: "discover", results: "discover", finder: "finder", list: "my-list", colleges: "colleges", compare: "compare" };
+  const NAV_FOR = { home: "home", quiz: "discover", swipe: "discover", results: "discover", finder: "finder", list: "my-list", colleges: "colleges", compare: "compare" };
   // Once the quiz is done, Discover moves to the end of the menu (the other pages come first).
   function orderNav() {
     const nav = document.querySelector(".topnav"), disc = nav && nav.querySelector('[data-nav="discover"]');
     if (!disc) return;
-    const after = quiz().done ? nav.querySelector('[data-nav="my-list"]') : null;
-    if (after) { if (disc.previousElementSibling !== after) after.after(disc); }
-    else if (nav.firstElementChild !== disc) nav.prepend(disc);
+    // Home always stays first; Discover sits right after Home until the quiz is done, then after Saved.
+    const after = nav.querySelector(quiz().done ? '[data-nav="my-list"]' : '[data-nav="home"]');
+    if (after && disc.previousElementSibling !== after) after.after(disc);
   }
   function render() {
     orderNav();
