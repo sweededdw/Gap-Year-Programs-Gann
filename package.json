@@ -1,13 +1,18 @@
 {
   "name": "israel-gap-year-finder",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Find and track Israel gap year programs, with Supabase accounts. Deployed on Vercel.",
   "scripts": {
     "dev": "node dev-server.js",
-    "start": "node dev-server.js --open"
+    "start": "node dev-server.js --open",
+    "test": "node tests/run.mjs",
+    "test:live": "node tests/run.mjs live"
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.2.17"
   }
 }

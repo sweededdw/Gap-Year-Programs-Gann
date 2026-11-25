@@ -16,11 +16,12 @@
             return body;
           })
         )
-        .then((cfg) =>
-          window.supabase.createClient(cfg.url, cfg.key, {
+        .then((cfg) => {
+          window.GYF_CONFIG = cfg; // public settings only: url, key, and which optional features are on
+          return window.supabase.createClient(cfg.url, cfg.key, {
             auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-          })
-        );
+          });
+        });
     }
     return clientPromise;
   };

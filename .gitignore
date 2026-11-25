@@ -5,3 +5,6 @@
 
 node_modules/
 .DS_Store
+
+# Test screenshots and browser profiles
+tests/out/

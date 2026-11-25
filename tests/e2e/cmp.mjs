@@ -1,0 +1,73 @@
+import { writeFileSync } from 'node:fs';
+const [SP, ROOT] = process.argv.slice(2); const B = 'file://' + ROOT + '/public/index.html';
+let list; for (let i=0;i<40;i++){ try { list = await (await fetch('http://localhost:9342/json/list')).json(); break; } catch { await new Promise(r=>setTimeout(r,250)); } }
+const ws = new WebSocket(list.find(t=>t.type==='page').webSocketDebuggerUrl); await new Promise(r=>ws.onopen=r);
+let id=0; const pend=new Map(); const errs=[];
+const cmd=(m,p={})=>new Promise(r=>{const i=++id;pend.set(i,r);ws.send(JSON.stringify({id:i,method:m,params:p}));});
+ws.onmessage=m=>{const d=JSON.parse(m.data); if(d.id&&pend.has(d.id)){pend.get(d.id)(d);pend.delete(d.id);} if(d.method==='Runtime.exceptionThrown') errs.push(d.params.exceptionDetails.exception?.description);};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const ev=async e=>(await cmd('Runtime.evaluate',{expression:e,awaitPromise:true,returnByValue:true})).result?.result?.value;
+const vp=(w,h)=>cmd('Emulation.setDeviceMetricsOverride',{width:w,height:h,deviceScaleFactor:1,mobile:w<500});
+const shot=async n=>{const r=await cmd('Page.captureScreenshot',{format:'png',captureBeyondViewport:true}); writeFileSync(`${SP}/${n}.png`,Buffer.from(r.result.data,'base64'));};
+const click=async sel=>{ await ev(`document.querySelector(${JSON.stringify(sel)}).click(); true`); await sleep(150); };
+const out=[]; const ok=(n,c)=>out.push((c?'PASS ':'FAIL ')+n);
+const go=async h=>{ await cmd('Page.navigate',{url:'about:blank'}); await sleep(100); await cmd('Page.navigate',{url:B+h}); await sleep(800); };
+const txt=sel=>ev(`document.querySelector(${JSON.stringify(sel)})?.textContent||""`);
+await cmd('Page.enable'); await cmd('Runtime.enable'); await vp(1280,1300);
+await go('#/browse'); await ev('localStorage.clear(); true');
+// program page chart
+await go('#/program/torah-tech');
+ok('Time breakdown is the first "The year" section + tab', await ev('document.querySelector(".tabs a:nth-child(2)").textContent')==='Time breakdown' && !!(await ev('!!document.getElementById("sec-time")')));
+ok('5 category bars on one fixed scale, values printed', await ev('document.querySelectorAll("#sec-time .trow").length')===5 && /Internships\s*23 h/.test(await txt('#sec-time .trows')) && /Religious study\s*29 h/.test(await txt('#sec-time .trows')));
+ok('published hours have no ≈, estimates do', !/≈23/.test(await txt('#sec-time .trows')) && /≈2 h/.test(await txt('#sec-time .trows')));
+const w = await ev('[...document.querySelectorAll("#sec-time .tbar")].map(b=>parseFloat(b.style.width))');
+ok(`bar widths match hours / 50 (${w.join(",")})`, Math.abs(w[0]-58)<0.2 && Math.abs(w[2]-46)<0.2);
+ok('total stacked bar with legend percentages', await ev('document.querySelectorAll("#sec-time .tstack .seg").length')===3 && /Religious study 54%/.test(await txt('#sec-time .tlegend')));
+ok('hero total + basis badge', /54/.test(await txt('#sec-time .hero-n')) && /published schedule/.test(await txt('#sec-time .thead .pbadge')));
+await ev('document.getElementById("sec-time").scrollIntoView(); window.scrollBy(0,-90); true'); await sleep(200);
+// hover tooltip
+const r = await ev('(()=>{const b=document.querySelector("#sec-time .tbar.c-intern").getBoundingClientRect(); return {x:b.left+b.width/2,y:b.top+b.height/2}})()');
+await cmd('Input.dispatchMouseEvent',{type:'mouseMoved',x:r.x,y:r.y}); await sleep(150);
+ok('hover shows a tooltip', !(await ev('document.querySelector(".viz-tip").hidden')) && /Internships: 23 h a week/.test(await txt('.viz-tip')));
+await shot('c-time');
+await cmd('Input.dispatchMouseEvent',{type:'mouseMoved',x:5,y:5});
+await go('#/program/hanoar-hatzioni');
+ok('no chart when there is no time data (Hanoar Hatzioni)', !(await ev('!!document.getElementById("sec-time")')));
+// compare from program pages
+await go('#/program/aardvark');
+await ev('document.querySelector(".school-head [data-act=cmp-add]").click(); true'); await sleep(500);
+ok('Compare button opens the compare page with that program', await ev('location.hash')==='#/compare' && /Aardvark Israel/.test(await txt('.cmp thead')));
+await ev(`(()=>{const s=document.querySelector('[data-act=cmp-pick][data-i="1"]'); s.value="year-course"; s.dispatchEvent(new Event("change",{bubbles:true})); return true})()`); await sleep(300);
+await ev(`(()=>{const s=document.querySelector('[data-act=cmp-pick][data-i="2"]'); s.value="torah-tech"; s.dispatchEvent(new Event("change",{bubbles:true})); return true})()`); await sleep(300);
+const names = await ev('[...document.querySelectorAll(".cmp-name")].map(a=>a.textContent)');
+ok(`three programs head to head (${names.join(" | ")})`, names.length===3 && names[1]==='Young Judaea Year Course' && names[2]==='Torah Tech');
+const intRow = await ev('(()=>{const tr=[...document.querySelectorAll(".cmp tbody tr")].find(t=>/Internships/.test(t.querySelector("th").textContent)&&t.querySelector(".tbar")); return [...tr.querySelectorAll("td")].map(td=>td.className)})()');
+ok(`internships row: Torah Tech wins, others dimmed (${intRow})`, intRow[2]==='lead' && intRow[0]==='lose' && intRow[1]==='lose');
+const tuit = await ev('(()=>{const tr=[...document.querySelectorAll(".cmp tbody tr")].find(t=>t.querySelector("th").textContent==="Tuition"); return [...tr.querySelectorAll("td")].map(td=>td.className)})()');
+ok('tuition: lowest wins with a "Lowest" tag', tuit[0]==='lead' && tuit[1]==='lose' && /Lowest/.test(await ev('[...document.querySelectorAll(".cmp tbody tr")].find(t=>t.querySelector("th").textContent==="Tuition").querySelector("td.lead").textContent')));
+const board = await ev('[...document.querySelectorAll(".cmp-board td")].map(td=>td.textContent)');
+ok(`scoreboard: rows won + best at (${board.map(b=>b.slice(0,40)).join(" | ")})`, board.length===3 && board.every(b=>/rows? won/.test(b)) && /Lowest tuition/.test(board[0]) && /Most internships/.test(board[2]));
+ok('a single overall leader is marked', await ev('document.querySelectorAll(".cmp-board td.champ").length')===1);
+ok('rows that are the same are hidden (Community: all Pluralistic? no - Aardvark/YC pluralistic, TT orthodox, so shown)', !!(await ev('[...document.querySelectorAll(".cmp tbody th")].some(t=>t.textContent==="Community")')));
+ok('main table: Basics + Time; the rest folds into More details', /Basics.*Time/.test(await ev('[...document.querySelectorAll(".cmp .grp th")].map(t=>t.textContent).join("|")')) && !!(await ev('!!document.querySelector("details.cmp-more") && !document.querySelector("details.cmp-more").open')) && /Housing/.test(await ev('document.querySelector("details.cmp-more").textContent')));
+ok('week-split mini bars for each program', await ev('document.querySelectorAll(".cmp .tstack.tstack-sm").length')===3);
+await shot('c-compare');
+// share link restores the same comparison
+await go('#/compare/kivunim,hevruta');
+ok('share link #/compare/a,b loads those programs', (await ev('[...document.querySelectorAll(".cmp-name")].map(a=>a.textContent).join("|")'))==='Kivunim|Hevruta Gap-Year Program');
+ok('identical rows hidden by default (Kivunim vs Hevruta: both Pluralistic)', !(await ev('[...document.querySelectorAll(".cmp tbody th")].some(t=>t.textContent==="Community")')) && /hidden because the programs match/.test(await ev('document.body.textContent')));
+await ev('(()=>{const c=document.querySelector("[data-act=cmp-same]"); c.checked=true; c.dispatchEvent(new Event("change",{bubbles:true})); return true})()'); await sleep(250);
+ok('toggle shows them again', await ev('[...document.querySelectorAll(".cmp tbody th")].some(t=>t.textContent==="Community")'));
+await ev('document.querySelector("[data-act=cmp-remove]").click(); true'); await sleep(200);
+ok('remove a program', await ev('document.querySelectorAll(".cmp-name").length')===1);
+ok('nav has Compare, active', await ev('document.querySelector("[data-nav=compare]").classList.contains("active")'));
+await vp(390,900); await sleep(300); await shot('c-compare-mobile');
+ok('phone: page itself does not scroll sideways', await ev('document.documentElement.scrollWidth <= innerWidth'));
+// Top 3 -> compare these 3
+await vp(1280,1000);
+await ev(`localStorage.setItem("gyf:v1", JSON.stringify({quiz:{v:3,done:true,step:0,answers:{deal:{},prefs:{academics:{want:4,weight:2}},field:[],city:[]}}})); true`);
+await go('#/results'); await ev('document.querySelector("[data-act=cmp-top3]").click(); true'); await sleep(500);
+ok('Top 3 "Compare these 3": quiz picks section + Closest to you + match %', await ev('location.hash')==='#/compare' && await ev('document.querySelectorAll(".cmp-name").length')===3 && /Your quiz picks/.test(await txt('.cmp')) && /% match/.test(await txt('.cmp-board')));
+await shot('c-compare-top3');
+ok('no JS errors', errs.length===0); if(errs.length) console.log(errs);
+console.log(out.join('\n')); process.exit(0);

@@ -1,0 +1,32 @@
+import { writeFileSync } from 'node:fs';
+const [SP, ROOT] = process.argv.slice(2); const B = 'http://localhost:4010/index.html';
+let list; for (let i=0;i<40;i++){ try { list = await (await fetch('http://localhost:9342/json/list')).json(); break; } catch { await new Promise(r=>setTimeout(r,250)); } }
+const ws = new WebSocket(list.find(t=>t.type==='page').webSocketDebuggerUrl); await new Promise(r=>ws.onopen=r);
+let id=0; const pend=new Map(); const errs=[];
+const cmd=(m,p={})=>new Promise(r=>{const i=++id;pend.set(i,r);ws.send(JSON.stringify({id:i,method:m,params:p}));});
+ws.onmessage=m=>{const d=JSON.parse(m.data); if(d.id&&pend.has(d.id)){pend.get(d.id)(d);pend.delete(d.id);} if(d.method==='Runtime.exceptionThrown') errs.push(d.params.exceptionDetails.exception?.description);};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const ev=async e=>(await cmd('Runtime.evaluate',{expression:e,awaitPromise:true,returnByValue:true})).result?.result?.value;
+const vp=(w,h)=>cmd('Emulation.setDeviceMetricsOverride',{width:w,height:h,deviceScaleFactor:1,mobile:w<500});
+const shot=async n=>{const r=await cmd('Page.captureScreenshot',{format:'png',captureBeyondViewport:true}); writeFileSync(`${SP}/${n}.png`,Buffer.from(r.result.data,'base64'));};
+const click=async sel=>{ await ev(`document.querySelector(${JSON.stringify(sel)}).click(); true`); await sleep(150); };
+const out=[]; const ok=(n,c)=>out.push((c?'PASS ':'FAIL ')+n);
+await cmd('Page.enable'); await cmd('Runtime.enable'); await vp(1280,1000);
+await cmd('Page.navigate',{url:B}); await sleep(800);
+await ev(`localStorage.setItem("gyf:v1", JSON.stringify({saved:{aardvark:1},quiz:{v:3,done:true,step:0,answers:{deal:{},prefs:{academics:{want:4,weight:2}},field:[],city:[]}}})); true`);
+const views=['#/results','#/swipe','#/browse','#/program/aardvark','#/program/yachad-mechinot','#/compare/aardvark,year-course,torah-tech','#/colleges','#/my-list','#/start','#/admin'];
+const all=[];
+for (const h of views) { await cmd('Page.navigate',{url:'about:blank'}); await sleep(100); await cmd('Page.navigate',{url:B+h}); await sleep(1500); const v=await ev('window.__cspv||["no watcher"]'); all.push(...v.map(x=>h+": "+x)); }
+ok('every view renders under the production CSP with zero violations', all.length===0); if(all.length) console.log(all.slice(0,10).join("\n"));
+await cmd('Page.navigate',{url:B+'#/browse'}); await sleep(2500);
+ok('program photos still load (img-src https:)', await ev('document.querySelectorAll(".bcard-photo.has-photo").length')>=30);
+ok('Google Fonts load (Fraunces in header)', await ev('document.fonts.check("700 20px Fraunces")'));
+ok('broken photo falls back without an inline handler', await ev('!document.querySelector(\'.bcard[data-href="#/program/yachad-mechinot"] .has-photo\')'));
+await cmd('Page.navigate',{url:'http://localhost:4010/login'}); await sleep(2000);
+const lv = await ev('window.__cspv||["no watcher"]');
+ok(`login page: supabase-js loads with SRI, no CSP violations (${lv.length})`, lv.length===0 && await ev('typeof window.supabase==="object"'));
+await cmd('Page.navigate',{url:'http://localhost:4010/privacy'}); await sleep(1200);
+const pv = await ev('window.__cspv||["no watcher"]');
+ok('privacy page: no CSP violations', pv.length===0 && /What we store/.test(await ev('document.body.textContent')));
+ok('no JS errors', errs.length===0); if(errs.length) console.log(errs.slice(0,5));
+console.log(out.join('\n')); process.exit(0);

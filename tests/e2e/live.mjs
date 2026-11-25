@@ -1,0 +1,25 @@
+import { writeFileSync } from 'node:fs';
+const [SP, ROOT] = process.argv.slice(2); const B = 'https://israel-gap-year-finder.vercel.app';
+let list; for (let i=0;i<40;i++){ try { list = await (await fetch('http://localhost:9342/json/list')).json(); break; } catch { await new Promise(r=>setTimeout(r,250)); } }
+const ws = new WebSocket(list.find(t=>t.type==='page').webSocketDebuggerUrl); await new Promise(r=>ws.onopen=r);
+let id=0; const pend=new Map(); const errs=[];
+const cmd=(m,p={})=>new Promise(r=>{const i=++id;pend.set(i,r);ws.send(JSON.stringify({id:i,method:m,params:p}));});
+ws.onmessage=m=>{const d=JSON.parse(m.data); if(d.id&&pend.has(d.id)){pend.get(d.id)(d);pend.delete(d.id);} if(d.method==='Runtime.exceptionThrown') errs.push(d.params.exceptionDetails.exception?.description);};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const ev=async e=>(await cmd('Runtime.evaluate',{expression:e,awaitPromise:true,returnByValue:true})).result?.result?.value;
+const vp=(w,h)=>cmd('Emulation.setDeviceMetricsOverride',{width:w,height:h,deviceScaleFactor:1,mobile:w<500});
+const shot=async n=>{const r=await cmd('Page.captureScreenshot',{format:'png',captureBeyondViewport:true}); writeFileSync(`${SP}/${n}.png`,Buffer.from(r.result.data,'base64'));};
+const click=async sel=>{ await ev(`document.querySelector(${JSON.stringify(sel)}).click(); true`); await sleep(150); };
+const logs=[]; 
+ws.addEventListener('message', m=>{ const d=JSON.parse(m.data); if(d.method==='Log.entryAdded') logs.push(d.params.entry.level+": "+d.params.entry.text); if(d.method==='Runtime.consoleAPICalled' && d.params.type==='error') logs.push('console: '+d.params.args.map(a=>a.value||a.description).join(' ')); });
+await cmd('Page.enable'); await cmd('Runtime.enable'); await cmd('Log.enable'); await vp(1280,900);
+await cmd('Page.navigate',{url:B+'/'}); await sleep(3500);
+const out=[]; const ok=(n,c)=>out.push((c?'PASS ':'FAIL ')+n);
+ok('live: logged-out visit lands on /login', await ev('location.pathname')==='/login');
+ok('live: supabase-js passed the integrity check and loaded', await ev('typeof window.supabase==="object" && typeof window.supabase.createClient==="function"'));
+ok('live: login form is enabled (config reached Supabase)', !(await ev('document.getElementById("submit").disabled')));
+const bad = logs.filter(l=>/Content Security Policy|integrity|Refused/i.test(l));
+ok('live: no CSP / integrity errors in the console', bad.length===0); if(bad.length) console.log(bad.join('\n'));
+ok('live: logo + Fraunces font load', await ev('document.querySelector(".logo-mark").complete && document.querySelector(".logo-mark").naturalWidth>0') && await ev('document.fonts.ready.then(()=>document.fonts.check("700 20px Fraunces"))'));
+ok('no JS errors', errs.length===0); if(errs.length) console.log(errs);
+console.log(out.join('\n')); process.exit(0);

@@ -24,6 +24,11 @@ Browser ──► Supabase Auth (sign up / log in / reset password)
 | `public/js/data.js` | All program data. Edit this to update programs. |
 | `api/config.js` | Vercel function that gives the browser the **public** Supabase URL and key |
 | `supabase/schema.sql` | Creates the progress table and its security rules. Run once. |
+| `supabase/migrations/` | Numbered database changes, run in order (see `supabase/README.md`). |
+| `public/js/admin.js` | The admin page for editing program and college data (`#/admin`). Loads only for admins. |
+| `api/delete-account.js` | Deletes the logged-in student's account. Needs `SUPABASE_SECRET_KEY` in Vercel. |
+| `public/privacy.html` | The privacy page. |
+| `tests/` | Browser and API tests (`npm test`); GitHub runs them on every push. |
 | `vercel.json` | Serves `public/`, gives clean URLs (`/login`), sets security headers |
 | `dev-server.js` | Local preview (`npm run dev`) |
 | `research/` | Research notes and sources |

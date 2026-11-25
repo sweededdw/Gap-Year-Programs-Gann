@@ -24,6 +24,38 @@
   let mode = query.get("mode") === "signup" ? "signup" : "login";
   let sb = null;
 
+  // ---------- Bot protection (Cloudflare Turnstile) ----------
+  // Off until TURNSTILE_SITE_KEY is set in Vercel. Then a small check appears above the button, and its
+  // token goes with every sign-up, log-in and reset request; Supabase verifies it (Auth → Bot protection).
+  let captcha = null; // { widget, token }
+  function setupCaptcha(siteKey) {
+    if (!siteKey) return;
+    captcha = { widget: null, token: null };
+    const box = document.createElement("div");
+    box.className = "auth-captcha";
+    submit.parentNode.insertBefore(box, submit);
+    window.onTurnstileReady = () => {
+      captcha.widget = window.turnstile.render(box, {
+        sitekey: siteKey,
+        theme: "dark",
+        action: "auth",
+        callback: (t) => { captcha.token = t; },
+        "expired-callback": () => { captcha.token = null; },
+        "error-callback": () => { captcha.token = null; },
+      });
+    };
+    const s = document.createElement("script");
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileReady";
+    s.async = true;
+    s.addEventListener("error", () => show("bad", "Couldn't load the security check. Turn off any blocker for this site, then refresh."));
+    document.head.appendChild(s);
+  }
+  // Each token works once, so get a fresh one after every attempt.
+  const captchaToken = () => (captcha ? captcha.token || undefined : undefined);
+  function resetCaptcha() {
+    if (captcha && captcha.widget != null && window.turnstile) { captcha.token = null; window.turnstile.reset(captcha.widget); }
+  }
+
   function setMode(m, keepMessage) {
     mode = m;
     const c = MODES[m];
@@ -66,13 +98,16 @@
     if (/rate limit|too many/i.test(m)) return "Too many attempts. Wait a few minutes and try again.";
     if (/password should be at least/i.test(m)) return "Password must be at least 8 characters.";
     if (/network|fetch/i.test(m)) return "Couldn't reach the server. Check your connection and try again.";
+    if (/captcha/i.test(m)) return "The security check didn't go through. Complete it again and retry.";
     return m;
   }
   function resendAction(email) {
     return {
       label: "Resend email",
       run: async () => {
-        const { error } = await sb.auth.resend({ type: "signup", email, options: { emailRedirectTo: RETURN_URL } });
+        if (captcha && !captcha.token) return show("bad", "Please finish the security check above the button, then press Resend again.");
+        const { error } = await sb.auth.resend({ type: "signup", email, options: { emailRedirectTo: RETURN_URL, captchaToken: captchaToken() } });
+        resetCaptcha();
         show(error ? "bad" : "ok", error ? friendly(error) : "Sent again. Check your inbox (and spam folder).");
       },
     };
@@ -94,11 +129,12 @@
     if (mode !== "reset" && !validEmail) return show("bad", "Please enter a valid email address.");
     if ((mode === "signup" || mode === "reset") && password.length < 8) return show("bad", "Password must be at least 8 characters.");
     if (mode === "login" && !password) return show("bad", "Please enter your password.");
+    if (captcha && mode !== "reset" && !captcha.token) return show("bad", "Please finish the security check above the button.");
 
     busy(true);
     try {
       if (mode === "login") {
-        const { error } = await sb.auth.signInWithPassword({ email, password });
+        const { error } = await sb.auth.signInWithPassword({ email, password, options: { captchaToken: captchaToken() } });
         if (error) {
           if (/email not confirmed/i.test(error.message)) show("warn", "Please confirm your email first. Check your inbox for the link.", resendAction(email));
           else show("bad", friendly(error));
@@ -107,7 +143,7 @@
         return goToApp();
       }
       if (mode === "signup") {
-        const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: RETURN_URL } });
+        const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: RETURN_URL, captchaToken: captchaToken() } });
         if (error) return show("bad", friendly(error));
         if (data.session) return goToApp(); // email confirmation is turned off in Supabase
         $("password").value = "";
@@ -116,7 +152,7 @@
         return show("ok", "Almost done! We sent a confirmation link to " + email + ". Click it and you'll be logged in.", resendAction(email));
       }
       if (mode === "forgot") {
-        const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: RETURN_URL });
+        const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: RETURN_URL, captchaToken: captchaToken() });
         if (error) return show("bad", friendly(error));
         return show("ok", "If an account exists for " + email + ", a reset link is on its way. Check your inbox.");
       }
@@ -130,6 +166,7 @@
       show("bad", friendly(err));
     } finally {
       busy(false);
+      if (mode !== "reset") resetCaptcha();
     }
   });
 
@@ -148,6 +185,8 @@
         : "Couldn't reach the server. Refresh to try again.");
       return;
     }
+    setupCaptcha(window.GYF_CONFIG && window.GYF_CONFIG.turnstileSiteKey);
+    if (query.get("deleted") === "1") show("ok", "Your account and everything saved in it were deleted.");
     sb.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setMode("reset", true);
     });

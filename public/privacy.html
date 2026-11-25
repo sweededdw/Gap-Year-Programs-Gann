@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy · Israel Gap Year Finder</title>
+  <meta name="description" content="What Israel Gap Year Finder stores about you, where it's kept, and how to download or delete it." />
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png" />
+  <meta name="theme-color" content="#0f1217" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@600&display=swap" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body class="auth-body">
+  <main class="legal">
+    <a class="brand auth-brand" href="/" aria-label="Israel Gap Year Finder"><img class="logo-mark" src="/static/logo-mark.svg" alt="" width="48" height="48" /><span class="wordmark wm-auth"><span class="wm-title">Israel Gap Year</span><span class="wm-sub">Finder</span></span></a>
+
+    <article class="card legal-card">
+      <h1>Privacy</h1>
+      <p class="muted">Last updated November 25, 2026</p>
+
+      <h2>What we store</h2>
+      <ul>
+        <li><strong>Your account:</strong> your name, email address and password. Passwords are stored hashed by our login provider, so nobody can read them, including us.</li>
+        <li><strong>What you save on the site:</strong> programs you save or pass on, your quiz answers, application progress and notes, and the colleges you track.</li>
+        <li><strong>Error reports:</strong> when something breaks in your browser, the site records the page address, the error message and your browser type, linked to your account. Only the site's admins can see these, and they're used only to fix problems.</li>
+        <li><strong>Visit counts:</strong> we use Vercel Web Analytics to count page views. It doesn't use cookies.</li>
+      </ul>
+
+      <h2>Where it's kept</h2>
+      <ul>
+        <li>Accounts and saved data are stored with <strong>Supabase</strong> (our database and login provider). Database rules make sure your account can read and change only your own saved data.</li>
+        <li>The site runs on <strong>Vercel</strong>.</li>
+        <li>A copy of what you save is also kept in your own browser, so it still works if the connection drops.</li>
+        <li>Emails to confirm your account or reset your password are sent through our login provider.</li>
+        <li>The log-in page may show a short security check from <strong>Cloudflare Turnstile</strong> to stop bots creating accounts.</li>
+      </ul>
+
+      <h2>Other sites your browser talks to</h2>
+      <p>Program photos load from each program's own website, and fonts load from Google Fonts. Those services see a normal web request from your browser (like visiting any site), but they don't get your account details or anything you saved.</p>
+
+      <h2>What we don't do</h2>
+      <p>The site has no ads, and we don't share your information with anyone beyond the services named on this page.</p>
+
+      <h2>Your choices</h2>
+      <p>Once you're logged in, open the account menu (top right) to:</p>
+      <ul>
+        <li><strong>Download my data:</strong> a copy of everything you've saved, as a file.</li>
+        <li><strong>Delete my saved data:</strong> clears your saved programs, progress, quiz answers and colleges, but keeps your login.</li>
+        <li><strong>Delete my account:</strong> removes your login and everything saved with it.</li>
+      </ul>
+
+      <p class="small muted legal-back"><a href="/">← Back to the site</a></p>
+    </article>
+  </main>
+  <script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

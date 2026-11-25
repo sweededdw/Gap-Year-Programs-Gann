@@ -14,7 +14,9 @@ try {
 
 const PUBLIC = path.join(__dirname, "public");
 const TYPES = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml", ".png": "image/png", ".json": "application/json", ".webp": "image/webp" };
-const configHandler = require("./api/config.js");
+// Every file in api/ is a serverless function on Vercel; run them the same way here.
+const API = {};
+fs.readdirSync(path.join(__dirname, "api")).filter((f) => f.endsWith(".js")).forEach((f) => { API["/api/" + f.slice(0, -3)] = require("./api/" + f); });
 // Send the same security headers Vercel does (from vercel.json), so local testing matches production.
 const SITE_HEADERS = {};
 try { (JSON.parse(fs.readFileSync(path.join(__dirname, "vercel.json"), "utf8")).headers || []).filter((h) => h.source === "/(.*)").forEach((h) => h.headers.forEach((x) => { SITE_HEADERS[x.key] = x.value; })); } catch { /* no vercel.json */ }
@@ -22,7 +24,9 @@ try { (JSON.parse(fs.readFileSync(path.join(__dirname, "vercel.json"), "utf8")).
 http
   .createServer((req, res) => {
     const url = new URL(req.url, "http://localhost");
-    if (url.pathname === "/api/config") return configHandler(req, res);
+    if (API[url.pathname]) return API[url.pathname](req, res);
+    // Vercel Web Analytics only exists on Vercel; answer locally with an empty script.
+    if (url.pathname === "/_vercel/insights/script.js") { res.writeHead(200, { "Content-Type": "text/javascript" }); return res.end(""); }
     let rel = decodeURIComponent(url.pathname);
     if (rel.endsWith("/")) rel += "index.html";
     if (!path.extname(rel)) rel += ".html"; // clean URLs: /login → login.html

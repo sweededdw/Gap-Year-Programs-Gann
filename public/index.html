@@ -30,8 +30,10 @@
         <details id="account" class="account acct-menu" hidden>
           <summary><span id="user-name" class="user-name"></span></summary>
           <div class="acct-pop">
+            <a id="acct-admin" class="acct-item" href="#/admin" hidden>Edit site data</a>
             <button id="acct-download" class="acct-item" type="button">Download my data</button>
             <button id="acct-delete" class="acct-item danger" type="button">Delete my saved data</button>
+            <button id="acct-close" class="acct-item danger" type="button" hidden>Delete my account</button>
             <button id="logout" class="acct-item" type="button">Log out</button>
           </div>
         </details>
@@ -44,7 +46,7 @@
   <main id="app" class="page" tabindex="-1"><p class="muted">Loading…</p></main>
 
   <footer class="footer">
-    <p>Program details were researched on <span id="as-of"></span> for the <span id="cycle"></span> cycle. Programs change dates and prices, so always confirm on the program's own site. <span id="storage-note">Your tracking data is saved only in this browser.</span></p>
+    <p>Program details were researched on <span id="as-of"></span> for the <span id="cycle"></span> cycle. Programs change dates and prices, so always confirm on the program's own site. <span id="storage-note">Your tracking data is saved only in this browser.</span> <a href="/privacy">Privacy</a></p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js" integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil" crossorigin="anonymous"></script>
@@ -55,5 +57,6 @@
   <script src="js/time.js"></script>
   <script src="js/colleges.js"></script>
   <script src="js/app.js"></script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

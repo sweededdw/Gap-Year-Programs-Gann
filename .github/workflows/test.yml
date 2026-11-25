@@ -1,0 +1,29 @@
+# Runs every test on each push and pull request. A red X on GitHub means something broke.
+name: Tests
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install test tools
+        run: npm ci
+      - name: Syntax check
+        run: for f in public/js/*.js api/*.js dev-server.js; do node --check "$f"; done
+      - name: Browser and API tests
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+        run: node tests/run.mjs
+      - name: Keep screenshots if something failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-screenshots
+          path: tests/out/*.png
+          retention-days: 7

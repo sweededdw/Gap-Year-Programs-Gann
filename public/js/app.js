@@ -8,6 +8,148 @@
   D.programs.forEach((p) => (byId[p.id] = p));
   const $app = document.getElementById("app");
 
+  // ---------- Error log ----------
+  // Errors students hit are sent to the `client_errors` table (5 per page load at most),
+  // so problems show up on the admin page before anyone has to report them.
+  const errQueue = [];
+  let errCount = 0;
+  function logError(message) {
+    message = String(message || "").slice(0, 2000);
+    if (!message || /^Script error\.?$/.test(message) || errCount >= 5) return;
+    errCount++;
+    errQueue.push({ page: (location.pathname + location.hash).slice(0, 300), message: message, user_agent: navigator.userAgent.slice(0, 300) });
+    flushErrors();
+  }
+  function flushErrors() {
+    try { if (!sb || !userId) return; } catch (e) { return; } // an error before setup finished: keep it queued
+    while (errQueue.length) {
+      const row = Object.assign({ user_id: userId }, errQueue.shift());
+      Promise.resolve(sb.from("client_errors").insert(row)).catch(() => {});
+    }
+  }
+  window.addEventListener("error", (e) => {
+    if (!e.message && !e.error) return; // a failed image or script load, not a code error
+    logError((e.message || String(e.error)) + (e.filename ? " @ " + e.filename.split("/").pop() + ":" + e.lineno + ":" + e.colno : "") + (e.error && e.error.stack ? "\n" + e.error.stack : ""));
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    const r = e.reason;
+    logError("Unhandled promise: " + ((r && (r.stack || r.message)) || String(r)));
+  });
+
+  // ---------- Content edits ----------
+  // The built-in data (data.js, details.js, time.js, colleges.js) is the base. Edits saved on the admin
+  // page live in the `programs` and `colleges` tables and replace the built-in entry with the same id
+  // (or add a new one). `data.hidden` takes an entry off the site without deleting it.
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  const RAW_DETAILS = (window.GYF_DETAILS && window.GYF_DETAILS.programs) || {};
+  const RAW_TIME = window.GYF_TIME || {};
+  const RAW_COLLEGES = window.GYF_COLLEGES || { colleges: [], notFound: [] };
+  const BUILTIN = { programs: {}, colleges: {} };
+  D.programs.forEach((p) => {
+    BUILTIN.programs[p.id] = Object.assign(clone(p), { details: RAW_DETAILS[p.id] ? clone(RAW_DETAILS[p.id]) : null, time: RAW_TIME[p.id] ? clone(RAW_TIME[p.id]) : null });
+  });
+  (RAW_COLLEGES.colleges || []).forEach((c) => { BUILTIN.colleges[c.name] = { kind: "policy", data: clone(c) }; });
+  (RAW_COLLEGES.notFound || []).forEach((n) => { const c = typeof n === "string" ? { name: n } : n; BUILTIN.colleges[c.name] = { kind: "not_found", data: clone(c) }; });
+  const EDITS = { programs: {}, colleges: {} }; // id -> { data, verified_at, updated_at } from the database
+
+  // What a valid program looks like is learned from the built-in data: every field all built-in
+  // programs have must be present, with one of the types they use. A bad edit is skipped, not shown broken.
+  const typeOf = (v) => (v === null ? "null" : Array.isArray(v) ? "array" : typeof v);
+  function shapeOf(list) {
+    const shape = {};
+    if (!list.length) return shape;
+    Object.keys(list[0]).forEach((k) => {
+      if (list.every((x) => k in x)) shape[k] = list.reduce((set, x) => ((set[typeOf(x[k])] = 1), set), {});
+    });
+    return shape;
+  }
+  const PROGRAM_SHAPE = shapeOf(D.programs);
+  const APP_SHAPE = shapeOf(D.programs.map((p) => p.app));
+  function checkShape(obj, shape, prefix) {
+    const problems = [];
+    Object.keys(shape).forEach((k) => {
+      if (!(k in obj)) problems.push("Missing field: " + prefix + k);
+      else if (!shape[k][typeOf(obj[k])]) problems.push(prefix + k + " should be " + Object.keys(shape[k]).join(" or ") + ", not " + typeOf(obj[k]));
+    });
+    return problems;
+  }
+  function programProblems(d, id) {
+    if (!d || typeOf(d) !== "object") return ["The data must be an object { ... }."];
+    const out = checkShape(d, PROGRAM_SHAPE, "");
+    if (d.id !== id) out.push('"id" must be "' + id + '".');
+    ["name", "short", "blurb", "website"].forEach((k) => { if (typeof d[k] === "string" && !d[k].trim()) out.push(k + " can't be empty"); });
+    if (typeof d.website === "string" && d.website.trim() && !/^https:\/\//.test(d.website)) out.push("website must start with https://");
+    if (d.app && typeOf(d.app) === "object") out.push.apply(out, checkShape(d.app, APP_SHAPE, "app."));
+    if (d.details != null && typeOf(d.details) !== "object") out.push("details should be an object or null");
+    if (d.time != null && typeOf(d.time) !== "object") out.push("time should be an object or null");
+    return out;
+  }
+  function collegeProblems(d, id) {
+    if (!d || typeOf(d) !== "object") return ["The data must be an object { ... }."];
+    const out = [];
+    if (d.name !== id) out.push('"name" must be "' + id + '".');
+    if (d.deferral != null && ["yes", "case", "no"].indexOf(d.deferral) < 0) out.push('deferral must be "yes", "case", "no" or null');
+    if (d.creditLevel != null && ["yes", "none", "limited", "unclear"].indexOf(d.creditLevel) < 0) out.push('creditLevel must be "yes", "none", "limited", "unclear" or null');
+    if (d.deadlineDate != null && !/^\d{4}-\d{2}-\d{2}$/.test(d.deadlineDate)) out.push("deadlineDate must look like 2027-05-01");
+    return out;
+  }
+  // Put one program (an edit, or the built-in copy when edit is null) into the live data.
+  function applyProgram(id, edit) {
+    const src = edit ? edit.data : BUILTIN.programs[id];
+    const i = D.programs.findIndex((x) => x.id === id);
+    delete byId[id]; delete RAW_DETAILS[id]; delete RAW_TIME[id];
+    if (!src || src.hidden) { if (i >= 0) D.programs.splice(i, 1); return; }
+    const p = clone(src);
+    const details = p.details, time = p.time;
+    delete p.details; delete p.time; delete p.hidden;
+    if (i >= 0) D.programs[i] = p;
+    else {
+      const order = Object.keys(BUILTIN.programs);
+      const at = order.indexOf(id);
+      const before = at < 0 ? -1 : D.programs.findIndex((x) => order.indexOf(x.id) > at);
+      if (before < 0) D.programs.push(p); else D.programs.splice(before, 0, p);
+    }
+    byId[id] = p;
+    if (details) RAW_DETAILS[id] = details;
+    if (time) RAW_TIME[id] = time;
+  }
+  function applyCollege(id, edit) {
+    const b = BUILTIN.colleges[id];
+    const src = edit ? { kind: edit.kind, data: edit.data } : b;
+    ["colleges", "notFound"].forEach((k) => {
+      const list = RAW_COLLEGES[k] || (RAW_COLLEGES[k] = []);
+      const i = list.findIndex((c) => (typeof c === "string" ? c : c.name) === id);
+      if (i >= 0) list.splice(i, 1);
+    });
+    if (!src || src.data.hidden) return;
+    const c = clone(src.data); delete c.hidden;
+    const list = src.kind === "not_found" ? RAW_COLLEGES.notFound : RAW_COLLEGES.colleges;
+    list.push(c);
+    if (src.kind !== "not_found") list.sort((x, y) => x.name.localeCompare(y.name));
+  }
+  function setEdit(table, id, row) {
+    if (row) EDITS[table][id] = row; else delete EDITS[table][id];
+    if (table === "programs") applyProgram(id, row); else applyCollege(id, row);
+  }
+  async function loadEdits() {
+    const [pr, co] = await Promise.all([
+      sb.from("programs").select("id, data, verified_at, updated_at"),
+      sb.from("colleges").select("id, kind, data, verified_at, updated_at"),
+    ]);
+    // Tables missing (migration 0002 not run yet) or unreachable: keep the built-in data.
+    (pr.error ? [] : pr.data || []).forEach((r) => {
+      const bad = programProblems(r.data, r.id).length && !(r.data && r.data.hidden); // hidden drafts may be unfinished
+      if (bad) return logError("Skipped invalid program edit: " + r.id);
+      setEdit("programs", r.id, r);
+    });
+    (co.error ? [] : co.data || []).forEach((r) => {
+      if (collegeProblems(r.data, r.id).length) return logError("Skipped invalid college edit: " + r.id);
+      setEdit("colleges", r.id, r);
+    });
+  }
+  // "Last checked" date for a program: when someone verified the edit, otherwise the research date.
+  const checkedOn = (id) => (EDITS.programs[id] && EDITS.programs[id].verified_at) || D.asOf;
+
   // ---------- Persistence ----------
   // On the website: accounts are Supabase Auth; progress is saved to the
   // `gap_year_trackers` table (one row per user, protected by row-level security).
@@ -213,6 +355,7 @@
     else if (parts[0] === "my-list") current = { view: "list", id: null };
     else if (parts[0] === "browse") current = { view: "finder", id: null };
     else if (parts[0] === "colleges") current = { view: "colleges", id: null };
+    else if (parts[0] === "admin") current = { view: "admin", id: parts.slice(1).join("/") || null };
     else if (parts[0] === "compare") {
       if (parts[1]) { state.compare = parts[1].split(",").filter((id) => byId[id]).slice(0, 3); save(); }
       current = { view: "compare", id: null };
@@ -243,6 +386,7 @@
     else if (current.view === "colleges") renderColleges();
     else if (current.view === "compare") renderCompare();
     else if (current.view === "results") renderResults();
+    else if (current.view === "admin") renderAdmin();
     else renderFinder();
     navState();
   }
@@ -994,7 +1138,7 @@
       '<div class="card"><h3>Key dates</h3>' + (tl.length ? '<div class="timeline">' + tl.map((t) =>
         '<div class="tl-item' + (daysUntil(t.date) < 0 ? " past" : "") + '"><div class="tl-date">' + fmtDate(t.date, { month: "short", day: "numeric" }) + '</div><div class="tl-what">' + esc(t.what) + "<br>" + countdown(t.date) + "</div></div>"
       ).join("") + "</div>" : '<p class="small muted">No dated deadlines yet. Add your interview, commit and college deferral dates and they will show up here.</p>') + "</div>" +
-      '<div class="card"><h3>Sources</h3><p class="small muted">Researched ' + fmtDate(D.asOf) + ". Confirm details with the program.</p><div class=\"sources\">" +
+      '<div class="card"><h3>Sources</h3><p class="small muted">Last checked ' + fmtDate(checkedOn(p.id)) + ". Confirm details with the program.</p><div class=\"sources\">" +
       allSources.map((u) => '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(u.replace(/^https?:\/\/(www\.)?/, "")) + "</a>").join("") + "</div></div>" +
       "</aside></div>";
   }
@@ -1767,6 +1911,64 @@
   document.getElementById("as-of").textContent = fmtDate(D.asOf);
   document.getElementById("cycle").textContent = D.cycle;
 
+  // ---------- Admin ----------
+  // The editor lives in admin.js, which only loads for admins. The database enforces who can write
+  // (row-level security with is_admin()); hiding the link is only for tidiness.
+  let isAdmin = false;
+  async function checkAdmin() {
+    try {
+      const { data, error } = await sb.rpc("is_admin");
+      isAdmin = !error && data === true;
+    } catch (e) { isAdmin = false; }
+    document.getElementById("acct-admin").hidden = !isAdmin;
+  }
+  let adminScript = null;
+  function renderAdmin() {
+    if (!isAdmin) { $app.innerHTML = '<div class="empty"><h2>Admins only</h2><p class="muted">This page is for editing the site\'s program and college data.</p><a class="btn" href="#/">Back to home</a></div>'; return; }
+    const go = () => window.GYF_ADMIN.render(adminCtx(), current.id);
+    if (window.GYF_ADMIN) return go();
+    $app.innerHTML = '<p class="muted">Loading the editor…</p>';
+    if (!adminScript) {
+      adminScript = document.createElement("script");
+      adminScript.src = "/js/admin.js";
+      adminScript.addEventListener("error", () => { adminScript = null; $app.innerHTML = '<p class="callout bad">Couldn\'t load the editor. Refresh to try again.</p>'; });
+      document.body.appendChild(adminScript);
+    }
+    adminScript.addEventListener("load", () => { if (current.view === "admin") go(); });
+  }
+  const adminCtx = () => ({
+    sb, $app, esc, I, fmtDate, D, byId, userId, BUILTIN, EDITS, COLLEGES: RAW_COLLEGES, DETAILS: RAW_DETAILS, TIME: RAW_TIME,
+    programProblems, collegeProblems, setEdit, clone, banner,
+  });
+
+  // ---------- Delete my account ----------
+  // Shown only when the server has the Supabase secret key (api/config says so). The secret key stays
+  // on the server: api/delete-account checks who's asking with their login token, then deletes them.
+  async function setupAccountDeletion() {
+    let on = false;
+    try { on = !!(window.GYF_CONFIG && window.GYF_CONFIG.accountDeletion); } catch (e) { on = false; }
+    const btn = document.getElementById("acct-close");
+    btn.hidden = !on;
+    if (on && !btn.dataset.wired) { btn.dataset.wired = "1"; btn.addEventListener("click", deleteAccount); }
+  }
+  async function deleteAccount() {
+    if (!confirm("Delete your account? This removes your login and everything you've saved, on every device. It can't be undone.")) return;
+    if (prompt('To confirm, type DELETE') !== "DELETE") return banner("Account not deleted.");
+    const { data: sess } = await sb.auth.getSession();
+    const token = sess && sess.session && sess.session.access_token;
+    let res;
+    try { res = await fetch("/api/delete-account", { method: "POST", headers: { Authorization: "Bearer " + token } }); } catch (e) { res = null; }
+    if (!res || !res.ok) {
+      let msg = "Couldn't delete your account. Try again in a minute.";
+      try { msg = (await res.json()).error || msg; } catch (e) { /* keep default */ }
+      return banner(msg);
+    }
+    clearTimeout(saveTimer); saveTimer = null; remoteOk = false;
+    try { Object.keys(localStorage).filter((k) => k.indexOf(STORE_KEY) === 0).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
+    try { await sb.auth.signOut({ scope: "local" }); } catch (e) { /* the account is gone either way */ }
+    location.replace("/login?deleted=1");
+  }
+
   async function init() {
     if (!HAS_BACKEND) {
       state = loadLocal();
@@ -1789,6 +1991,7 @@
     document.getElementById("account").hidden = false;
     document.getElementById("acct-download").addEventListener("click", () => downloadData(user.email));
     document.getElementById("acct-delete").addEventListener("click", deleteData);
+    flushErrors();
     document.getElementById("logout").addEventListener("click", async () => {
       await pushRemote();
       await sb.auth.signOut();
@@ -1796,7 +1999,12 @@
     });
     sb.auth.onAuthStateChange((event) => { if (event === "SIGNED_OUT") location.replace("/login"); });
 
-    const { data: row, error } = await sb.from(TABLE).select("state, updated_at").eq("user_id", userId).maybeSingle();
+    const [{ data: row, error }] = await Promise.all([
+      sb.from(TABLE).select("state, updated_at").eq("user_id", userId).maybeSingle(),
+      loadEdits().catch((e) => logError("Loading edits failed: " + (e && e.message))),
+      checkAdmin(),
+      setupAccountDeletion(),
+    ]);
     if (error) {
       remoteOk = false;
       state = loadLocal();
