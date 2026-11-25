@@ -90,8 +90,8 @@ window.GYF_COLLEGES = {
    "deadlineDate": null,
    "length": null,
    "deposit": true,
-   "creditLevel": "unclear",
-   "credit": null,
+   "creditLevel": "limited",
+   "credit": "Courses at another college only count toward a UMD degree with advance approval, generally with a C- or better (UMD transfer-credit rules).",
    "israel": null,
    "noApplyingElsewhere": null,
    "source": "https://admissions.umd.edu/persona/deferral-requests",
@@ -868,17 +868,17 @@ window.GYF_COLLEGES = {
   {
    "name": "University of Miami",
    "deferral": "case",
-   "how": "Submit a request to postpone enrollment; the Admission Committee reviews it.",
-   "deadline": null,
-   "deadlineDate": null,
+   "how": "Pay the nonrefundable deposit, then email your gap-year plan to your admission officer with \"Postponement/Gap Year\" in the subject line. The Admission Committee reviews each request.",
+   "deadline": "June 1",
+   "deadlineDate": "2027-06-01",
    "length": "Up to one academic year.",
    "deposit": true,
-   "creditLevel": "unclear",
-   "credit": "Restrictions are set in your postponement and admission letters.",
+   "creditLevel": "limited",
+   "credit": "Unapproved college coursework during the gap year means reapplying as a transfer student.",
    "grades": null,
    "israel": null,
    "noApplyingElsewhere": null,
-   "source": "https://bulletin.miami.edu/general-university-information/undergraduate-policies-and-procedures/admission/postponement-deferment/",
+   "source": "https://admitted.miami.edu/frequently-asked-questions/general-faqs/index.html",
    "quote": "Requests are reviewed case-by-case by the Admission Committee.",
    "hillel": {
     "rank": 43,
@@ -890,17 +890,17 @@ window.GYF_COLLEGES = {
   {
    "name": "University of Southern California",
    "deferral": "yes",
-   "how": "Request a deferral through the admission process.",
+   "how": "Submit the USC Admission Deferral Request Form.",
    "deadline": null,
    "deadlineDate": null,
    "length": "Up to one year; longer gaps for religious reasons or compulsory military service are considered.",
    "deposit": null,
-   "creditLevel": "unclear",
-   "credit": null,
+   "creditLevel": "none",
+   "credit": "USC doesn't award college credit for gap programs. If you defer to the next fall you can't take classes elsewhere before starting at USC.",
    "grades": null,
    "israel": "Longer deferrals are considered for religious reasons.",
    "noApplyingElsewhere": null,
-   "source": "https://catalogue.usc.edu/content.php?catoid=8&navoid=2391",
+   "source": "https://ask.usc.edu/s/article/000002508",
    "quote": "students may defer admission for up to one year",
    "hillel": {
     "rank": 44,
@@ -993,6 +993,28 @@ window.GYF_COLLEGES = {
     "jewish": 1500,
     "type": "Public",
     "name": "CUNY, Baruch College"
+   }
+  },
+  {
+   "deadline": null,
+   "deadlineDate": null,
+   "length": null,
+   "deposit": null,
+   "creditLevel": "unclear",
+   "credit": null,
+   "grades": "Scholarship offers can't be deferred.",
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "how": "Accept your offer in CUNYfirst, pay a deposit if one is required, then defer in the Admitted Student Portal (opens in April).",
+   "name": "Hunter College",
+   "deferral": "yes",
+   "source": "https://www.hunter.cuny.edu/students/admissions/undergraduate/admitted-students/faq/",
+   "hillel": {
+    "rank": 51,
+    "jewish": 1500,
+    "type": "Public",
+    "name": "Hunter College"
    }
   },
   {
@@ -1862,6 +1884,41 @@ window.GYF_COLLEGES = {
    "deferral": "yes",
    "source": "https://college.harvard.edu/resources/faq/may-i-defer-my-admission-once-admitted",
    "hillel": null
+  },
+  {
+   "deadline": "June 1 (Regular Decision); May 1 (ED II); February 1 (ED I)",
+   "deadlineDate": "2027-06-01",
+   "length": "One year.",
+   "deposit": true,
+   "creditLevel": "limited",
+   "credit": "You can't enroll full time elsewhere during the gap year.",
+   "grades": null,
+   "israel": null,
+   "noApplyingElsewhere": true,
+   "quote": null,
+   "how": "Pay the $250 nonrefundable deposit, then submit the deferral request with your gap-year plan. Typically 20–25 students a class are approved; a reaffirmation essay is due January 15 of the gap year.",
+   "name": "Wesleyan University",
+   "deferral": "case",
+   "source": "https://www.wesleyan.edu/admission/apply/faq.html",
+   "hillel": null
+  },
+  {
+   "deadline": null,
+   "deadlineDate": null,
+   "length": "Up to two years.",
+   "deposit": true,
+   "creditLevel": "yes",
+   "credit": "In the S. Daniel Abraham Israel Program, a year of study in Israel counts as a year of YU credit on your transcript. Otherwise your yeshiva or seminary sends a transcript for evaluation, and students not in the program pay a $4,000 Israel institution evaluation fee.",
+   "grades": null,
+   "israel": "Built for a year in Israel: the S. Daniel Abraham Israel Program turns a yeshiva or seminary year into YU credit (for students admitted in the fall straight from high school).",
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "how": "Pay the $550 nonrefundable enrollment deposit (credited to your first semester) and defer for up to a year at a time, for two consecutive years.",
+   "name": "Yeshiva University",
+   "deferral": "yes",
+   "note": "YU's pages differ on deferral length and fees; confirm with YU Admissions.",
+   "source": "https://www.yu.edu/admissions/admitted-students",
+   "hillel": null
   }
  ],
  "notFound": [
@@ -1956,15 +2013,6 @@ window.GYF_COLLEGES = {
    }
   },
   {
-   "name": "Hunter College",
-   "hillel": {
-    "rank": 51,
-    "jewish": 1500,
-    "type": "Public",
-    "name": "Hunter College"
-   }
-  },
-  {
    "name": "San Francisco State University",
    "hillel": {
     "rank": 55,
@@ -2035,14 +2083,6 @@ window.GYF_COLLEGES = {
     "type": "Private",
     "name": "Pace University"
    }
-  },
-  {
-   "name": "Wesleyan University",
-   "hillel": null
-  },
-  {
-   "name": "Yeshiva University",
-   "hillel": null
   }
  ]
 };
