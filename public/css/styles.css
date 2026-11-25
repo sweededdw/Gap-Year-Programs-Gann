@@ -446,7 +446,7 @@ html, body { overscroll-behavior-x: none; }
 .ttab.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .ttab.on span { color: var(--accent-ink); opacity: .8; }
 .btn.on { border-color: var(--accent); color: var(--accent); }
-.filters-panel { padding: 16px; margin-bottom: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 4px 20px; }
+.filters-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 4px 20px; }
 .filters-panel .fgroup { margin-top: 8px; }
 .filters-foot { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 .bgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
@@ -624,3 +624,24 @@ html, body { overscroll-behavior-x: none; }
 .sbtn.info { font-family: inherit; font-style: normal; }
 .callout > span[aria-hidden] { line-height: 1.3; }
 .brand-mark svg { display: block; }
+
+/* Browse: collapsible Filters / Upcoming deadlines bars */
+.dbars { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); margin-bottom: 18px; overflow: hidden; }
+.dbar-wrap + .dbar-wrap { border-top: 1px solid var(--border); }
+.dbar { width: 100%; display: flex; align-items: center; gap: 10px; padding: 13px 16px; background: none; border: 0; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.dbar:hover { background: var(--surface-2); }
+.dbar > .ic:first-child { color: var(--muted); }
+.dbar .dt { font-weight: 700; white-space: nowrap; }
+.dbar .ds { flex: 1; min-width: 0; color: var(--muted); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dbar .ic:last-child { color: var(--muted); transition: transform .15s; }
+.dbar[aria-expanded="true"] .ic:last-child { transform: rotate(180deg); }
+.dpanel { padding: 0 16px 16px; }
+.filters-panel .fgroup.wide { grid-column: 1 / -1; }
+.dl-list { list-style: none; margin: 0; }
+.dl-list a { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--border); color: var(--text); font-size: 14px; }
+.dl-list li:first-child a { border-top: 0; }
+.dl-list a:hover { text-decoration: none; color: var(--accent); }
+.dl-date { font-weight: 700; }
+@media (max-width: 560px) { .dbar .ds { display: none; } .dl-list a { grid-template-columns: 56px 1fr; } .dl-list .cd { grid-column: 2; } }
+.dl-list { max-width: 720px; }
+.fchip.on .muted { color: inherit; opacity: .75; }

@@ -273,6 +273,7 @@
     cost: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
     cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
     clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+    chev: '<path d="m6 9 6 6 6-6"/>',
     alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/>',
     sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
   };
@@ -331,26 +332,25 @@
     const up = upcomingDeadlines(45);
     const activeFilters = FILTER_GROUPS.reduce((n, g) => n + f[g.key].length, 0) + (f.semester ? 1 : 0) + (f.credit ? 1 : 0);
     const typeCount = (t) => D.programs.filter((p) => p.type === t).length;
+    const filterSummary = (f.type ? TYPE_PLURAL[f.type] : "All types") + (activeFilters ? " · " + activeFilters + " more" : "") + " · " + list.length + " shown";
     $app.innerHTML =
       '<div class="browse-head"><div><h1>All programs</h1>' +
       '<p class="muted">' + D.programs.length + ' Israel gap years. Not sure where to start? <a href="#/start">Take the 1-minute quiz</a>.</p></div></div>' +
-      (up.length
-        ? '<div class="upcoming-strip" aria-label="Upcoming deadlines"><span class="us-label">Coming up</span>' +
-          up.map((it) =>
-            '<a href="#/program/' + it.p.id + '"><strong>' + fmtDate(it.date, { month: "short", day: "numeric" }) + "</strong> " +
-            esc(it.count > 1 ? it.d.label + " (" + it.count + ")" : it.p.name) + "</a>"
-          ).join("") + "</div>"
-        : "") +
-      '<div class="type-tabs" role="tablist" aria-label="Program type">' +
-      '<button class="ttab' + (!f.type ? " on" : "") + '" data-act="type-tab" data-value="">All <span>' + D.programs.length + "</span></button>" +
-      TYPE_ORDER.map((t) => '<button class="ttab' + (f.type === t ? " on" : "") + '" data-act="type-tab" data-value="' + t + '">' + TYPE_PLURAL[t] + " <span>" + typeCount(t) + "</span></button>").join("") +
-      "</div>" +
       '<div class="toolbar"><input class="search" type="search" placeholder="Search by name or city…" aria-label="Search programs" data-act="search" value="' + esc(f.q || "") + '">' +
       '<select class="select" aria-label="Sort" data-act="sort">' +
       [["featured", "Featured"], ["deadline", "Next deadline"], ["cost", "Lowest tuition"], ["name", "A–Z"]].map((o) => '<option value="' + o[0] + '"' + ((f.sort || "featured") === o[0] ? " selected" : "") + ">Sort: " + o[1] + "</option>").join("") +
-      '</select><button class="btn' + (f.open ? " on" : "") + '" data-act="toggle-filters" aria-expanded="' + !!f.open + '">' + I("sliders") + ' More filters' + (activeFilters ? ' <span class="count-pill">' + activeFilters + "</span>" : "") + "</button></div>" +
+      "</select></div>" +
+      '<div class="dbars">' +
+      // --- Filters bar ---
+      '<div class="dbar-wrap"><button class="dbar" data-act="toggle-filters" aria-expanded="' + !!f.open + '">' + I("sliders") +
+      '<span class="dt">Filters</span><span class="ds">' + esc(filterSummary) + "</span>" +
+      (activeFilters + (f.type ? 1 : 0) ? '<span class="count-pill">' + (activeFilters + (f.type ? 1 : 0)) + "</span>" : "") + I("chev") + "</button>" +
       (f.open
-        ? '<section class="card filters-panel" aria-label="More filters">' +
+        ? '<section class="dpanel filters-panel" aria-label="Filters">' +
+          '<div class="fgroup wide"><h3>Program type</h3><div class="fchips">' +
+          '<button class="fchip' + (!f.type ? " on" : "") + '" aria-pressed="' + !f.type + '" data-act="type-tab" data-value="">All <span class="muted">' + D.programs.length + "</span></button>" +
+          TYPE_ORDER.map((t) => '<button class="fchip' + (f.type === t ? " on" : "") + '" aria-pressed="' + (f.type === t) + '" data-act="type-tab" data-value="' + t + '">' + TYPE_PLURAL[t] + ' <span class="muted">' + typeCount(t) + "</span></button>").join("") +
+          "</div></div>" +
           FILTER_GROUPS.filter((g) => g.key !== "gender").map((g) =>
             '<div class="fgroup"><h3>' + g.title + '</h3><div class="fchips">' +
             Object.keys(g.options).map((k) =>
@@ -361,7 +361,21 @@
           '<label class="check"><input type="checkbox" data-act="toggle" data-key="semester"' + (f.semester ? " checked" : "") + "> Semester option</label>" +
           '<label class="check"><input type="checkbox" data-act="toggle" data-key="credit"' + (f.credit ? " checked" : "") + "> College credit</label></div></div>" +
           '<div class="filters-foot"><button class="btn ghost sm" data-act="clear-filters">Clear all</button><button class="btn sm primary" data-act="toggle-filters">Show ' + list.length + " programs</button></div></section>"
+        : "") + "</div>" +
+      // --- Upcoming deadlines bar ---
+      (up.length
+        ? '<div class="dbar-wrap"><button class="dbar" data-act="toggle-deadlines" aria-expanded="' + !!f.dlOpen + '">' + I("clock") +
+          '<span class="dt">Upcoming deadlines</span><span class="ds">Next: ' + fmtDate(up[0].date, { month: "short", day: "numeric" }) + " · " + esc(up[0].count > 1 ? up[0].d.label : up[0].p.name) + "</span>" +
+          '<span class="count-pill">' + up.length + "</span>" + I("chev") + "</button>" +
+          (f.dlOpen
+            ? '<ul class="dpanel dl-list dl-upcoming" aria-label="Upcoming deadlines">' +
+              up.map((it) =>
+                '<li><a href="#/program/' + it.p.id + '"><span class="dl-date">' + fmtDate(it.date, { month: "short", day: "numeric" }) + "</span>" +
+                '<span class="dl-name">' + esc(it.count > 1 ? it.d.label + " (" + it.count + " programs)" : it.p.name) + "</span>" + countdown(it.date) + "</a></li>"
+              ).join("") + "</ul>"
+            : "") + "</div>"
         : "") +
+      "</div>" +
       (list.length ? '<div class="bgrid">' + list.map(card).join("") + "</div>" : '<div class="card empty">No programs match. <button class="btn sm" data-act="clear-filters">Clear filters</button></div>');
   }
 
@@ -1201,6 +1215,7 @@
     if (act === "college-tab") { state.collegeTab = el.dataset.value; save(); return render(); }
     if (act === "type-tab") { filters().type = el.dataset.value || ""; save(); return render(); }
     if (act === "toggle-filters") { filters().open = !filters().open; save(); return render(); }
+    if (act === "toggle-deadlines") { filters().dlOpen = !filters().dlOpen; save(); return render(); }
     if (act === "save") {
       state.saved[el.dataset.id] = !state.saved[el.dataset.id];
       if (!state.saved[el.dataset.id]) delete state.saved[el.dataset.id];
