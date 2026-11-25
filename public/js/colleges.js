@@ -3,7 +3,8 @@
  * Only facts a source states are included; anything not found is null.
  *
  * deferral:    "yes" | "case" (case-by-case, must be approved) | "no"
- * creditLevel: "none"    = no college credit / credit-bearing study allowed during the deferral
+ * creditLevel: "yes"     = the college accepts gap-year credit (e.g. Queens College)
+ *              "none"    = no college credit / credit-bearing study allowed during the deferral
  *              "limited" = no degree-seeking or full-time enrollment elsewhere; some coursework may be OK
  *              "unclear" = the college's page doesn't say
  * grades:      what the college says about grades (final transcript, minimum grades for transferred courses).
@@ -12,7 +13,7 @@
  * deadlineDate: ISO date for the fall-2027 entering class when the college states a fixed date.
  */
 window.GYF_COLLEGES = {
- "asOf": "2026-11-24",
+ "asOf": "2026-11-25",
  "top": 100,
  "colleges": [
   {
@@ -60,10 +61,32 @@ window.GYF_COLLEGES = {
    }
   },
   {
+   "deadline": null,
+   "deadlineDate": null,
+   "length": null,
+   "deposit": null,
+   "creditLevel": "unclear",
+   "credit": null,
+   "grades": null,
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": "No, you must enroll for the term indicated on your admission letter.",
+   "how": "UCF says you must enroll in the term on your admission letter; otherwise your admission is revoked. Apply for a later term instead.",
+   "name": "University of Central Florida",
+   "deferral": "no",
+   "source": "https://www.ucf.edu/admissions/undergraduate/question/can-i-defer-my-admission-for-a-future-term-if-im-not-ready-to-attend/",
+   "hillel": {
+    "rank": 3,
+    "jewish": 6300,
+    "type": "Public",
+    "name": "University of Central Florida"
+   }
+  },
+  {
    "name": "University of Maryland, College Park",
    "deferral": "case",
-   "how": "Confirm enrollment and pay the $400 deposit in the Terps Application Portal, then email the Deferral Request Form to ApplyMaryland@umd.edu.",
-   "deadline": "Your enrollment confirmation deadline (in your admission letter)",
+   "how": "Confirm your enrollment and pay the $400 non-refundable deposit in the Terps Application Portal, then email Admissions with the subject line \"Freshman Deferral Request\".",
+   "deadline": "By the enrollment confirmation deadline in your admission letter",
    "deadlineDate": null,
    "length": null,
    "deposit": true,
@@ -72,7 +95,7 @@ window.GYF_COLLEGES = {
    "israel": null,
    "noApplyingElsewhere": null,
    "source": "https://admissions.umd.edu/persona/deferral-requests",
-   "quote": "Requests to defer enrollment will be considered on an individual basis.",
+   "quote": "Freshman deferral requests must be submitted by the enrollment confirmation deadline listed in your admission letter.",
    "hillel": {
     "rank": 4,
     "jewish": 5800,
@@ -145,12 +168,34 @@ window.GYF_COLLEGES = {
    }
   },
   {
+   "deadline": null,
+   "deadlineDate": null,
+   "length": "Up to one year.",
+   "deposit": null,
+   "creditLevel": "yes",
+   "credit": "Credits from an accredited college in Israel, such as Bar-Ilan or Michlalah, count: up to 36 for a year, 18 for a semester. To get the full 36 you apply as a transfer student.",
+   "grades": null,
+   "israel": "Up to 36 credits for a year at an accredited Israeli college such as Bar-Ilan or Michlalah.",
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "how": "Accept your offer, then defer for up to one year (Macaulay Honors acceptances can also be deferred a year).",
+   "name": "Queens College",
+   "deferral": "yes",
+   "source": "https://www.qc.cuny.edu/admissions/faq-undergraduate-admissions/",
+   "hillel": {
+    "rank": 8,
+    "jewish": 4000,
+    "type": "Public",
+    "name": "Queens College"
+   }
+  },
+  {
    "name": "University of Wisconsin–Madison",
    "deferral": "yes",
-   "how": "Accept your offer by the confirmation deadline and submit the Deferred Enrollment Request Form.",
-   "deadline": "Same as your enrollment confirmation deadline",
-   "deadlineDate": null,
-   "length": "Up to one year",
+   "how": "Submit the Deferred Enrollment Request Form; if pre-approved, sign the Deferred Enrollment Student Agreement. Final transcripts are due by July 15.",
+   "deadline": "May 1 (fall admits)",
+   "deadlineDate": "2027-05-01",
+   "length": "Up to one year from your original admission.",
    "deposit": true,
    "creditLevel": "none",
    "credit": "Deferral is not granted to enroll at another institution or in any program that grants college credit, in the U.S. or abroad.",
@@ -233,14 +278,14 @@ window.GYF_COLLEGES = {
   {
    "name": "McGill University",
    "deferral": "yes",
-   "how": "Accept the offer and pay the confirmation deposit; then use the McGill Applicant Portal's Additional options to select 'Defer your application'.",
-   "deadline": "September-term admits: August 31; January-term admits: December 31.",
-   "deadlineDate": null,
-   "length": "Up to one academic year (the page also describes one-term deferrals).",
+   "how": "Accept your offer and pay the deposit, then submit the deferral request form. You can only request a deferral once.",
+   "deadline": "August 31 (September entry)",
+   "deadlineDate": "2027-08-31",
+   "length": "Up to one academic year.",
    "deposit": true,
    "creditLevel": "none",
    "credit": "Participation in post-secondary study at another college or university, or furthering academic coursework, is prohibited; McGill may revoke a deferral for enrolling in unapproved undergraduate-level courses during the gap year.",
-   "grades": "Deferral may be refused or revoked for academic cause, including a dramatic decline in grades during the final portion of the pre-university program.",
+   "grades": "McGill can refuse or revoke a deferral if your grades drop sharply in your last year or you don't graduate.",
    "israel": null,
    "noApplyingElsewhere": null,
    "source": "https://www.mcgill.ca/accepted/nextsteps/deferring-your-offer",
@@ -275,17 +320,39 @@ window.GYF_COLLEGES = {
    }
   },
   {
-   "name": "University of Arizona",
-   "deferral": "yes",
-   "how": "Log in to Future Wildcat, open the application, select \"Defer Admission,\" and submit the form. Requires the enrollment fee.",
    "deadline": null,
    "deadlineDate": null,
-   "length": "Up to two semesters; up to four for military or faith-based mission.",
+   "length": "Up to one year.",
+   "deposit": null,
+   "creditLevel": "unclear",
+   "credit": null,
+   "grades": "Deferring voids a merit scholarship offer.",
+   "israel": "FIU lets students on a gap year for a mission or an Israel trip defer up to one year.",
+   "noApplyingElsewhere": null,
+   "quote": "Students doing a gap year for a mission or Israel Birthright Trip may defer their enrollment up to 1 year.",
+   "how": "Request the deferral when you update your application. It moves you to the same term the next year.",
+   "name": "Florida International University",
+   "deferral": "yes",
+   "source": "https://admissions.fiu.edu/contact/faqs/",
+   "hillel": {
+    "rank": 15,
+    "jewish": 3500,
+    "type": "Public",
+    "name": "Florida International University"
+   }
+  },
+  {
+   "name": "University of Arizona",
+   "deferral": "yes",
+   "how": "Pay the enrollment fee, then request it in the Defer Admission tab of your Future Wildcat Account.",
+   "deadline": null,
+   "deadlineDate": null,
+   "length": "Up to two semesters (four for military or faith-based missions).",
    "deposit": true,
    "creditLevel": "unclear",
    "credit": null,
    "grades": null,
-   "israel": null,
+   "israel": "Faith-based missions can defer for up to four semesters.",
    "noApplyingElsewhere": null,
    "source": "https://www.arizona.edu/admissions/defer",
    "quote": "Deferred admission is permitted for all main campus students for up to two semesters (or four semesters for students deferring for military or a faith-based mission).",
@@ -341,6 +408,50 @@ window.GYF_COLLEGES = {
    }
   },
   {
+   "deadline": "One month before your admitted term starts",
+   "deadlineDate": null,
+   "length": null,
+   "deposit": null,
+   "creditLevel": "unclear",
+   "credit": null,
+   "grades": null,
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "how": "Delays are only approved for things like medical emergencies or military orders; Illinois lists gap years among requests it generally won't approve. Otherwise you reapply.",
+   "name": "University of Illinois at Urbana-Champaign",
+   "deferral": "no",
+   "source": "https://www.admissions.illinois.edu/general-admission-policies/",
+   "hillel": {
+    "rank": 19,
+    "jewish": 3250,
+    "type": "Public",
+    "name": "University of Illinois at Urbana-Champaign"
+   }
+  },
+  {
+   "deadline": null,
+   "deadlineDate": null,
+   "length": null,
+   "deposit": null,
+   "creditLevel": "unclear",
+   "credit": null,
+   "grades": null,
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "how": "Only short deferrals are possible, requested through the SIR payment page if you qualify. For a full gap year you reapply.",
+   "name": "University of California, Santa Barbara",
+   "deferral": "no",
+   "source": "https://admissions.sa.ucsb.edu/steps-to-enrollment",
+   "hillel": {
+    "rank": 20,
+    "jewish": 3000,
+    "type": "Public",
+    "name": "University of California, Santa Barbara"
+   }
+  },
+  {
    "name": "University of Colorado at Boulder",
    "deferral": "yes",
    "how": "Use the term-change form on your application status page (new term, reasons and planned activities).",
@@ -387,16 +498,16 @@ window.GYF_COLLEGES = {
   {
    "name": "George Washington University",
    "deferral": "yes",
-   "how": "After paying the deposit, use \"Manage Application Details\" in the admissions portal to complete the deferral form.",
-   "deadline": "Considered until the first day of classes (preferred deadlines are listed on GW's page)",
-   "deadlineDate": null,
-   "length": "One or two semesters (longer for national military service)",
+   "how": "Pay the enrollment deposit, then request the deferral with \"Manage Application Details\" in the admissions portal.",
+   "deadline": "August 1 preferred (considered until the first day of classes)",
+   "deadlineDate": "2027-08-01",
+   "length": "One or two semesters.",
    "deposit": true,
    "creditLevel": "none",
    "credit": "You can't enroll at another institution, and credit earned elsewhere during the deferral won't transfer.",
    "israel": null,
    "noApplyingElsewhere": true,
-   "source": "https://undergraduate.admissions.gwu.edu/apply/deferral",
+   "source": "https://undergraduate.admissions.gwu.edu/deferral-requests",
    "quote": "Credit earned at other institutions during the deferral period is not eligible for transfer credit.",
    "hillel": {
     "rank": 24,
@@ -451,10 +562,10 @@ window.GYF_COLLEGES = {
   {
    "name": "University of Texas, Austin",
    "deferral": "case",
-   "how": "Submit an online appeal with a brief statement of 500 words or fewer describing the circumstances; supplemental materials are optional.",
+   "how": "Submit a \"Semester Change or Defer Appeal\" online. Each appeal is considered case by case.",
    "deadline": "Fall freshman appeals: January 1–March 15",
    "deadlineDate": null,
-   "length": "A single semester or up to one year.",
+   "length": "One semester or up to a year.",
    "deposit": null,
    "creditLevel": "unclear",
    "credit": null,
@@ -493,9 +604,31 @@ window.GYF_COLLEGES = {
    }
   },
   {
+   "deadline": null,
+   "deadlineDate": null,
+   "length": "Up to two semesters.",
+   "deposit": true,
+   "creditLevel": "limited",
+   "credit": "You can't enroll in a degree program at another college during the deferral.",
+   "grades": "Your merit scholarship offer is kept if you defer.",
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "how": "Ask the Admissions office for permission and pay the acceptance fee for your original semester.",
+   "name": "University of Vermont",
+   "deferral": "case",
+   "source": "https://catalogue.uvm.edu/undergraduate/admissioninfo/reapplying/",
+   "hillel": {
+    "rank": 29,
+    "jewish": 2500,
+    "type": "Public",
+    "name": "University of Vermont"
+   }
+  },
+  {
    "name": "UMass Amherst",
    "deferral": "case",
-   "how": "Log in and complete the deferral request form. UMass may ask for more documentation.",
+   "how": "UMass says it rarely approves deferral requests; ask Admissions before May 1, when you accept your offer.",
    "deadline": null,
    "deadlineDate": null,
    "length": null,
@@ -516,15 +649,15 @@ window.GYF_COLLEGES = {
   {
    "name": "University of California, Los Angeles",
    "deferral": "case",
-   "how": "Submit a deferral request through the admitted-student process. UCLA grants few deferrals.",
-   "deadline": null,
-   "deadlineDate": null,
+   "how": "Submit a \"Deferment Request\" through the Contact Us link on MyApplication Status (email requests aren't reviewed). Deferments generally go only to students with medical conditions, active military orders or religious missions.",
+   "deadline": "Window: April 1 – August 15",
+   "deadlineDate": "2027-08-15",
    "length": null,
    "deposit": null,
-   "creditLevel": "unclear",
-   "credit": null,
+   "creditLevel": "none",
+   "credit": "You can't be enrolled in any college courses or institutions during the deferment.",
    "grades": null,
-   "israel": null,
+   "israel": "Religious missions are one of the few reasons UCLA lists for approving a deferment.",
    "noApplyingElsewhere": null,
    "source": "https://admission.ucla.edu/admitted-students/first-year-accept-your-offer",
    "quote": "UCLA does not grant many deferrals. Students are only admitted to the term for which they applied.",
@@ -555,6 +688,28 @@ window.GYF_COLLEGES = {
     "jewish": 2500,
     "type": "Public",
     "name": "Virginia Tech"
+   }
+  },
+  {
+   "deadline": "First day of the quarter you were admitted to",
+   "deadlineDate": null,
+   "length": "Up to one year.",
+   "deposit": null,
+   "creditLevel": "none",
+   "credit": "You may not take coursework at another college or university during the deferral.",
+   "grades": null,
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "how": "Submit your Statement of Intent to Register and have all final transcripts and scores received, then request the deferral. Approved case by case.",
+   "name": "University of California, Davis",
+   "deferral": "case",
+   "source": "https://www.ucdavis.edu/admissions/undergraduate/apply/deferred-enrollment",
+   "hillel": {
+    "rank": 33,
+    "jewish": 2500,
+    "type": "Public",
+    "name": "University of California, Davis"
    }
   },
   {
@@ -625,10 +780,10 @@ window.GYF_COLLEGES = {
   {
    "name": "New York University",
    "deferral": "yes",
-   "how": "Complete the Deferred Enrollment Request Form in the NYU Admitted Student Portal.",
-   "deadline": "Campus-specific deadline in your admitted-student portal",
-   "deadlineDate": null,
-   "length": "One year (an additional year may be approved)",
+   "how": "Submit the Deferred Enrollment Request Form in the admitted student portal. If approved you're guaranteed a place the next year; you re-confirm and pay another $500 deposit.",
+   "deadline": "July 1 (New York campus)",
+   "deadlineDate": "2027-07-01",
+   "length": "One full year.",
    "deposit": true,
    "creditLevel": "limited",
    "credit": "You may not defer in order to attend another college or university.",
@@ -641,6 +796,29 @@ window.GYF_COLLEGES = {
     "jewish": 2500,
     "type": "Private",
     "name": "New York University"
+   },
+   "note": "NYU's page may be out of date; confirm the date in your admitted-student portal."
+  },
+  {
+   "deadline": null,
+   "deadlineDate": null,
+   "length": null,
+   "deposit": null,
+   "creditLevel": "unclear",
+   "credit": null,
+   "grades": null,
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "how": "Write to the Admissions Office. Your credentials are re-evaluated and the request depends on available space.",
+   "name": "University of Delaware",
+   "deferral": "case",
+   "source": "https://catalog.udel.edu/content.php?catoid=94&navoid=34633",
+   "hillel": {
+    "rank": 38,
+    "jewish": 2350,
+    "type": "Public",
+    "name": "University of Delaware"
    }
   },
   {
@@ -1171,10 +1349,10 @@ window.GYF_COLLEGES = {
   {
    "name": "Northwestern University",
    "deferral": "yes",
-   "how": "Follow Northwestern's deferred-enrollment steps for new students.",
-   "deadline": null,
-   "deadlineDate": null,
-   "length": null,
+   "how": "Submit a deferred enrollment proposal; it needs approval from the Dean of Undergraduate Admission.",
+   "deadline": "June 1",
+   "deadlineDate": "2027-06-01",
+   "length": "One full year.",
    "deposit": null,
    "creditLevel": "none",
    "credit": "Work from another institution completed during a deferral will not transfer to Northwestern.",
@@ -1257,7 +1435,7 @@ window.GYF_COLLEGES = {
   {
    "name": "University of Pennsylvania",
    "deferral": "yes",
-   "how": "Accept Penn's offer of admission, then submit a Gap Year Form through the Penn Applicant Portal.",
+   "how": "Reply \"Yes\" to your offer, then submit the Gap Year Request form that appears in the Penn Applicant Portal (email requests aren't accepted). The Dean of Admissions reviews each one.",
    "deadline": null,
    "deadlineDate": null,
    "length": "One year",
@@ -1266,7 +1444,7 @@ window.GYF_COLLEGES = {
    "credit": null,
    "israel": null,
    "noApplyingElsewhere": null,
-   "source": "https://admissions.upenn.edu/how-to-apply/resources-programs/glossary",
+   "source": "https://global.upenn.edu/pennabroad/gap-year-resources",
    "quote": "Students interested in taking a gap year … must first accept Penn's offer of admission, then submit a Gap Year Form through their Penn Applicant Portal.",
    "hillel": {
     "rank": 79,
@@ -1360,6 +1538,29 @@ window.GYF_COLLEGES = {
     "jewish": 886,
     "type": "Private",
     "name": "Duke University"
+   }
+  },
+  {
+   "deadline": "June 1 (Regular Decision); February 1 (Early Decision)",
+   "deadlineDate": "2027-06-01",
+   "length": "One year.",
+   "deposit": true,
+   "creditLevel": "limited",
+   "credit": "You can't enroll full time or in a degree program elsewhere. Up to 8 credits for gap-year academic work may be awarded after the Registrar reviews it.",
+   "grades": null,
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "how": "Accept your offer and pay the $500 deposit, then submit the Gap Year Request Form in your applicant portal with a specific plan. Students admitted from the waitlist can't defer.",
+   "name": "Barnard College",
+   "deferral": "case",
+   "note": "Barnard's catalog lists April 25 for Regular Decision; its enrolling-students page says June 1. Confirm with Barnard.",
+   "source": "https://barnard.edu/information-enrolling-students",
+   "hillel": {
+    "rank": 85,
+    "jewish": 850,
+    "type": "Private",
+    "name": "Barnard College"
    }
   },
   {
@@ -1644,18 +1845,26 @@ window.GYF_COLLEGES = {
    "source": "https://mitadmissions.org/help/faq/deferred-enrollment/",
    "quote": "If you're admitted to MIT, you may defer enrollment for one or two years.",
    "hillel": null
+  },
+  {
+   "deadline": "End of June (Request to Defer form)",
+   "deadlineDate": "2027-06-30",
+   "length": "One year (two years considered for military or religious service).",
+   "deposit": null,
+   "creditLevel": "none",
+   "credit": "Formal academic study during the year doesn't earn credit toward your Harvard degree, and you can't enroll as a degree or diploma candidate anywhere.",
+   "grades": null,
+   "israel": "Two-year deferrals are considered for religious service.",
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "how": "Choose \"I defer\" on the admitted student reply form, or, if you already said you're enrolling, submit the Request to Defer form.",
+   "name": "Harvard College",
+   "deferral": "yes",
+   "source": "https://college.harvard.edu/resources/faq/may-i-defer-my-admission-once-admitted",
+   "hillel": null
   }
  ],
  "notFound": [
-  {
-   "name": "University of California, Davis",
-   "hillel": {
-    "rank": 33,
-    "jewish": 2500,
-    "type": "Public",
-    "name": "University of California, Davis"
-   }
-  },
   {
    "name": "Queensborough Community College",
    "hillel": {
@@ -1699,42 +1908,6 @@ window.GYF_COLLEGES = {
     "jewish": 850,
     "type": "Private",
     "name": "Hofstra University"
-   }
-  },
-  {
-   "name": "Queens College",
-   "hillel": {
-    "rank": 8,
-    "jewish": 4000,
-    "type": "Public",
-    "name": "Queens College"
-   }
-  },
-  {
-   "name": "Florida International University",
-   "hillel": {
-    "rank": 15,
-    "jewish": 3500,
-    "type": "Public",
-    "name": "Florida International University"
-   }
-  },
-  {
-   "name": "University of Illinois at Urbana-Champaign",
-   "hillel": {
-    "rank": 19,
-    "jewish": 3250,
-    "type": "Public",
-    "name": "University of Illinois at Urbana-Champaign"
-   }
-  },
-  {
-   "name": "University of Vermont",
-   "hillel": {
-    "rank": 29,
-    "jewish": 2500,
-    "type": "Public",
-    "name": "University of Vermont"
    }
   },
   {
@@ -1783,24 +1956,6 @@ window.GYF_COLLEGES = {
    }
   },
   {
-   "name": "University of Central Florida",
-   "hillel": {
-    "rank": 3,
-    "jewish": 6300,
-    "type": "Public",
-    "name": "University of Central Florida"
-   }
-  },
-  {
-   "name": "University of California, Santa Barbara",
-   "hillel": {
-    "rank": 20,
-    "jewish": 3000,
-    "type": "Public",
-    "name": "University of California, Santa Barbara"
-   }
-  },
-  {
    "name": "Hunter College",
    "hillel": {
     "rank": 51,
@@ -1834,15 +1989,6 @@ window.GYF_COLLEGES = {
     "jewish": 3000,
     "type": "Public",
     "name": "California State University, Northridge"
-   }
-  },
-  {
-   "name": "University of Delaware",
-   "hillel": {
-    "rank": 38,
-    "jewish": 2350,
-    "type": "Public",
-    "name": "University of Delaware"
    }
   },
   {
@@ -1882,15 +2028,6 @@ window.GYF_COLLEGES = {
    }
   },
   {
-   "name": "Barnard College",
-   "hillel": {
-    "rank": 85,
-    "jewish": 850,
-    "type": "Private",
-    "name": "Barnard College"
-   }
-  },
-  {
    "name": "Pace University",
    "hillel": {
     "rank": 98,
@@ -1898,10 +2035,6 @@ window.GYF_COLLEGES = {
     "type": "Private",
     "name": "Pace University"
    }
-  },
-  {
-   "name": "Harvard College",
-   "hillel": null
   },
   {
    "name": "Wesleyan University",
