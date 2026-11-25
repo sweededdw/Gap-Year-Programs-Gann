@@ -87,3 +87,9 @@ Every program has a **1–5 rating in 12 categories** (`PROFILES` in `public/js/
 ## Notes
 - Program data (`public/js/data.js`) is public research, so it isn't secret. The login controls who uses the tracker, not who can technically download the list.
 - Each program in `data.js` has an `app` block (`deadlines`, `portal`, `essays`, `interview`, `recs`, `fees`, `aid`, `visa`, `decision`). Leave a value `null` when the program doesn't publish it, and the page will show "Not published". Data was researched on 2026-11-24 for the 2027–28 cycle.
+
+## Ideas for later
+- **See who else is interested.** Students mark interest in a gap year, and others can see who's interested in the same program. This needs a shared Supabase table plus privacy choices: opt-in, who can see names (for example only logged-in students, or only your school), and how to remove yourself.
+- **Recent Gann students per program.** The count would come from the school, since it isn't public.
+- **What each program looks for.** Admissions criteria for each program.
+- **Student stories.** Fill `public/js/stories.js` with real testimonials and alumni contacts, with their permission. The program pages already have a spot for them.
