@@ -835,3 +835,17 @@ table.cmp { table-layout: fixed; } .cmp .rowh { width: 170px; }
 /* Selected "Any" / "Skip" / "Don't care" look selected, same blue as any other choice */
 .qchip.any.on { background: var(--accent-soft); border-color: var(--accent); color: var(--text); font-weight: 600; }
 .popt.dc.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+
+/* My colleges: collapsible cards */
+.mycol { padding: 0; gap: 0; }
+.mycol-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px 10px 6px; }
+.mycol-toggle { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; background: none; border: 0; color: var(--text); font: inherit; text-align: left; cursor: pointer; padding: 6px 8px; border-radius: 10px; }
+.mycol-toggle:hover { background: var(--surface-2); }
+.mycol-chev { color: var(--muted); display: inline-grid; transform: rotate(-90deg); transition: transform .15s; }
+.mycol.open .mycol-chev { transform: none; }
+.mycol-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mycol-name { font-size: 17px; font-weight: 700; }
+.mycol-sum { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mycol-sum.next { color: var(--text); white-space: normal; }
+.mycol-body { padding: 0 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+.mycol-body .hillel-line { margin: 0; }

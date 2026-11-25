@@ -949,7 +949,10 @@
     return '<p class="hillel-line small">' + (h.rank ? "Hillel #" + h.rank + " · " : "") + Number(h.jewish).toLocaleString("en-US") + " Jewish undergrads · " + esc(h.type) + "</p>";
   }
   const APP_STATUS = [["", "Planning to apply"], ["applied", "Applied"], ["accepted", "Accepted"], ["waiting", "Waitlisted / deferred"], ["rejected", "Not accepted"], ["committed", "Committed"]];
-  const APP_PLAN = [["", "Choose a plan"], ["ed", "Early Decision"], ["ed2", "Early Decision II"], ["ea", "Early Action"], ["rea", "Restrictive Early Action"], ["rd", "Regular Decision"], ["rolling", "Rolling"]];
+  const APP_PLAN = [["", "Choose"], ["binding", "Binding"], ["nonbinding", "Non-binding"]];
+  // Older saves used specific plans; Early Decision (I or II) is binding, everything else isn't.
+  const PLAN_MIGRATE = { ed: "binding", ed2: "binding", ea: "nonbinding", rea: "nonbinding", rd: "nonbinding", rolling: "nonbinding" };
+  const label = (opts, v) => (opts.find((o) => o[0] === (v || "")) || ["", ""])[1];
   const notFoundList = () => (COLLEGES.notFound || []).map((n) => (typeof n === "string" ? { name: n } : n));
   const myIndex = (name) => state.colleges.findIndex((c) => norm(c.name) === norm(name));
   function policyFacts(c) {
@@ -984,22 +987,35 @@
     return "Deferral denied. Talk to admissions about your options.";
   }
   function myCollegeCard(c, i) {
+    if (PLAN_MIGRATE[c.plan]) c.plan = PLAN_MIGRATE[c.plan];
     const ci = collegeInfo(c.name);
     const step = nextStep(c, ci);
-    return '<article class="card mycol">' +
-      '<div class="mycol-head"><div><h3>' + esc(c.name || "College") + "</h3>" + (ci ? hillelLine(ci) : "") +
-      '<div class="chips">' + (ci ? deferBadge(ci) + creditBadge(ci) + (ci.noApplyingElsewhere ? '<span class="pbadge warn">Can\'t apply elsewhere</span>' : "") : '<span class="pbadge muted">No published gap year policy</span>') + "</div></div>" +
+    const open = !!(state.colOpen || {})[c.name];
+    const bits = [c.plan ? label(APP_PLAN, c.plan) : null, label(APP_STATUS, c.app), "Deferral: " + label(DEFER_STATUS, c.status).toLowerCase()].filter(Boolean);
+    return '<article class="card mycol' + (open ? " open" : "") + '">' +
+      '<div class="mycol-head">' +
+      '<button class="mycol-toggle" data-act="col-toggle" data-i="' + i + '" aria-expanded="' + open + '">' +
+        '<span class="mycol-chev">' + I("chev") + "</span>" +
+        '<span class="mycol-title"><span class="mycol-name">' + esc(c.name || "College") + "</span>" +
+        '<span class="mycol-sum">' + esc(bits.join(" · ")) + "</span>" +
+        (!open && step ? '<span class="mycol-sum next">' + step + "</span>" : "") + "</span></button>" +
       '<button class="btn ghost sm" data-act="del-college" data-i="' + i + '" aria-label="Remove ' + esc(c.name) + '">' + I("x") + "</button></div>" +
-      (step ? '<p class="mycol-next small">' + step + "</p>" : "") +
-      '<div class="mycol-grid">' +
-      '<label class="field"><span>Plan</span>' + statusSelect(["colleges", i, "plan"], c.plan, APP_PLAN, "g", "Application plan") + "</label>" +
-      '<label class="field"><span>Application</span>' + statusSelect(["colleges", i, "app"], c.app, APP_STATUS, "g", "Application status") + "</label>" +
-      '<label class="field"><span>Application due</span><input class="input" type="date" value="' + esc(c.appDeadline || "") + '"' + bindAttr(["colleges", i, "appDeadline"], "g") + "></label>" +
-      '<label class="field"><span>Gap year deferral</span>' + statusSelect(["colleges", i, "status"], c.status, DEFER_STATUS, "g", "Deferral status") + "</label>" +
-      '<label class="field"><span>Request deferral by</span><input class="input" type="date" value="' + esc(c.deadline || "") + '"' + bindAttr(["colleges", i, "deadline"], "g") + "></label>" +
-      '<label class="field wide"><span>Notes</span><textarea class="textarea" rows="2" placeholder="Portal login, essays, who to email about the deferral…"' + bindAttr(["colleges", i, "notes"], "g") + ">" + esc(c.notes || "") + "</textarea></label>" +
-      "</div>" +
-      (ci ? '<details class="mycol-policy"><summary>Gap year policy</summary>' + policyFacts(ci) + "</details>" : "") +
+      (open
+        ? '<div class="mycol-body">' + (ci ? hillelLine(ci) : "") +
+          '<div class="chips">' + (ci ? deferBadge(ci) + creditBadge(ci) + (ci.noApplyingElsewhere ? '<span class="pbadge warn">Can\'t apply elsewhere</span>' : "") : '<span class="pbadge muted">No published gap year policy</span>') + "</div>" +
+          (step ? '<p class="mycol-next small">' + step + "</p>" : "") +
+          '<div class="mycol-grid">' +
+          '<label class="field"><span>Plan</span>' + statusSelect(["colleges", i, "plan"], c.plan, APP_PLAN, "g", "Application plan") + "</label>" +
+          '<label class="field"><span>Application</span>' + statusSelect(["colleges", i, "app"], c.app, APP_STATUS, "g", "Application status") + "</label>" +
+          '<label class="field"><span>Application due</span><input class="input" type="date" value="' + esc(c.appDeadline || "") + '"' + bindAttr(["colleges", i, "appDeadline"], "g") + "></label>" +
+          '<label class="field"><span>Gap year deferral</span>' + statusSelect(["colleges", i, "status"], c.status, DEFER_STATUS, "g", "Deferral status") + "</label>" +
+          '<label class="field"><span>Request deferral by</span><input class="input" type="date" value="' + esc(c.deadline || "") + '"' + bindAttr(["colleges", i, "deadline"], "g") + "></label>" +
+          '<label class="field wide"><span>Notes</span><textarea class="textarea" rows="2" placeholder="Portal login, essays, who to email about the deferral…"' + bindAttr(["colleges", i, "notes"], "g") + ">" + esc(c.notes || "") + "</textarea></label>" +
+          "</div>" +
+          (c.plan === "binding" ? '<p class="small muted">Binding: if you\'re admitted you commit to attend, so confirm the gap year deferral rules before you apply.</p>' : "") +
+          (ci ? '<details class="mycol-policy"><summary>Gap year policy</summary>' + policyFacts(ci) + "</details>" : "") +
+          "</div>"
+        : "") +
       "</article>";
   }
   function renderColleges() {
@@ -1547,12 +1563,18 @@
         deadline: ci && ci.deadlineDate ? ci.deadlineDate : "",
         status: "",
       });
+    } else if (act === "col-toggle") {
+      const nm = state.colleges[+el.dataset.i].name;
+      state.colOpen = state.colOpen || {};
+      state.colOpen[nm] = !state.colOpen[nm];
     } else if (act === "col-add") {
       const name = (el.dataset.name || "").trim();
       if (!name || myIndex(name) >= 0) return;
+      state.colOpen = state.colOpen || {};
       const ci = collegeInfo(name);
       const nf = notFoundList().find((n) => norm(n.name) === norm(name));
       state.colleges.push({ name: ci ? ci.name : nf ? nf.name : name, policy: ci ? collegeSummary(ci) : "", deadline: ci && ci.deadlineDate ? ci.deadlineDate : "", status: "", app: "", plan: "", appDeadline: "", notes: "" });
+      state.colOpen[state.colleges[state.colleges.length - 1].name] = true; // a just-added college opens so you can fill it in
     } else if (act === "del-college") {
       if (!confirm("Remove this college from every program page?")) return;
       state.colleges.splice(+el.dataset.i, 1);
