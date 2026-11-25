@@ -89,7 +89,13 @@ Every program has a **1–5 rating in 12 categories** (`PROFILES` in `public/js/
 - Each program in `data.js` has an `app` block (`deadlines`, `portal`, `essays`, `interview`, `recs`, `fees`, `aid`, `visa`, `decision`). Leave a value `null` when the program doesn't publish it, and the page will show "Not published". Data was researched on 2026-11-24 for the 2027–28 cycle.
 
 ## Ideas for later
-- **See who else is interested.** Students mark interest in a gap year, and others can see who's interested in the same program. This needs a shared Supabase table plus privacy choices: opt-in, who can see names (for example only logged-in students, or only your school), and how to remove yourself.
+- **Social layer** (inspired by Facebook's Wall, Friends, News Feed and People You May Know):
+  - **See who else is interested.** Students mark interest in a gap year, and others can see who's interested in the same program.
+  - **Friends.** Connect with other students. In graph terms, each student is a node and each friendship an edge.
+  - **Wall.** A profile page showing the programs you're interested in or applying to, where friends can leave posts.
+  - **Feed.** Friends' activity, newest first: saved a program, applied, got in, committed.
+  - **People You May Know.** Suggest students based on mutual friends (weighing how many, how recent and how close), the same school or grad year, and the same programs saved.
+  - **Privacy from day one.** When Facebook launched News Feed in 2006 without privacy controls, users protested and the controls were added a few days later. So everything here should be opt-in, with per-item visibility (only me / friends / my school) and an easy way to hide activity or remove yourself. This needs Supabase tables (profiles, friendships, interests, posts) with row-level security.
 - **Recent Gann students per program.** The count would come from the school, since it isn't public.
 - **What each program looks for.** Admissions criteria for each program.
 - **Student stories.** Fill `public/js/stories.js` with real testimonials and alumni contacts, with their permission. The program pages already have a spot for them.
