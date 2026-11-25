@@ -1093,7 +1093,7 @@
       '<section class="colsearch"><div class="sec-head"><h2>Find a college</h2></div>' +
       '<input class="search" type="search" placeholder="Search by college name, e.g. Michigan" aria-label="Search colleges" data-act="college-search" value="' + esc(raw) + '">' +
       (q.length >= 2 ? results
-        : '<p class="small muted" style="margin-top:10px">Type at least 2 letters. We have sourced policies for ' + COLLEGES.colleges.length + " colleges, including " + COLLEGES.colleges.filter((c) => c.hillel).length + " of the " + (COLLEGES.top || 100) + " with the most Jewish students (Hillel International).</p>" +
+        : '<p class="small muted" style="margin-top:10px">Type at least 2 letters. We have sourced policies for ' + COLLEGES.colleges.length + " colleges, including " + COLLEGES.colleges.filter((c) => c.hillel && c.hillel.rank <= (COLLEGES.top || 100)).length + " of the " + (COLLEGES.top || 100) + " with the most Jewish students (Hillel International).</p>" +
           '<div class="callout info" style="margin-top:12px"><span aria-hidden="true">' + I("info") + '</span><div><strong>Why credit matters:</strong> Israel programs that give college credit (Year Course, Kivunim, Aardvark/JTS, TAU, Hebrew U, Bar-Ilan) can clash with colleges marked <span class="pbadge bad">No college credit</span>. Skip the credit option or get written approval first.</div></div>') +
       "</section>";
   }
