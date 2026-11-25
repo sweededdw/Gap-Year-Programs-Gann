@@ -92,6 +92,7 @@ Every program has a **1–5 rating in 12 categories** (`PROFILES` in `public/js/
 See [PRODUCT-QUESTIONS.md](PRODUCT-QUESTIONS.md): market size, what program data to show, how students decide, data sourcing, and why use this over Masa's search.
 
 ## Ideas for later
+- **A homepage.** Right now the site opens straight into the quiz (or your Top 3). Later, add a real landing page that explains what the finder does and links to the quiz, Browse, Compare and Colleges.
 - **Social layer** (inspired by Facebook's Wall, Friends, News Feed and People You May Know):
   - **See who else is interested.** Students mark interest in a gap year, and others can see who's interested in the same program.
   - **Friends.** Connect with other students. In graph terms, each student is a node and each friendship an edge.
