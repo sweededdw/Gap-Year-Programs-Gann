@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Israel Gap Year Finder">
+  <path d="M14 70 A26 26 0 0 1 66 70 Z" fill="#e8a93a"/>
+  <line x1="6" y1="70" x2="94" y2="70" stroke="#0f1217" stroke-width="4" stroke-linecap="round"/>
+  <line x1="24" y1="81" x2="76" y2="81" stroke="#2f5fe0" stroke-width="4" stroke-linecap="round"/>
+  <path d="M60 70 C61 60 62 50 64 38" fill="none" stroke="#0f1217" stroke-width="6" stroke-linecap="round"/>
+  <path d="M64 38 C54 28 42 28 32 34 C44 32 54 34 64 38 Z" fill="#0f1217"/>
+  <path d="M64 38 C74 26 86 26 96 34 C84 31 74 33 64 38 Z" fill="#0f1217"/>
+  <path d="M64 38 C60 24 52 16 42 14 C52 20 58 28 64 38 Z" fill="#0f1217"/>
+  <path d="M64 38 C70 24 78 16 88 16 C78 22 70 28 64 38 Z" fill="#0f1217"/>
+</svg>
