@@ -198,7 +198,7 @@
   const FILTER_GROUPS = [
     { key: "orientation", title: "Jewish community", options: L.orientation, match: (p, v) => p.orientation === v },
     { key: "focus", title: "Focus", options: L.focus, match: (p, v) => p.focus.indexOf(v) >= 0 },
-    { key: "field", title: "Field", options: Object.keys(L.field).reduce((o, k) => ((o[k] = L.field[k][0] + " " + L.field[k][1]), o), {}), match: (p, v) => !!p.fields[v] },
+    { key: "field", title: "Field", options: Object.keys(L.field).reduce((o, k) => ((o[k] = L.field[k][1]), o), {}), match: (p, v) => !!p.fields[v] },
     { key: "city", title: "Where", options: L.city, match: (p, v) => p.cities.indexOf(v) >= 0 },
     { key: "israeliPeers", title: "Israeli peers", options: L.israeliPeers, match: (p, v) => p.israeliPeers === v },
     { key: "gender", title: "Setting", options: L.gender, match: (p, v) => p.gender === v },
@@ -263,18 +263,34 @@
   // ---------- Shared visuals: type badge + photo header ----------
   const TYPE_ORDER = ["gap", "mechina", "university", "movement", "service", "yeshiva", "seminary"];
   const TYPE_PLURAL = { gap: "Gap year programs", mechina: "Mechinot", university: "University", movement: "Youth movement", service: "Service", yeshiva: "Yeshivot", seminary: "Seminaries" };
+  // Small line icons (inline SVG, inherit text color). Used instead of emoji.
+  const SVG = {
+    heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+    x: '<path d="M18 6 6 18M6 6l12 12"/>',
+    undo: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+    info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+    pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+    cost: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
+    cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+    alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/>',
+    sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+  };
+  function I(name, filled) {
+    return '<svg class="ic" viewBox="0 0 24 24" width="1em" height="1em" fill="' + (filled ? "currentColor" : "none") +
+      '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + SVG[name] + "</svg>";
+  }
   function typeBadge(p) {
     const t = L.type[p.type] || L.type.gap;
     const g = p.gender === "men" ? " · Men only" : p.gender === "women" ? " · Women only" : "";
-    return '<span class="type-badge t-' + p.type + '">' + t[0] + " " + esc(t[1]) + g + "</span>";
+    return '<span class="type-badge t-' + p.type + '">' + esc(t[1]) + g + "</span>";
   }
   // A photo from the program's own site when we have one; otherwise an illustrated gradient.
   // If a photo fails to load, the illustration takes over automatically.
   function photoBox(p, cls, inner) {
-    const emojis = p.focus.slice(0, 3).map((f) => FOCUS_EMOJI[f] || "✨");
     return '<div class="ph ' + cls + " g-" + p.orientation + (p.photo ? " has-photo" : "") + '">' +
       (p.photo ? '<img src="' + esc(p.photo) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.remove(\'has-photo\');this.remove()">' : "") +
-      '<div class="ph-emojis" aria-hidden="true">' + emojis.map((e) => "<span>" + e + "</span>").join("") + "</div>" + (inner || "") + "</div>";
+      '<div class="ph-mark" aria-hidden="true">' + esc(p.short) + "</div>" + (inner || "") + "</div>";
   }
   function compactCost(p) {
     if (p.costUSD != null) return "$" + String(Math.round(p.costUSD / 100) / 10).replace(/\.0$/, "") + "k";
@@ -289,7 +305,7 @@
       keys.map((k) => {
         const c = L.categories[k], r = p.profile[k], want = prefs[k] && +prefs[k].weight ? prefs[k].want : 0;
         const dots = [1, 2, 3, 4, 5].map((n) => '<span class="rdot' + (r && n <= r.v ? " on" : "") + (want === n ? " want" : "") + '"></span>').join("");
-        return '<div class="rrow"><span class="rl">' + c.icon + " " + esc(c.label) + '</span><span class="rdots" title="' + esc(c.low + " → " + c.high) + '">' + dots + "</span>" +
+        return '<div class="rrow"><span class="rl">' + esc(c.label) + '</span><span class="rdots" title="' + esc(c.low + " → " + c.high) + '">' + dots + "</span>" +
           '<span class="rv small">' + (r ? (r.est ? "≈" : "") + r.v + " · " + esc(r.v <= 2 ? c.low : r.v >= 4 ? c.high : "In between") : '<span class="muted">Unknown</span>') + "</span></div>";
       }).join("") +
       '<p class="small muted" style="margin-top:6px">Learning style: <strong>' + esc(L.learning[p.learning]) + "</strong>" +
@@ -300,13 +316,13 @@
     if (!keys.length) return "";
     const picked = (quiz().answers.field || []);
     return '<div class="fields-box"><h3>Fields you can explore</h3><ul>' +
-      keys.map((k) => '<li class="' + (picked.indexOf(k) >= 0 ? "match" : "") + '"><span class="fe" aria-hidden="true">' + L.field[k][0] + "</span><div><strong>" + esc(L.field[k][1]) + "</strong>" +
+      keys.map((k) => '<li class="' + (picked.indexOf(k) >= 0 ? "match" : "") + '"><div><strong>' + esc(L.field[k][1]) + "</strong>" +
         (picked.indexOf(k) >= 0 ? ' <span class="chip ok">✓ your pick</span>' : "") + '<div class="small muted">' + esc(p.fields[k]) + "</div></div></li>").join("") +
       "</ul></div>";
   }
   function websiteLink(p, cls, extra) {
     return '<a class="' + cls + '" href="' + esc(p.website) + '" target="_blank" rel="noopener"' + (extra || "") + ">" +
-      (p.websiteLabel ? "🔎 " + esc(p.websiteLabel) : "🌐 Website") + " ↗</a>";
+      (p.websiteLabel ? esc(p.websiteLabel) : "Website") + " ↗</a>";
   }
 
   function renderFinder() {
@@ -319,7 +335,7 @@
       '<div class="browse-head"><div><h1>All programs</h1>' +
       '<p class="muted">' + D.programs.length + ' Israel gap years. Not sure where to start? <a href="#/start">Take the 1-minute quiz</a>.</p></div></div>' +
       (up.length
-        ? '<div class="upcoming-strip" aria-label="Upcoming deadlines"><span class="us-label">⏰ Coming up</span>' +
+        ? '<div class="upcoming-strip" aria-label="Upcoming deadlines"><span class="us-label">Coming up</span>' +
           up.map((it) =>
             '<a href="#/program/' + it.p.id + '"><strong>' + fmtDate(it.date, { month: "short", day: "numeric" }) + "</strong> " +
             esc(it.count > 1 ? it.d.label + " (" + it.count + ")" : it.p.name) + "</a>"
@@ -327,12 +343,12 @@
         : "") +
       '<div class="type-tabs" role="tablist" aria-label="Program type">' +
       '<button class="ttab' + (!f.type ? " on" : "") + '" data-act="type-tab" data-value="">All <span>' + D.programs.length + "</span></button>" +
-      TYPE_ORDER.map((t) => '<button class="ttab' + (f.type === t ? " on" : "") + '" data-act="type-tab" data-value="' + t + '">' + L.type[t][0] + " " + TYPE_PLURAL[t] + " <span>" + typeCount(t) + "</span></button>").join("") +
+      TYPE_ORDER.map((t) => '<button class="ttab' + (f.type === t ? " on" : "") + '" data-act="type-tab" data-value="' + t + '">' + TYPE_PLURAL[t] + " <span>" + typeCount(t) + "</span></button>").join("") +
       "</div>" +
       '<div class="toolbar"><input class="search" type="search" placeholder="Search by name or city…" aria-label="Search programs" data-act="search" value="' + esc(f.q || "") + '">' +
       '<select class="select" aria-label="Sort" data-act="sort">' +
       [["featured", "Featured"], ["deadline", "Next deadline"], ["cost", "Lowest tuition"], ["name", "A–Z"]].map((o) => '<option value="' + o[0] + '"' + ((f.sort || "featured") === o[0] ? " selected" : "") + ">Sort: " + o[1] + "</option>").join("") +
-      '</select><button class="btn' + (f.open ? " on" : "") + '" data-act="toggle-filters" aria-expanded="' + !!f.open + '">⚙︎ More filters' + (activeFilters ? ' <span class="count-pill">' + activeFilters + "</span>" : "") + "</button></div>" +
+      '</select><button class="btn' + (f.open ? " on" : "") + '" data-act="toggle-filters" aria-expanded="' + !!f.open + '">' + I("sliders") + ' More filters' + (activeFilters ? ' <span class="count-pill">' + activeFilters + "</span>" : "") + "</button></div>" +
       (f.open
         ? '<section class="card filters-panel" aria-label="More filters">' +
           FILTER_GROUPS.filter((g) => g.key !== "gender").map((g) =>
@@ -358,11 +374,11 @@
       '<article class="card bcard" data-href="#/program/' + p.id + '">' +
       photoBox(p, "bcard-photo",
         typeBadge(p) +
-        '<button class="heart' + (saved ? " on" : "") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '" aria-label="' + (saved ? "Remove from" : "Save to") + ' my list">' + (saved ? "♥" : "♡") + "</button>") +
+        '<button class="heart' + (saved ? " on" : "") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '" aria-label="' + (saved ? "Remove from" : "Save to") + ' my list">' + I("heart", saved) + "</button>") +
       '<div class="bcard-body">' +
       '<h3><a href="#/program/' + p.id + '">' + esc(p.name) + "</a></h3>" +
-      '<p class="small muted">📍 ' + esc(p.base) + "</p>" +
-      '<div class="bcard-facts"><span title="' + esc(p.costText) + '">💵 ' + esc(compactCost(p)) + "</span><span>🗓️ " + esc(p.length.split(" · ")[0].split(" (")[0]) + "</span><span>⏰ " + dl + "</span></div>" +
+      '<p class="small muted">' + I("pin") + " " + esc(p.base) + "</p>" +
+      '<div class="bcard-facts"><span title="' + esc(p.costText) + '">' + I("cost") + " " + esc(compactCost(p)) + "</span><span>" + I("cal") + " " + esc(p.length.split(" · ")[0].split(" (")[0]) + "</span><span>" + I("clock") + " " + dl + "</span></div>" +
       (saved && pr.done > 0 ? '<div class="progress-bar" title="Your application: ' + pr.pct + '%"><span style="width:' + pr.pct + '%"></span></div>' : "") +
       '<div class="bcard-actions">' + websiteLink(p, "btn sm") + '<a class="btn ghost sm" href="#/program/' + p.id + '">Details →</a></div>' +
       "</div></article>"
@@ -421,7 +437,7 @@
 
     // ---- 1. Deadlines
     const dlBody =
-      (a.rolling ? '<div class="callout warn" style="margin-bottom:12px"><span aria-hidden="true">⚠</span><div><strong>Rolling admissions.</strong> Spots go to complete applications as they arrive, and popular programs can fill months before any posted date. Apply as early as you can.</div></div>' : "") +
+      (a.rolling ? '<div class="callout warn" style="margin-bottom:12px"><span aria-hidden="true">' + I("alert") + '</span><div><strong>Rolling admissions.</strong> Spots go to complete applications as they arrive, and popular programs can fill months before any posted date. Apply as early as you can.</div></div>' : "") +
       (a.deadlines.length
         ? '<div class="rows">' + a.deadlines.map((d) =>
             '<div class="row date-row"><div class="when">' + (d.date ? fmtDate(d.date) : '<span class="muted">Date not posted</span>') + '</div><div class="grow"><div class="title">' + esc(d.label) + ' <span class="pill ' + d.type + '">' + esc(d.type === "other" ? "Other" : d.type) + "</span></div>" +
@@ -492,7 +508,7 @@
         const exp = parseDate(s.passportExpiry);
         check = exp && exp >= need
           ? '<div class="callout ok small" style="margin-top:6px">✓ Valid through ' + fmtDate(need) + ", 6 months past the program's approximate end (" + fmtDate(end) + ").</div>"
-          : '<div class="callout bad small" style="margin-top:6px">⚠ Renew before you apply for the visa. It should stay valid until at least ' + fmtDate(need) + ", 6 months past the program's approximate end.</div>";
+          : '<div class="callout bad small" style="margin-top:6px">' + I("alert") + ' Renew before you apply for the visa. It should stay valid until at least ' + fmtDate(need) + ", 6 months past the program's approximate end.</div>";
       }
       return '<label class="field" style="margin-top:6px;max-width:260px">Passport expiration date<input class="input" type="date" value="' + esc(s.passportExpiry || "") + '"' + bindAttr(["passportExpiry"]) + "></label>" + check;
     };
@@ -526,7 +542,7 @@
     // ---- 9. Visa
     const visaBody =
       '<div class="cols-2"><div class="col-box"><h4>Program handles</h4><p>' + esc(a.visa.program) + '</p></div><div class="col-box"><h4>You file</h4><p>' + esc(a.visa.student) + "</p></div></div>" +
-      '<div class="callout warn" style="margin-top:12px"><span aria-hidden="true">⚠</span><div><strong>Dual citizens / children of Israelis:</strong> ' + esc(a.visa.dualCitizen) + "</div></div>" +
+      '<div class="callout warn" style="margin-top:12px"><span aria-hidden="true">' + I("alert") + '</span><div><strong>Dual citizens / children of Israelis:</strong> ' + esc(a.visa.dualCitizen) + "</div></div>" +
       '<label class="check" style="margin-top:12px"><input type="checkbox"' + (s.visaDone ? " checked" : "") + bindAttr(["visaDone"]) + "> My visa (or Israeli passport and army-status paperwork) is sorted</label>";
 
     // ---- 10. College deferral (shared across programs)
@@ -536,7 +552,7 @@
     const defBody =
       '<ul class="plain small">' + D.deferralGuidance.map((g) => "<li>" + esc(g) + "</li>").join("") + "</ul>" +
       (conflicts.length
-        ? '<div class="callout bad" style="margin-top:12px"><span aria-hidden="true">⚠</span><div><strong>Credit conflict:</strong> this program offers college credit, but ' +
+        ? '<div class="callout bad" style="margin-top:12px"><span aria-hidden="true">' + I("alert") + '</span><div><strong>Credit conflict:</strong> this program offers college credit, but ' +
           conflicts.map((c) => esc(c.name)).join(", ") + " " + (conflicts.length > 1 ? "don't" : "doesn't") +
           " allow credit-bearing study during a deferral. Skip the credit option or ask the college before you enroll.</div></div>"
         : "") +
@@ -603,8 +619,8 @@
       '<p class="muted">' + esc(p.operator) + " · " + esc(p.base) + "</p>" +
       '<div class="chips"><span class="chip accent">' + esc(L.orientation[p.orientation]) + '</span><span class="chip">' + esc(L.gender[p.gender]) + '</span><span class="chip">' + esc(L.israeliPeers[p.israeliPeers]) + "</span>" +
       (p.credit ? '<span class="chip">College credit</span>' : "") + (p.semesterOption ? '<span class="chip">Semester option</span>' : "") + "</div></div>" +
-      '<div class="actions"><button class="btn' + (saved ? "" : " primary") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '">' + (saved ? "★ On my list" : "☆ Add to my list") + "</button>" +
-      '<a class="btn" href="' + esc(p.website) + '" target="_blank" rel="noopener">' + (p.websiteLabel ? "🔎 " + esc(p.websiteLabel) : "🌐 Official website") + " ↗</a></div></header>" +
+      '<div class="actions"><button class="btn' + (saved ? "" : " primary") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '">' + (saved ? I("heart", true) + " On my list" : I("heart") + " Add to my list") + "</button>" +
+      '<a class="btn" href="' + esc(p.website) + '" target="_blank" rel="noopener">' + (p.websiteLabel ? esc(p.websiteLabel) : "Official website") + " ↗</a></div></header>" +
       '<div class="card stats">' +
       '<div class="stat"><div class="label">Tuition</div><div class="value">' + esc(p.costUSD != null ? money(p.costUSD) : p.costText.indexOf("₪") >= 0 ? shortCost(p) : "—") + '</div><div class="sub">' + esc(p.costUSD != null ? shortCost(p) : p.costText.indexOf("₪") >= 0 ? "Priced in shekels" : p.costText) + "</div></div>" +
       '<div class="stat"><div class="label">Length</div><div class="value">' + esc(p.length.split(" · ")[0].split(" (")[0]) + '</div><div class="sub">' + esc(p.semesterOption ? "Semester option available" : "Full year") + "</div></div>" +
@@ -653,7 +669,7 @@
               '<td style="min-width:120px"><div class="small">' + pr.pct + '%</div><div class="progress-bar"><span style="width:' + pr.pct + '%"></span></div></td>' +
               "<td>" + esc(resultLabel(ps(p.id).result)) + "</td></tr>";
           }).join("") + "</tbody></table></div>"
-        : '<div class="card empty">Nothing saved yet. Tap ☆ on any program to add it here.</div>');
+        : '<div class="card empty">Nothing saved yet. Tap the heart on any program to add it here.</div>');
   }
 
   // ---------- College gap year policies ----------
@@ -696,7 +712,7 @@
     $app.innerHTML =
       '<div class="browse-head"><div><h1>College gap year policies</h1>' +
       '<p class="muted">The ' + (COLLEGES.top || 100) + ' colleges with the most Jewish students (Hillel International, 2025): whether you can defer for a gap year, when to ask, and how gap-year credits and grades are treated. Researched ' + fmtDate(COLLEGES.asOf) + " from each college's own website. Always confirm with the college.</p></div></div>" +
-      '<div class="callout info" style="margin-bottom:14px"><span aria-hidden="true">💡</span><div><strong>Why credit matters:</strong> Israel programs that give college credit (Year Course, Kivunim, Aardvark/JTS, TAU, Hebrew U, Bar-Ilan) can clash with colleges marked <span class="pbadge bad">No college credit</span>. Skip the credit option or get written approval first.</div></div>' +
+      '<div class="callout info" style="margin-bottom:14px"><span aria-hidden="true">' + I("info") + '</span><div><strong>Why credit matters:</strong> Israel programs that give college credit (Year Course, Kivunim, Aardvark/JTS, TAU, Hebrew U, Bar-Ilan) can clash with colleges marked <span class="pbadge bad">No college credit</span>. Skip the credit option or get written approval first.</div></div>' +
       '<div class="type-tabs" role="tablist">' + COLLEGE_TABS.map((t) => '<button class="ttab' + (tab === t[0] ? " on" : "") + '" data-act="college-tab" data-value="' + t[0] + '">' + t[1] + "</button>").join("") + "</div>" +
       '<div class="toolbar"><input class="search" type="search" placeholder="Search colleges…" aria-label="Search colleges" data-act="college-search" value="' + esc(state.collegeQuery || "") + '"><span class="results-count">' + list.length + " with published policies</span></div>" +
       '<div class="college-grid">' + list.map((c) =>
@@ -708,10 +724,10 @@
         '<div class="wide"><dt>How to ask</dt><dd>' + esc(c.how || "Not stated") + (c.deposit ? " Requires your enrollment deposit." : "") + "</dd></div>" +
         '<div class="wide"><dt>Credit during the gap year</dt><dd>' + esc(c.credit || "Not stated. Ask admissions.") + "</dd></div>" +
         (c.grades ? '<div class="wide"><dt>Grades & credits from the gap year</dt><dd>' + esc(c.grades) + "</dd></div>" : "") +
-        (c.israel ? '<div class="wide"><dt>🇮🇱 Israel programs</dt><dd>' + esc(c.israel) + "</dd></div>" : "") +
+        (c.israel ? '<div class="wide"><dt>Israel programs</dt><dd>' + esc(c.israel) + "</dd></div>" : "") +
         "</dl>" +
         (c.quote ? '<blockquote class="college-quote">“' + esc(c.quote) + "”</blockquote>" : "") +
-        (c.note ? '<p class="small" style="color:var(--warn)">⚠ ' + esc(c.note) + "</p>" : "") +
+        (c.note ? '<p class="small" style="color:var(--warn)">' + I("alert") + ' ' + esc(c.note) + "</p>" : "") +
         (c.source ? '<a class="small" href="' + esc(c.source) + '" target="_blank" rel="noopener">Source: ' + esc(c.source.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]) + " ↗</a>" : "") + "</article>"
       ).join("") + "</div>" +
       (notFound.length
@@ -721,10 +737,6 @@
   }
 
   // ---------- Discover: quick quiz ----------
-  const FOCUS_EMOJI = {
-    "text-study": "📚", academics: "🎓", internships: "💼", volunteering: "🤝", leadership: "🧭", "army-prep": "🪖",
-    travel: "✈️", outdoors: "🥾", tech: "💻", sports: "⚽", culinary: "🍳", kibbutz: "🌾",
-  };
   // ---------- Matching model ----------
   // 1) Dealbreakers knock programs out before scoring (religious environment, setting, budget, length).
   // 2) For each category the user picks what they want (1–5) and how much they care (weight 0–3).
@@ -744,13 +756,13 @@
   // Screen 1: dealbreakers. Anything left blank doesn't filter.
   const DEAL = {
     orientation: { q: "Which communities feel right?", multi: true,
-      options: [["pluralistic", "🤝", "Pluralistic"], ["conservative", "🕍", "Conservative"], ["reform", "🌱", "Reform"], ["mo-coed", "📖", "Modern Orthodox"], ["orthodox", "🕯️", "Yeshiva / seminary"], ["secular", "🇮🇱", "Secular"]] },
+      options: [["pluralistic", "", "Pluralistic"], ["conservative", "", "Conservative"], ["reform", "", "Reform"], ["mo-coed", "", "Modern Orthodox"], ["orthodox", "", "Yeshiva / seminary"], ["secular", "", "Secular"]] },
     budget: { q: "Tuition budget", multi: false,
-      options: [["u15", "💚", "Up to $15k"], ["15-25", "💛", "Up to $25k"], ["25-35", "🧡", "Up to $35k"], ["o35", "💜", "No limit"]] },
-    gender: { q: "Setting", multi: false, options: [["coed", "👫", "Co-ed"], ["men", "👨", "Men's"], ["women", "👩", "Women's"]] },
+      options: [["u15", "", "Up to $15k"], ["15-25", "", "Up to $25k"], ["25-35", "", "Up to $35k"], ["o35", "", "No limit"]] },
+    gender: { q: "Setting", multi: false, options: [["coed", "", "Co-ed"], ["men", "", "Men's"], ["women", "", "Women's"]] },
     hebrew: { q: "Your Hebrew right now", multi: false, anyLabel: "Skip",
-      options: [["none", "🌱", "None yet"], ["basic", "🔤", "Basics"], ["conversational", "💬", "Conversational"], ["fluent", "🗣️", "Fluent"]] },
-    must: { q: "Must-haves", multi: true, options: [["semester", "⏱️", "Semester option"], ["credit", "🎓", "College credit"]] },
+      options: [["none", "", "None yet"], ["basic", "", "Basics"], ["conversational", "", "Conversational"], ["fluent", "", "Fluent"]] },
+    must: { q: "Must-haves", multi: true, options: [["semester", "", "Semester option"], ["credit", "", "College credit"]] },
   };
   const TOTAL_STEPS = 2;
   // Hebrew level → the program Hebrew rating (1–5) that suits it. Programs far above your level score lower;
@@ -839,13 +851,13 @@
       '<button class="qchip any' + (!picked.length ? " on" : "") + '" aria-pressed="' + !picked.length + '" data-act="' + act + '" data-key="' + key + '" data-value="__any">' + (def.anyLabel || "Any") + "</button>" +
       def.options.map((o) => {
         const on = picked.indexOf(o[0]) >= 0;
-        return '<button class="qchip' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="' + act + '" data-key="' + key + '" data-value="' + o[0] + '">' + o[1] + " " + esc(o[2]) + "</button>";
+        return '<button class="qchip' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="' + act + '" data-key="' + key + '" data-value="' + o[0] + '">' + esc(o[2]) + "</button>";
       }).join("") + "</div></div>";
   }
   function prefRow(row) {
     const k = row[0], c = CATS[k];
     const pref = quiz().answers.prefs[k] || {};
-    return '<div class="prow' + (pref.want ? " active" : "") + '"><span class="prow-label"><span aria-hidden="true">' + c.icon + "</span> " + esc(c.label) + "</span>" +
+    return '<div class="prow' + (pref.want ? " active" : "") + '"><span class="prow-label">' + esc(c.label) + "</span>" +
       '<div class="prow-scale"><span class="pend">' + esc(row[1]) + '</span><div class="pnums" role="group" aria-label="' + esc(c.label) + ': 1 = ' + esc(row[1]) + ", 5 = " + esc(row[2]) + '">' +
       [1, 2, 3, 4, 5].map((n) => {
         const on = pref.want === n;
@@ -862,7 +874,6 @@
     if (q.step === 0) {
       $app.innerHTML =
         '<section class="quiz quiz-intro">' +
-        '<div class="intro-emoji" aria-hidden="true">🇮🇱</div>' +
         "<h1>Find your year in Israel</h1>" +
         '<p class="muted">Two quick screens, then your top 3 matches.</p>' +
         '<button class="btn primary big" data-act="quiz-next">Start →</button>' +
@@ -883,7 +894,7 @@
         '<div class="prows">' + PREF_ROWS.map(prefRow).join("") + "</div>" +
         '<details class="extras"' + (a.field.length || a.city.length ? " open" : "") + "><summary>Optional: a field or city you have in mind</summary>" +
         choiceGroup("field", { q: "Field (up to 3)", anyLabel: "Don't care", options: Object.keys(L.field).map((k) => [k, L.field[k][0], L.field[k][1]]) }, a.field, "field-pick") +
-        choiceGroup("city", { q: "Where", anyLabel: "Don't care", options: [["jerusalem", "🏛️", "Jerusalem"], ["tel-aviv", "🏙️", "Tel Aviv"], ["kibbutz", "🌾", "Kibbutz"], ["north", "⛰️", "The North"], ["abroad", "🌍", "Travel abroad"]] }, a.city, "city-pick") +
+        choiceGroup("city", { q: "Where", anyLabel: "Don't care", options: [["jerusalem", "", "Jerusalem"], ["tel-aviv", "", "Tel Aviv"], ["kibbutz", "", "Kibbutz"], ["north", "", "The North"], ["abroad", "", "Travel abroad"]] }, a.city, "city-pick") +
         "</details>";
     }
     $app.innerHTML =
@@ -904,10 +915,9 @@
   function breakdownRows(m) {
     return m.parts.slice().sort((x, y) => y.w - x.w || y.fit - x.fit).map((x) => {
       const c = CATS[x.k];
-      const icon = c ? c.icon : x.k === "hebrewLevel" ? "🗣️" : x.k === "city" ? "📍" : x.k.indexOf("field:") === 0 ? L.field[x.k.slice(6)][0] : "•";
       const cls = x.fit >= 0.75 ? "good" : x.fit >= 0.5 ? "ok" : "bad";
       const mark = x.fit >= 0.75 ? "✓" : x.fit >= 0.5 ? "~" : "✕";
-      return '<li class="' + cls + '"><span class="bm">' + mark + "</span>" + icon + " " + esc(catLabel(x.k)) +
+      return '<li class="' + cls + '"><span class="bm">' + mark + "</span>" + esc(catLabel(x.k)) +
         (c && !x.unknown ? '<span class="bv">you ' + x.want + " · " + (x.est ? "≈" : "") + x.have + "</span>" : "") +
         (x.k === "hebrewLevel" ? '<span class="bv">you: ' + HEB_NAME[x.level] + " · program " + (x.est ? "≈" : "") + x.have + "/5</span>" : "") + "</li>";
     }).join("");
@@ -915,16 +925,16 @@
   function renderResults() {
     const all = matches();
     const top = all.slice(0, 3);
-    if (!top.length) { $app.innerHTML = '<section class="quiz quiz-intro"><div class="intro-emoji">🤔</div><h1>No programs pass your dealbreakers</h1><button class="btn primary" data-act="retake">Change my answers</button></section>'; return; }
+    if (!top.length) { $app.innerHTML = '<section class="quiz quiz-intro"><h1>No programs pass your dealbreakers</h1><button class="btn primary" data-act="retake">Change my answers</button></section>'; return; }
     $app.innerHTML =
       '<section class="results">' +
       '<div class="results-head"><div><h1>Your top 3</h1><p class="muted">Best fits out of ' + all.length + " programs.</p></div>" +
-      '<div class="swipe-head-actions"><button class="btn ghost sm" data-act="retake">Change answers</button><button class="btn sm" data-act="restart">↺ Retake quiz</button></div></div>' +
+      '<div class="swipe-head-actions"><button class="btn ghost sm" data-act="retake">Change answers</button><button class="btn sm" data-act="restart">' + I("undo") + ' Retake quiz</button></div></div>' +
       '<div class="top3">' + top.map((m, i) => {
         const p = m.p, saved = !!state.saved[p.id];
         return '<article class="card topcard">' +
           photoBox(p, "top-photo", '<span class="rank">#' + (i + 1) + "</span>" + typeBadge(p) +
-            '<button class="heart' + (saved ? " on" : "") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '" aria-label="Save">' + (saved ? "♥" : "♡") + "</button>") +
+            '<button class="heart' + (saved ? " on" : "") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '" aria-label="Save">' + I("heart", saved) + "</button>") +
           '<div class="topcard-body"><div class="tc-title"><h2><a href="#/program/' + p.id + '">' + esc(p.name) + "</a></h2>" +
           (m.pct != null ? '<span class="match-pill">' + m.pct + "% match</span>" : "") + "</div>" +
           '<p class="why">' + esc(whyLine(m)) + "</p>" +
@@ -946,23 +956,22 @@
   function swipeCard(m, i) {
     const p = m.p;
     const nd = nextDeadline(p);
-    const emojis = p.focus.slice(0, 3).map((f) => FOCUS_EMOJI[f] || "✨");
     const deadline = nd.kind === "date" ? fmtDate(nd.d.date, { month: "short", day: "numeric" }) + " " + countdown(nd.d.date) : nd.kind === "rolling" ? "Rolling — apply early" : "Not posted yet";
     return (
       '<article class="scard' + (i === 0 ? " top" : "") + '" data-id="' + p.id + '" style="--i:' + i + '"' + (i === 0 ? ' tabindex="0" aria-label="' + esc(p.name) + '"' : ' aria-hidden="true"') + ">" +
       '<div class="scard-hero ph g-' + p.orientation + (p.photo ? " has-photo" : "") + '">' +
       (p.photo ? '<img src="' + esc(p.photo) + '" alt="" draggable="false" referrerpolicy="no-referrer" onerror="this.parentNode.classList.remove(\'has-photo\');this.remove()">' : "") +
-      '<span class="stamp like" aria-hidden="true">SAVE ♥</span><span class="stamp nope" aria-hidden="true">PASS ✕</span>' +
+      '<span class="stamp like" aria-hidden="true">SAVE</span><span class="stamp nope" aria-hidden="true">PASS</span>' +
       (m.pct != null ? '<span class="scard-match">' + m.pct + "% match</span>" : "") +
-      '<div class="scard-emojis ph-emojis" aria-hidden="true">' + emojis.map((e) => "<span>" + e + "</span>").join("") + "</div>" +
+      '<div class="scard-mark ph-mark" aria-hidden="true">' + esc(p.short) + "</div>" +
       '<div class="scard-title">' + typeBadge(p) + ' <span class="scard-tag">' + esc(L.orientation[p.orientation]) + "</span><h2>" + esc(p.name) + "</h2>" +
-      "<p>📍 " + esc(p.base) + "</p></div></div>" +
+      "<p>" + I("pin") + " " + esc(p.base) + "</p></div></div>" +
       '<div class="scard-body">' +
-      '<div class="scard-stats"><div><span>💵</span><strong>' + esc(shortCost(p)) + '</strong></div><div><span>🗓️</span><strong>' + esc(p.length.split(" · ")[0]) + '</strong></div><div><span>⏰</span><strong>' + deadline + "</strong></div></div>" +
+      '<div class="scard-stats"><div>' + I("cost") + "<strong>" + esc(shortCost(p)) + "</strong></div><div>" + I("cal") + "<strong>" + esc(p.length.split(" · ")[0]) + '</strong></div><div>' + I("clock") + "<strong>" + deadline + "</strong></div></div>" +
       '<p class="scard-blurb">' + esc(p.blurb) + "</p>" +
       (m.reasons.length ? '<div class="chips">' + m.reasons.slice(0, 5).map((r) => '<span class="chip ok">✓ ' + esc(r) + "</span>").join("") + "</div>" : "") +
       '<div class="scard-links">' +
-      '<a class="btn sm" href="' + esc(p.website) + '" target="_blank" rel="noopener" tabindex="' + (i === 0 ? 0 : -1) + '">' + (p.websiteLabel ? "🔎 " + esc(p.websiteLabel) : "🌐 Visit website") + " ↗</a>" +
+      '<a class="btn sm" href="' + esc(p.website) + '" target="_blank" rel="noopener" tabindex="' + (i === 0 ? 0 : -1) + '">' + (p.websiteLabel ? esc(p.websiteLabel) : "Visit website") + " ↗</a>" +
       '<a class="btn ghost sm" href="#/program/' + p.id + '" tabindex="' + (i === 0 ? 0 : -1) + '">Full details →</a></div>' +
       "</div></article>"
     );
@@ -975,25 +984,25 @@
     const hist = (state.swipeHistory || []).length;
     if (!d.length) {
       $app.innerHTML =
-        '<section class="quiz quiz-intro"><div class="intro-emoji" aria-hidden="true">🎉</div><h1>' + (all.length ? "You've seen all your matches" : "No matches yet") + "</h1>" +
+        '<section class="quiz quiz-intro"><h1>' + (all.length ? "You've seen all your matches" : "No matches yet") + "</h1>" +
         '<p class="muted">' + (all.length ? "You saved <strong>" + savedHere + "</strong> of " + all.length + " programs." : "Try the quiz again with fewer must-haves.") + "</p>" +
         '<div class="end-actions">' +
-        (savedHere ? '<a class="btn primary big" href="#/my-list">See my saved programs ♥</a>' : "") +
+        (savedHere ? '<a class="btn primary big" href="#/my-list">See my saved programs</a>' : "") +
         (all.length > savedHere ? '<button class="btn" data-act="swipe-reset">Review the ones I passed</button>' : "") +
-        '<button class="btn" data-act="retake">Change answers</button><button class="btn" data-act="restart">↺ Retake quiz</button><a class="btn ghost" href="#/browse">Browse all programs</a></div>' +
-        (hist ? '<p class="small"><button class="btn ghost sm" data-act="swipe-undo">↺ Undo last swipe</button></p>' : "") + "</section>";
+        '<button class="btn" data-act="retake">Change answers</button><button class="btn" data-act="restart">' + I("undo") + ' Retake quiz</button><a class="btn ghost" href="#/browse">Browse all programs</a></div>' +
+        (hist ? '<p class="small"><button class="btn ghost sm" data-act="swipe-undo">' + I("undo") + ' Undo last swipe</button></p>' : "") + "</section>";
       return;
     }
     $app.innerHTML =
       '<section class="swipe">' +
       '<div class="swipe-head"><div><h1>Your matches</h1><p class="small muted">' + (seen + 1) + " of " + all.length + " · " + savedHere + ' saved</p></div>' +
-      '<div class="swipe-head-actions"><a class="btn ghost sm" href="#/results">🏆 Top 3</a><button class="btn ghost sm" data-act="retake">Change answers</button></div></div>' +
+      '<div class="swipe-head-actions"><a class="btn ghost sm" href="#/results">Top 3</a><button class="btn ghost sm" data-act="retake">Change answers</button></div></div>' +
       '<div class="swipe-stage">' + d.slice(0, 3).map(swipeCard).reverse().join("") + "</div>" +
       '<div class="swipe-actions">' +
-      '<button class="sbtn small" data-act="swipe-undo"' + (hist ? "" : " disabled") + ' aria-label="Undo last swipe" title="Undo">↺</button>' +
-      '<button class="sbtn nope" data-act="swipe-pass" aria-label="Pass" title="Pass (←)">✕</button>' +
-      '<button class="sbtn small info" data-act="swipe-info" aria-label="See full details" title="Details (↑)">i</button>' +
-      '<button class="sbtn like" data-act="swipe-like" aria-label="Save for later" title="Save (→)">♥</button>' +
+      '<button class="sbtn small" data-act="swipe-undo"' + (hist ? "" : " disabled") + ' aria-label="Undo last swipe" title="Undo">' + I("undo") + '</button>' +
+      '<button class="sbtn nope" data-act="swipe-pass" aria-label="Pass" title="Pass (←)">' + I("x") + '</button>' +
+      '<button class="sbtn small info" data-act="swipe-info" aria-label="See full details" title="Details (↑)">' + I("info") + '</button>' +
+      '<button class="sbtn like" data-act="swipe-like" aria-label="Save for later" title="Save (→)">' + I("heart", true) + '</button>' +
       "</div>" +
       '<p class="swipe-hint small muted">Drag the card right to save, left to pass, or tap it for full details. Arrow keys work too.</p>' +
       "</section>";
