@@ -713,3 +713,12 @@ html, body { overscroll-behavior-x: none; }
 .auth-brand .logo-mark { height: 64px; width: 64px; }
 .wm-auth .wm-title { font-size: 30px; }
 .wm-auth .wm-sub { font-size: 10.5px; margin-top: 6px; }
+
+/* Daily life bullets */
+.life-item > div { min-width: 0; }
+.life-list { margin: 4px 0 0; padding-left: 18px; font-size: 14px; line-height: 1.5; }
+.life-list li { margin: 3px 0; }
+.life-list li::marker { color: var(--muted); }
+.life-list.sched { list-style: none; padding-left: 0; }
+.life-list.sched li { display: grid; grid-template-columns: 52px 1fr; gap: 8px; margin: 2px 0; }
+.life-list.sched .t { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; }

@@ -462,13 +462,29 @@
   function infoSection(key, title, body, sub) {
     return '<section class="card sec" id="sec-' + key + '"><div class="sec-head"><h2>' + esc(title) + "</h2>" + (sub ? '<span class="small muted">' + sub + "</span>" : "") + "</div>" + body + "</section>";
   }
+  // Turn a details paragraph into bullets: schedules split on " · " (times in bold), prose by sentence and semicolon.
+  function bulletList(t) {
+    if (t.indexOf(" · ") >= 0) {
+      return '<ul class="life-list sched">' + t.split(" · ").map((x) => {
+        x = x.trim().replace(/\.$/, "");
+        const m = /^(\d{1,2}:\d{2}(?:[–-]\d{1,2}:\d{2})?)\s+(.*)$/.exec(x);
+        return "<li>" + (m ? '<strong class="t">' + esc(m[1]) + "</strong> <span>" + esc(m[2]) + "</span>" : '<span class="t"></span><span>' + esc(x.charAt(0).toUpperCase() + x.slice(1)) + "</span>") + "</li>";
+      }).join("") + "</ul>";
+    }
+    const parts = t.split(/(?<=[.!?])\s+(?=[A-Z0-9₪$£"“'(])|;\s+/).map((x) => x.trim()).filter(Boolean);
+    return '<ul class="life-list">' + parts.map((x) => {
+      x = x.charAt(0).toUpperCase() + x.slice(1);
+      if (!/[.!?)”"]$/.test(x)) x += ".";
+      return "<li>" + esc(x) + "</li>";
+    }).join("") + "</ul>";
+  }
   function yearSections(p) {
     const d = DETAILS[p.id] || {};
     const out = [];
     const life = [["cal", "A typical week", d.week], ["clock", "A typical day", d.day], ["home", "Housing", d.housing], ["meals", "Meals", d.meals],
       ["candle", "Shabbat & holidays", d.shabbat], ["map", "Trips & travel", d.trips], ["users", "Staff & support", d.staff], ["check", "Included in the price", d.included]].filter((x) => x[2]);
     if (life.length) out.push(["life", "Daily life", '<div class="life-grid">' + life.map((x) =>
-      '<div class="life-item"><span class="life-ic">' + I(x[0]) + "</span><div><h4>" + x[1] + "</h4><p>" + esc(x[2]) + "</p></div></div>").join("") + "</div>"]);
+      '<div class="life-item"><span class="life-ic">' + I(x[0]) + "</span><div><h4>" + x[1] + "</h4>" + bulletList(x[2]) + "</div></div>").join("") + "</div>"]);
     const it = d.internships, tracks = d.tracks || [];
     if ((it && it.offered) || tracks.length) {
       const title = it && it.offered && tracks.length ? "Internships & tracks" : it && it.offered ? "Internships" : "Tracks";
