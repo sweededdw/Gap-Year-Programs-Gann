@@ -722,3 +722,4 @@ html, body { overscroll-behavior-x: none; }
 .life-list.sched { list-style: none; padding-left: 0; }
 .life-list.sched li { display: grid; grid-template-columns: 52px 1fr; gap: 8px; margin: 2px 0; }
 .life-list.sched .t { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; }
+.school-head .aud-tag { align-self: flex-start; width: fit-content; }

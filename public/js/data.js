@@ -922,7 +922,7 @@
       credit: false,
       israeliPeers: "some",
       focus: ["leadership", "volunteering", "army-prep", "travel"],
-      audience: "For Betar members worldwide (Masa: ages 18–30). It runs March to November, not September to June.",
+      audience: "Open to participants from around the world, ages 18–30 (Masa). It runs March to November, not September to June, so it doesn't line up with a fall start.",
       blurb:
         "A four-month Machon LeMadrichim leadership course (youth leadership, Judaism, Zionism, Jewish history), a Marva army experience, a Poland seminar, a Betar camp in Rome, volunteering at the Jabotinsky Center and other NGOs, and time in Ariel with local Betar members and Israeli schoolchildren.",
       website: "https://betar.org.il/en/shnat/",
@@ -1134,11 +1134,18 @@
     "hanoar-hatzioni": "https://i0.wp.com/www.hholamit.org.il/wp-content/uploads/2025/02/f7fc75bd-2dc0-4168-aac2-16610507d540.jpg?fit=768%2C576&ssl=1",
     "hdoz-shnat": "https://static.wixstatic.com/media/dfc88e_1b560047a5b14503af72669779dacf01~mv2.jpg/v1/fill/w_960,h_640,al_c,q_80/dfc88e_1b560047a5b14503af72669779dacf01~mv2.jpg",
   });
-  // Short "who it's for" tag shown on cards, for programs not built around a North American Sept–June year.
+  // Short eligibility/restriction label shown on cards and program headers: who can apply (region, membership,
+// aliyah, Hebrew) or, for Shnat Betar, a calendar that doesn't fit a fall start.
   const AUDIENCE_TAG = {
-    "fzy-year-course": "UK participants", "ba-torani": "UK, Europe & Canada", "ba-mta": "Australia, NZ & S. Africa · Feb–Dec",
-    "garin-tzabar": "For those making aliyah", "shnat-betar": "Runs March–November", "hanoar-hatzioni": "Movement members",
-    "hdoz-shnat": "Australia · Jan–Nov", "tzofim-sherut": "North American Tzofim", "yachad-mechinot": "Taught in Hebrew",
+    "fzy-year-course": "UK-specific",
+    "ba-torani": "UK, Europe & Canada only",
+    "ba-mta": "Australia, NZ & South Africa only",
+    "hdoz-shnat": "Australia-specific",
+    "garin-tzabar": "Must be making aliyah",
+    "hanoar-hatzioni": "Hanoar Hatzioni members",
+    "tzofim-sherut": "Tzofim members · Hebrew check",
+    "yachad-mechinot": "Taught in Hebrew",
+    "shnat-betar": "Runs March–November",
   };
   programs.forEach(function (p) { if (AUDIENCE_TAG[p.id]) p.audienceTag = AUDIENCE_TAG[p.id]; });
   Object.assign(FIELDS, {
