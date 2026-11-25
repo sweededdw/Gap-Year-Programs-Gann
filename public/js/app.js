@@ -220,12 +220,22 @@
     else if (parts[0] === "results") current = { view: quiz().done ? "results" : "quiz", id: null };
     else if (parts[0] === "start") current = { view: "quiz", id: null };
     else if (parts[0] === "swipe") current = { view: quiz().done ? "swipe" : "quiz", id: null };
-    else current = { view: quiz().done ? "results" : "quiz", id: null };
+    else current = { view: "home", id: null };
     if (current.view !== "detail") lastListView = current.view;
     render();
   }
   const NAV_FOR = { quiz: "discover", swipe: "discover", results: "discover", finder: "finder", list: "my-list", colleges: "colleges", compare: "compare" };
+  // Once the quiz is done, Discover moves to the end of the menu (the other pages come first).
+  function orderNav() {
+    const nav = document.querySelector(".topnav"), disc = nav && nav.querySelector('[data-nav="discover"]');
+    if (!disc) return;
+    const after = quiz().done ? nav.querySelector('[data-nav="my-list"]') : null;
+    if (after) { if (disc.previousElementSibling !== after) after.after(disc); }
+    else if (nav.firstElementChild !== disc) nav.prepend(disc);
+  }
   function render() {
+    orderNav();
+    if (current.view === "home") return renderHome(), navState();
     if (current.view === "detail") renderDetail(byId[current.id]);
     else if (current.view === "list") renderList();
     else if (current.view === "quiz") renderQuiz();
@@ -234,10 +244,51 @@
     else if (current.view === "compare") renderCompare();
     else if (current.view === "results") renderResults();
     else renderFinder();
+    navState();
+  }
+  function navState() {
     document.querySelectorAll("[data-nav]").forEach((a) => {
       a.classList.toggle("active", a.dataset.nav === NAV_FOR[current.view]);
     });
     document.getElementById("saved-count").textContent = Object.keys(state.saved).filter((k) => state.saved[k] && byId[k]).length;
+  }
+
+  // ---------- Home ----------
+  function renderHome() {
+    const q = quiz(), done = q.done;
+    const top = done ? matches()[0] : null;
+    const savedN = Object.keys(state.saved).filter((k) => state.saved[k] && byId[k]).length;
+    const up = upcomingDeadlines(60).slice(0, 3);
+    const nColleges = (window.GYF_COLLEGES || { colleges: [] }).colleges.length;
+    const card = (href, icon, title, text) => '<a class="home-card" href="' + href + '"><span class="home-ic">' + I(icon) + "</span><strong>" + title + "</strong><span>" + text + "</span></a>";
+    $app.innerHTML =
+      '<section class="home-hero">' +
+      '<p class="home-eyebrow">For the ' + esc(D.cycle) + " year</p>" +
+      "<h1>Find your year in Israel</h1>" +
+      '<p class="home-lede">' + D.programs.length + " programs, from yeshivot and seminaries to university, internship and service years. Answer a few questions and see your best matches.</p>" +
+      '<div class="home-ctas">' +
+      (done ? '<a class="btn primary big" href="#/results">See your top 3 →</a><a class="btn big" href="#/swipe">Keep swiping</a>'
+            : '<a class="btn primary big" href="#/start">Take the 2-minute quiz →</a><a class="btn big" href="#/browse">Browse all programs</a>') +
+      "</div></section>" +
+      (top ? '<a class="home-top card" href="#/program/' + top.p.id + '">' +
+          (top.p.photo ? '<span class="home-top-ph" style="background-image:url(\'' + esc(top.p.photo) + '\')"></span>' : '<span class="home-top-ph ph g-' + top.p.orientation + '"><span>' + esc(top.p.short) + "</span></span>") +
+          '<span class="home-top-body"><span class="small muted">Your top match</span><strong>' + esc(top.p.name) + "</strong>" +
+          (top.pct != null ? '<span class="match-pill">' + top.pct + "% match</span>" : "") + "</span></a>" : "") +
+      '<div class="home-stats">' +
+      '<div><strong>' + D.programs.length + "</strong><span>Israel gap year programs</span></div>" +
+      '<div><strong>' + nColleges + "</strong><span>colleges' gap year rules</span></div>" +
+      (up.length ? '<div><strong>' + fmtDate(up[0].date, { month: "short", day: "numeric" }) + "</strong><span class=\"home-stat-clip\">next deadline · " + esc(up[0].count > 1 ? up[0].d.label : up[0].p.name) + "</span></div>" : "") +
+      '<div><strong>' + savedN + "</strong><span>programs saved</span></div>" +
+      "</div>" +
+      '<div class="home-grid">' +
+      card(done ? "#/swipe" : "#/start", "heart", "Discover", "Swipe through your matches and save the ones you like.") +
+      card("#/compare", "sliders", "Compare", "Put up to three programs head to head.") +
+      card("#/colleges", "check", "Colleges", "Track your colleges and their gap year deferral rules.") +
+      card("#/my-list", "cal", "Saved", "Deadlines, essays and documents for each program you save.") +
+      "</div>" +
+      (up.length ? '<section class="home-up"><h2>Coming up</h2><ul class="dl-list">' + up.map((it) =>
+          '<li><a href="#/program/' + it.p.id + '"><span class="dl-date">' + fmtDate(it.date, { month: "short", day: "numeric" }) + '</span><span class="dl-name">' + esc(it.count > 1 ? it.d.label + " (" + it.count + " programs)" : it.p.name) + "</span>" + countdown(it.date) + "</a></li>").join("") +
+          '</ul><a class="small" href="#/browse">All programs and deadlines →</a></section>' : "");
   }
 
   // ---------- Finder ----------
