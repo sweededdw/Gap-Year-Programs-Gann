@@ -505,73 +505,119 @@
     const ids = cmpList();
     const P = ids.map((id) => byId[id]);
     const prefs = quiz().answers.prefs || {};
+    const answered = Object.keys(prefs).filter((k) => prefs[k] && prefs[k].want);
+    const showSame = !!state.cmpSame;
+    const n = P.length;
     const opts = (sel) => '<option value="">' + (sel ? "Change program…" : "Add a program…") + "</option>" +
       TYPE_ORDER.map((ty) => '<optgroup label="' + esc(TYPE_PLURAL[ty]) + '">' + D.programs.filter((q) => q.type === ty).map((q) => '<option value="' + q.id + '"' + (q.id === sel ? " selected" : "") + ">" + esc(q.name) + "</option>").join("") + "</optgroup>").join("");
     const slots = [];
     for (let i = 0; i < CMP_MAX; i++) slots.push(P[i] || null);
-    const head = '<tr><th class="rowh"></th>' + slots.map((q, i) => '<th class="cmp-col">' +
-      (q ? (q.photo ? '<div class="cmp-ph" style="background-image:url(\'' + esc(q.photo) + '\')"></div>' : '<div class="cmp-ph ph g-' + q.orientation + '"><span>' + esc(q.short) + "</span></div>") +
-        typeBadge(q) + '<a class="cmp-name" href="#/program/' + q.id + '">' + esc(q.name) + "</a>" + (q.audienceTag ? '<span class="aud-tag">' + esc(q.audienceTag) + "</span>" : "") : '<div class="cmp-ph empty">' + (i + 1) + "</div>") +
-      '<select class="select sm" data-act="cmp-pick" data-i="' + i + '" aria-label="Program ' + (i + 1) + '">' + opts(q && q.id) + "</select>" +
-      (q ? '<button class="btn ghost sm" data-act="cmp-remove" data-i="' + i + '">Remove</button>' : "") + "</th>").join("") + "</tr>";
-    // row helpers. lead: "max" | "min" | null decides which cell is bold (the leader), Baseball-Reference style.
-    const row = (label, cells, lead, vals) => {
-      let best = null;
-      if (lead && vals) { const v = vals.filter((x) => x != null); if (v.length > 1 && new Set(v).size > 1) best = lead === "min" ? Math.min.apply(null, v) : Math.max.apply(null, v); }
-      return '<tr><th class="rowh" scope="row">' + label + "</th>" + slots.map((q, i) => "<td" + (q && best != null && vals[i] === best ? ' class="lead"' : "") + ">" + (q ? cells(q, i) : "") + "</td>").join("") + "</tr>";
+    const wins = slots.map(() => []);   // per column: labels of rows it leads outright
+    let hidden = 0;
+    // One row. spec.vals = numbers for ranking (null = n/a); spec.lead = "max" | "min";
+    // spec.tag = word on the winner chip; spec.win = what the scoreboard says the winner is best at.
+    const row = (label, cell, spec) => {
+      spec = spec || {};
+      const texts = slots.map((q, i) => (q ? cell(q, i) : ""));
+      const live = texts.filter((t, i) => slots[i]);
+      const same = n > 1 && live.every((t) => t === live[0]);
+      if (same && !showSame && !spec.keep) { hidden++; return ""; }
+      let leader = -1;
+      if (spec.lead && spec.vals) {
+        const v = spec.vals.map((x, i) => (slots[i] ? x : null));
+        const ok = v.filter((x) => x != null);
+        if (ok.length > 1) {
+          const best = spec.lead === "min" ? Math.min.apply(null, ok) : Math.max.apply(null, ok);
+          const at = v.map((x, i) => (x === best ? i : -1)).filter((i) => i >= 0);
+          if (at.length === 1) { leader = at[0]; if (spec.win) wins[leader].push(spec.win); }
+        }
+      }
+      return '<tr><th class="rowh" scope="row">' + label + "</th>" + slots.map((q, i) =>
+        "<td" + (i === leader ? ' class="lead"' : leader >= 0 && q ? ' class="lose"' : "") + ">" + texts[i] +
+        (i === leader && spec.tag ? '<span class="win-tag">' + spec.tag + "</span>" : "") + "</td>").join("") + "</tr>";
     };
-    const group = (title, sub) => '<tr class="grp"><th colspan="' + (CMP_MAX + 1) + '">' + title + (sub ? ' <span class="small muted">' + sub + "</span>" : "") + "</th></tr>";
+    const group = (title, sub) => '<tr class="grp"><th colspan="' + (CMP_MAX + 1) + '">' + title + (sub ? ' <span class="grp-sub">' + sub + "</span>" : "") + "</th></tr>";
     const v = (fn) => slots.map((q) => (q ? fn(q) : null));
     const tm = (q) => TIME[q.id];
-    const nd = (q) => { const n = nextDeadline(q); return n.kind === "date" ? fmtDate(n.d.date, { month: "short", day: "numeric", year: "numeric" }) + " " + countdown(n.d.date) : n.kind === "rolling" ? "Rolling" : '<span class="muted">Not posted</span>'; };
     const det = (q) => DETAILS[q.id] || {};
-    const clip = (t) => (t ? '<span class="clip">' + esc(t) + "</span>" : '<span class="muted">Not published</span>');
-    let body = "";
-    if (P.length) {
-      body += group("Basics") +
+    const nd = (q) => { const x = nextDeadline(q); return x.kind === "date" ? fmtDate(x.d.date, { month: "short", day: "numeric" }) + " " + countdown(x.d.date) : x.kind === "rolling" ? "Rolling" : '<span class="muted">Not posted</span>'; };
+    const PEERS = { none: 1, some: 2, integrated: 3 };
+    let basics = "", time = "", ratings = "", more = "";
+    if (n) {
+      basics =
+        row("Tuition", (q) => '<span title="' + esc(q.costText) + '">' + esc(compactCost(q)) + "</span>", { lead: "min", vals: v((q) => q.costUSD), tag: "Lowest", win: "Lowest tuition", keep: true }) +
+        row("Length", (q) => esc(q.length.split(" · ")[0].split(" (")[0])) +
+        row("Next deadline", nd) +
+        row("Israeli peers", (q) => esc(L.israeliPeers[q.israeliPeers]), { lead: "max", vals: v((q) => PEERS[q.israeliPeers]), tag: "Most", win: "Most Israeli contact" }) +
+        row("College credit", (q) => (q.credit === true ? "Yes" : q.credit === false ? "No" : '<span class="muted">Not researched</span>'), { lead: "max", vals: v((q) => (q.credit === true ? 1 : q.credit === false ? 0 : null)), win: "College credit" }) +
+        row("Semester option", (q) => (q.semesterOption ? "Yes" : "No"), { lead: "max", vals: v((q) => (q.semesterOption ? 1 : 0)), win: "Semester option" }) +
         row("Community", (q) => esc(L.orientation[q.orientation])) +
         row("Setting", (q) => esc(L.gender[q.gender])) +
-        row("Where", (q) => esc(q.base.split(" (")[0])) +
-        row("Length", (q) => esc(q.length.split(" · ")[0].split(" (")[0])) +
-        row("Tuition", (q) => esc(compactCost(q)) + '<div class="small muted">' + esc(shortCost(q)) + "</div>", "min", v((q) => q.costUSD)) +
-        row("Next deadline", nd) +
-        row("Israeli peers", (q) => esc(L.israeliPeers[q.israeliPeers])) +
-        row("College credit", (q) => (q.credit === true ? "Yes" : q.credit === false ? "No" : '<span class="muted">Not researched</span>')) +
-        row("Semester option", (q) => (q.semesterOption ? "Yes" : "No"));
-      body += group("Time", "approx. hours a week · bold = most in the row · ≈ = our estimate") +
-        TCATS.map((c) => row('<i class="key c-' + c[0] + '"></i>' + c[1], (q) => {
+        row("Where", (q) => esc(q.base.split(" (")[0]));
+      // time: bars scaled to the row's own max so the winner's bar is the longest
+      time = TCATS.map((c) => {
+        const vals = v((q) => (tm(q) ? tm(q)[c[0]] || 0 : null));
+        const mx = Math.max.apply(null, vals.filter((x) => x != null).concat([1]));
+        return row('<i class="key c-' + c[0] + '"></i>' + c[1], (q) => {
           const t = tm(q); if (!t) return '<span class="muted">Not enough info</span>';
           const x = t[c[0]] || 0;
-          return '<span class="cval">' + (x ? tVal(t, c[0]) : "0") + '</span><span class="ttrack sm"><span class="tbar c-' + c[0] + '" style="width:' + Math.min(100, (x / TIME_SCALE) * 100).toFixed(1) + '%" data-tip="' + esc(q.short + " · " + c[1] + ": " + tVal(t, c[0])) + '"></span></span>';
-        }, "max", v((q) => (tm(q) ? tm(q)[c[0]] || 0 : null)))).join("") +
-        row("<strong>Total structured time</strong>", (q) => (tm(q) ? "<strong>≈" + tTotal(tm(q)) + " h</strong>" : '<span class="muted">—</span>'), "max", v((q) => (tm(q) ? tTotal(tm(q)) : null))) +
-        row("Week split", (q) => (tm(q) ? stackBar(tm(q), "tstack-sm") : ""));
-      const answered = Object.keys(prefs).some((k) => prefs[k] && prefs[k].want);
-      body += group("Ratings (1–5)", answered ? "bold = closest to your quiz answer" : "bold = highest") +
-        Object.keys(L.categories).map((k) => {
-          const c = L.categories[k], want = prefs[k] && prefs[k].want;
-          const vals = v((q) => (q.profile[k] ? (want ? -Math.abs(q.profile[k].v - want) : q.profile[k].v) : null));
-          return row(esc(c.label) + (want ? '<div class="small muted">you: ' + want + "</div>" : ""), (q) => {
-            const rt = q.profile[k];
-            if (!rt) return '<span class="muted">Unknown</span>';
-            return '<span class="rdots">' + [1, 2, 3, 4, 5].map((n) => '<span class="rdot' + (n <= rt.v ? " on" : "") + '"></span>').join("") + '</span> <span class="cval">' + (rt.est ? "≈" : "") + rt.v + "</span>";
-          }, "max", vals);
-        }).join("");
-      body += group("The year") +
+          return '<span class="cval">' + (x ? tVal(t, c[0]) : "0 h") + '</span><span class="cbar"><span class="tbar c-' + c[0] + '" style="width:' + ((x / mx) * 100).toFixed(1) + '%" data-tip="' + esc(q.short + " · " + c[1] + ": " + tVal(t, c[0]) + " a week") + '"></span></span>';
+        }, c[0] === "other" ? {} : { lead: "max", vals, tag: "Most", win: "Most " + c[1].toLowerCase() });
+      }).join("") +
+        row("Week split", (q) => (tm(q) ? stackBar(tm(q), "tstack-sm") + '<span class="small muted">≈' + tTotal(tm(q)) + " h a week</span>" : '<span class="muted">—</span>'), { keep: true });
+      const rkeys = answered.length ? answered : [];
+      const ratingRow = (k) => {
+        const c = L.categories[k], want = prefs[k] && prefs[k].want;
+        return row(esc(c.label) + (want ? '<div class="small muted">you: ' + want + "</div>" : ""), (q) => {
+          const rt = q.profile[k];
+          if (!rt) return '<span class="muted">Unknown</span>';
+          return '<span class="rdots">' + [1, 2, 3, 4, 5].map((x) => '<span class="rdot' + (x <= rt.v ? " on" : "") + '"></span>').join("") + '</span> <span class="cval">' + (rt.est ? "≈" : "") + rt.v + "</span>";
+        }, want ? { lead: "max", vals: v((q) => (q.profile[k] ? -Math.abs(q.profile[k].v - want) : null)), tag: "Closest to you", win: c.label + " (your pick)" } : {});
+      };
+      ratings = rkeys.map(ratingRow).join("");
+      const otherKeys = Object.keys(L.categories).filter((k) => rkeys.indexOf(k) < 0);
+      const clip = (t) => (t ? '<span class="clip">' + esc(t) + "</span>" : '<span class="muted">Not published</span>');
+      more =
+        otherKeys.map(ratingRow).join("") +
         row("Housing", (q) => clip(det(q).housing)) +
         row("Meals", (q) => clip(det(q).meals)) +
         row("Internships", (q) => { const it = det(q).internships; return it && it.offered ? "Yes" + (it.hours ? '<div class="small muted">' + esc(it.hours) + "</div>" : "") : it && it.offered === false ? "No" : '<span class="muted">Not stated</span>'; }) +
-        row("Tracks", (q) => { const tr = det(q).tracks || []; return tr.length ? esc(tr.map((x) => x.name).join(", ")) : '<span class="muted">—</span>'; });
-      body += group("Applying") +
+        row("Tracks", (q) => { const tr = det(q).tracks || []; return tr.length ? esc(tr.map((x) => x.name).join(", ")) : '<span class="muted">—</span>'; }) +
         row("Interview", (q) => (q.app.interview.required === true ? "Yes" : q.app.interview.required === false ? "No" : '<span class="muted">Not stated</span>')) +
-        row("Deposit", (q) => (q.app.fees.deposit ? esc(q.app.fees.deposit) : '<span class="muted">Not published</span>')) +
-        row("Application fee", (q) => (q.app.fees.application ? esc(q.app.fees.application) : '<span class="muted">Not published</span>'));
+        row("Deposit", (q) => (q.app.fees.deposit ? esc(q.app.fees.deposit) : '<span class="muted">Not published</span>'));
     }
+    const ms = n ? matches() : [];
+    const matchPct = (q) => { const m = ms.find((x) => x.p.id === q.id); return m && m.pct != null && answered.length ? m.pct : null; };
+    const pcts = slots.map((q) => (q ? matchPct(q) : null));
+    const bestPct = Math.max.apply(null, pcts.filter((x) => x != null).concat([-1]));
+    const soloBest = pcts.filter((x) => x === bestPct).length === 1;
+    const most = Math.max.apply(null, wins.map((w) => w.length));
+    const head = '<tr class="cmp-headrow"><th class="rowh"></th>' + slots.map((q, i) => '<th class="cmp-col">' +
+      (q ? '<div class="cmp-top">' + (q.photo ? '<div class="cmp-ph" style="background-image:url(\'' + esc(q.photo) + '\')"></div>' : '<div class="cmp-ph ph g-' + q.orientation + '"><span>' + esc(q.short) + "</span></div>") +
+          '<div class="cmp-id"><a class="cmp-name" href="#/program/' + q.id + '">' + esc(q.name) + "</a>" + typeBadge(q) + "</div>" +
+          '<button class="cmp-x" data-act="cmp-remove" data-i="' + i + '" aria-label="Remove ' + esc(q.name) + '">' + I("x") + "</button></div>"
+        : '<div class="cmp-empty">Add a program</div>') +
+      '<select class="select sm" data-act="cmp-pick" data-i="' + i + '" aria-label="Program ' + (i + 1) + '">' + opts(q && q.id) + "</select></th>").join("") + "</tr>";
+    const board = n > 1 ? '<tr class="cmp-board"><th class="rowh">Head to head</th>' + slots.map((q, i) => {
+      if (!q) return "<td></td>";
+      const w = wins[i], top = w.length === most && most > 0 && wins.filter((x) => x.length === most).length === 1;
+      const p = pcts[i];
+      return '<td class="' + (top ? "champ" : "") + '"><div class="score"><span class="score-n">' + w.length + '</span><span class="score-l">row' + (w.length === 1 ? "" : "s") + " won</span>" + (top ? '<span class="win-tag">Leads</span>' : "") + "</div>" +
+        (p != null ? '<div class="small">' + (p === bestPct && soloBest ? "<strong>" + p + "% match</strong> · best for you" : p + "% match") + "</div>" : "") +
+        (w.length ? '<div class="best-at">Best at: ' + esc(w.slice(0, 3).join(" · ")) + (w.length > 3 ? " +" + (w.length - 3) : "") + "</div>" : '<div class="best-at muted">No outright wins</div>') + "</td>";
+    }).join("") + "</tr>" : "";
     $app.innerHTML =
-      '<div class="browse-head"><div><h1>Compare programs</h1><p class="muted">Pick up to three programs to see them head to head. Bold marks the leader in each row.</p></div></div>' +
-      '<div class="card table-wrap cmp-wrap"><table class="cmp"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>" +
-      (P.length ? "" : '<div class="card empty" style="margin-top:12px">Choose programs above, or tap "Compare" on any program page. <a href="#/results">Compare your Top 3</a>.</div>') +
-      (P.length ? '<p class="small muted" style="margin-top:10px">Share this comparison: <a href="#/compare/' + ids.join(",") + '">link</a></p>' : "");
+      '<div class="browse-head cmp-headline"><div><h1>Compare programs</h1><p class="muted">Up to three programs head to head. The winner of each row is highlighted.</p></div>' +
+      (n > 1 ? '<label class="check small"><input type="checkbox" data-act="cmp-same"' + (showSame ? " checked" : "") + "> Show rows where they're the same</label>" : "") + "</div>" +
+      '<div class="card table-wrap cmp-wrap"><table class="cmp"><thead>' + head + "</thead><tbody>" + board +
+      (n ? group("Basics") + basics + group("Time", "approx. hours a week · ≈ = our estimate") + time +
+        (ratings ? group("Your quiz picks", "ratings 1–5") + ratings : "") : "") +
+      "</tbody></table></div>" +
+      (n ? '<details class="cmp-more"><summary>More details: ' + (answered.length ? "other ratings, " : "ratings, ") + "housing, meals, internships, applying</summary>" +
+        '<div class="card table-wrap cmp-wrap"><table class="cmp"><tbody>' + more + "</tbody></table></div></details>" : "") +
+      (n && hidden ? '<p class="small muted" style="margin-top:8px">' + hidden + " row" + (hidden === 1 ? " is" : "s are") + " hidden because the programs match.</p>" : "") +
+      (n ? "" : '<div class="card empty" style="margin-top:12px">Choose programs above, or tap "Compare" on any program page. <a href="#/results">Compare your Top 3</a>.</div>') +
+      (n ? '<p class="small muted" style="margin-top:8px">Share this comparison: <a href="#/compare/' + ids.join(",") + '">link</a></p>' : "");
   }
 
   // ---------- "The year" sections: daily life, internships & tracks, student stories ----------
@@ -1040,6 +1086,7 @@
     a.prefs = a.prefs || {};
     a.field = a.field || [];
     a.city = a.city || [];
+    a.any = a.any || {}; // groups where the student explicitly chose "Any" / "Don't care" / "Skip"
     return q;
   }
 
@@ -1107,9 +1154,10 @@
   }
 
   function choiceGroup(key, def, picked, act) {
+    const anyOn = !picked.length && !!quiz().answers.any[key]; // nothing is pre-selected; "Any" lights up once you pick it
     return '<div class="qgroup"><h3>' + esc(def.q) + "</h3>" + (def.sub ? '<p class="small muted">' + esc(def.sub) + "</p>" : "") +
       '<div class="qchips">' +
-      '<button class="qchip any' + (!picked.length ? " on" : "") + '" aria-pressed="' + !picked.length + '" data-act="' + act + '" data-key="' + key + '" data-value="__any">' + (def.anyLabel || "Any") + "</button>" +
+      '<button class="qchip any' + (anyOn ? " on" : "") + '" aria-pressed="' + anyOn + '" data-act="' + act + '" data-key="' + key + '" data-value="__any">' + (def.anyLabel || "Any") + "</button>" +
       def.options.map((o) => {
         const on = picked.indexOf(o[0]) >= 0;
         return '<button class="qchip' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="' + act + '" data-key="' + key + '" data-value="' + o[0] + '">' + esc(o[2]) + "</button>";
@@ -1125,7 +1173,7 @@
         return '<button class="pnum' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="pref-pick" data-key="' + k + '" data-value="' + n + '">' + n + "</button>";
       }).join("") +
       '</div><span class="pend">' + esc(row[2]) + "</span></div>" +
-      '<button class="popt dc' + (!pref.want ? " on" : "") + '" aria-pressed="' + !pref.want + '" data-act="pref-pick" data-key="' + k + '" data-value="0">Don\'t care</button>' +
+      '<button class="popt dc' + (!pref.want && pref.dc ? " on" : "") + '" aria-pressed="' + (!pref.want && !!pref.dc) + '" data-act="pref-pick" data-key="' + k + '" data-value="0">Don\'t care</button>' +
       "</div>";
   }
 
@@ -1147,7 +1195,7 @@
     let body;
     if (q.step === 1) {
       body = "<h1>The basics</h1>" +
-        '<p class="muted">These rule programs out. Leave a group on "Any" if it doesn\'t matter.</p>' +
+        '<p class="muted">These rule programs out. Pick "Any" or skip a group if it doesn\'t matter.</p>' +
         Object.keys(DEAL).map((k) => choiceGroup(k, DEAL[k], a.deal[k] || [], "deal-pick") +
           (k === "orientation" ? '<div class="qgroup"><h3>Tuition budget</h3>' + budgetSlider("budget-range", a.deal.max, "Maximum tuition") +
             '<p class="small muted" style="margin-top:4px">Programs that haven\'t posted a US-dollar price stay in.</p></div>' : "")).join("");
@@ -1380,12 +1428,14 @@
     const q = quiz();
     const a = q.answers;
     const k = el && el.dataset.key, v = el && el.dataset.value;
-    if (v === "__any") { // "Any" / "No preference" clears that group
+    if (v === "__any") { // "Any" / "Don't care" / "Skip": an explicit choice that clears the group
+      a.any[k] = true;
       if (act === "deal-pick") a.deal[k] = [];
       else if (act === "field-pick") a.field = [];
       else if (act === "city-pick") a.city = [];
       save(); const y0 = window.scrollY; render(); window.scrollTo(0, y0); return;
     }
+    if (/^(deal|field|city)-pick$/.test(act)) a.any[k] = false;
     if (act === "deal-pick") {
       const def = DEAL[k];
       let arr = (a.deal[k] || []).slice();
@@ -1395,7 +1445,7 @@
       a.deal[k] = arr;
     } else if (act === "pref-pick") {
       const cur = a.prefs[k] && a.prefs[k].want;
-      a.prefs[k] = !+v || cur === +v ? { want: 0, weight: 0 } : { want: +v, weight: 2 };
+      a.prefs[k] = !+v ? { want: 0, weight: 0, dc: true } : cur === +v ? { want: 0, weight: 0 } : { want: +v, weight: 2 };
     }
     else if (act === "city-pick") { const i = a.city.indexOf(v); if (i >= 0) a.city.splice(i, 1); else a.city.push(v); }
     else if (act === "field-pick") { const i = a.field.indexOf(v); if (i >= 0) a.field.splice(i, 1); else { if (a.field.length >= 3) a.field.shift(); a.field.push(v); } }
@@ -1536,6 +1586,7 @@
     const act = el.dataset.act;
     if (act === "toggle") { filters()[el.dataset.key] = el.checked; save(); render(); }
     else if (act === "sort") { filters().sort = el.value; save(); render(); }
+    else if (act === "cmp-same") { state.cmpSame = el.checked; save(); render(); }
     else if (act === "cmp-pick") {
       const l = cmpList(), i = +el.dataset.i;
       if (el.value) { const at = l.indexOf(el.value); if (at >= 0) l.splice(at, 1); l.splice(Math.min(i, l.length), i < l.length ? 1 : 0, el.value); }
