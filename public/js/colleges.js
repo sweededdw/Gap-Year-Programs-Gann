@@ -846,17 +846,17 @@ window.GYF_COLLEGES = {
   {
    "name": "University of Oregon",
    "deferral": "case",
-   "how": "Submit Intent to Register and enrollment deposit by May 1; by June 30 submit a written gap-year statement and the Gap Year Deferral Agreement and Proposal through the online form.",
-   "deadline": "June 30 (deferral agreement and proposal; deposit by May 1)",
+   "how": "Submit your intent to register and deposit by May 1, then the deferral agreement and gap-year proposal. Waitlist admits aren't eligible.",
+   "deadline": "June 30",
    "deadlineDate": "2027-06-30",
-   "length": "Up to one year; longer than one calendar year requires a new application.",
+   "length": "Up to one academic year.",
    "deposit": true,
-   "creditLevel": "unclear",
-   "credit": "The page says a gap-year activity may allow academic credit, but does not state how credits earned during deferral are treated for admission or transfer.",
+   "creditLevel": "none",
+   "credit": "Enrolling at another college or earning any college credit, even part time or through a gap year program, means applying as a transfer and losing first-year scholarship eligibility.",
    "grades": "UO will outline academic conditions, typically maintaining the admitted GPA if it does not already have the final high-school transcript; significant later grade drops may make a student ineligible.",
    "israel": null,
    "noApplyingElsewhere": true,
-   "source": "https://www.uoregon.edu/admissions/operations/defer-or-gap-year/",
+   "source": "https://admissions.uoregon.edu/gap-year",
    "quote": "Requesting and accepting a deferral is a commitment to enroll at UO in a future term. Students who plan to apply to other colleges or universities during the gap year should not request a deferral.",
    "hillel": {
     "rank": 42,
@@ -953,6 +953,28 @@ window.GYF_COLLEGES = {
    }
   },
   {
+   "name": "Towson University",
+   "deferral": "no",
+   "how": "Towson says newly admitted students who don't register for their first term must complete a new application. Deferring also cancels fall financial aid offers.",
+   "deadline": null,
+   "deadlineDate": null,
+   "length": null,
+   "deposit": null,
+   "creditLevel": "unclear",
+   "credit": null,
+   "grades": null,
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "source": "https://www.towson.edu/registrar/reenrollment/requirements.html",
+   "hillel": {
+    "rank": 47,
+    "jewish": 1700,
+    "type": "Public",
+    "name": "Towson University"
+   }
+  },
+  {
    "name": "Brown University",
    "deferral": "case",
    "how": "Accept Brown's offer, then email admission@brown.edu to request a deferral in writing; the Board of Admission reviews each request. Waitlist admits can also ask.",
@@ -1038,6 +1060,29 @@ window.GYF_COLLEGES = {
     "type": "Public",
     "name": "Temple University, Main and Ambler"
    }
+  },
+  {
+   "name": "San Francisco State University",
+   "deferral": "no",
+   "how": "SF State says that if you don't enroll in your admitted term you must reapply and meet the requirements in effect then.",
+   "deadline": null,
+   "deadlineDate": null,
+   "length": null,
+   "deposit": null,
+   "creditLevel": "unclear",
+   "credit": null,
+   "grades": null,
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "source": "https://future.sfsu.edu/admissions-covid-19-faq",
+   "hillel": {
+    "rank": 55,
+    "jewish": 1500,
+    "type": "Public",
+    "name": "San Francisco State University"
+   },
+   "note": "From SF State's admissions FAQ; confirm with Undergraduate Admissions."
   },
   {
    "name": "Queen's University",
@@ -1369,6 +1414,28 @@ window.GYF_COLLEGES = {
    }
   },
   {
+   "name": "University of South Florida",
+   "deferral": "yes",
+   "how": "Request a deferment through the Office of Admissions; it doesn't change your campus assignment.",
+   "deadline": null,
+   "deadlineDate": null,
+   "length": "Up to one year.",
+   "deposit": null,
+   "creditLevel": "unclear",
+   "credit": null,
+   "grades": null,
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "source": "https://www.usf.edu/admissions/freshmen/next-steps/understanding-your-decision.aspx",
+   "hillel": {
+    "rank": 73,
+    "jewish": 1200,
+    "type": "Public",
+    "name": "University of South Florida"
+   }
+  },
+  {
    "name": "Long Island University, Brooklyn Campus",
    "deferral": "yes",
    "how": "Contact an admissions recruiter to complete the deferral.",
@@ -1436,13 +1503,13 @@ window.GYF_COLLEGES = {
   {
    "name": "University of British Columbia",
    "deferral": "yes",
-   "how": "Accept your offer and meet its conditions, then email the deferred admission request form to admissions.inquiry@ubc.ca.",
-   "deadline": "July 1 (UBC Vancouver; August 15 for Okanagan)",
+   "how": "Submit the deferred admission request; eligible reasons include a planned gap year. Register for first-year courses while it's pending, since approval isn't guaranteed.",
+   "deadline": "July 1 (Vancouver); August 15 (Okanagan)",
    "deadlineDate": "2027-07-01",
-   "length": null,
+   "length": "One year (two for mandatory military service).",
    "deposit": null,
-   "creditLevel": "unclear",
-   "credit": null,
+   "creditLevel": "none",
+   "credit": "You can't defer if you plan to attend another institution during the year.",
    "grades": null,
    "israel": null,
    "noApplyingElsewhere": null,
@@ -1500,14 +1567,14 @@ window.GYF_COLLEGES = {
   {
    "name": "Ithaca College",
    "deferral": "case",
-   "how": "Submit the Request a Gap Year form in IC Connect, including reasons and tentative plans.",
+   "how": "Submit the Request a Gap Year form in the IC Connect portal with your reasons and tentative plans; reviewed case by case.",
    "deadline": "May 15",
    "deadlineDate": "2027-05-15",
-   "length": "A semester or year",
+   "length": "A semester or a year.",
    "deposit": null,
    "creditLevel": "unclear",
    "credit": null,
-   "grades": "Students must still submit a final high school transcript at the end of the academic year in which they were first offered admission.",
+   "grades": "An Ithaca College scholarship awarded at admission carries into your new term; need-based aid is re-evaluated.",
    "israel": null,
    "noApplyingElsewhere": null,
    "source": "https://www.ithaca.edu/admission/undergraduate-admission/admitted-students/gap-semester-or-year",
@@ -1786,16 +1853,16 @@ window.GYF_COLLEGES = {
   {
    "name": "Skidmore College",
    "deferral": "yes",
-   "how": "Email deanofadmissions@skidmore.edu.",
+   "how": "Complete the enrollment process, then email deanofadmissions@skidmore.edu with a plan for the year. A new $500 nonrefundable deposit is requested the January after approval.",
    "deadline": "May 15",
    "deadlineDate": "2027-05-15",
-   "length": "One year",
-   "deposit": null,
-   "creditLevel": "unclear",
-   "credit": null,
+   "length": "One year.",
+   "deposit": true,
+   "creditLevel": "limited",
+   "credit": "You may take courses elsewhere but can't enroll as a degree candidate at another institution.",
    "grades": null,
    "israel": null,
-   "noApplyingElsewhere": null,
+   "noApplyingElsewhere": true,
    "source": "https://www.skidmore.edu/admissions/faqs.php",
    "quote": "If you've decided to enrich your education with a gap year experience, you can request a one-year deferral by emailing deanofadmissions@skidmore.edu by May 15.",
    "hillel": {
@@ -1803,7 +1870,8 @@ window.GYF_COLLEGES = {
     "jewish": 500,
     "type": "Private",
     "name": "Skidmore College"
-   }
+   },
+   "note": "Older Skidmore catalogs say June 1; current pages say May 15."
   },
   {
    "name": "Pace University",
@@ -2840,15 +2908,6 @@ window.GYF_COLLEGES = {
    }
   },
   {
-   "name": "Towson University",
-   "hillel": {
-    "rank": 47,
-    "jewish": 1700,
-    "type": "Public",
-    "name": "Towson University"
-   }
-  },
-  {
    "name": "University at Albany",
    "hillel": {
     "rank": 49,
@@ -2876,30 +2935,12 @@ window.GYF_COLLEGES = {
    }
   },
   {
-   "name": "San Francisco State University",
-   "hillel": {
-    "rank": 55,
-    "jewish": 1500,
-    "type": "Public",
-    "name": "San Francisco State University"
-   }
-  },
-  {
    "name": "Concordia University, Sir George and Loyola Campus",
    "hillel": {
     "rank": 71,
     "jewish": 1200,
     "type": "Public",
     "name": "Concordia University, Sir George and Loyola Campus"
-   }
-  },
-  {
-   "name": "University of South Florida",
-   "hillel": {
-    "rank": 73,
-    "jewish": 1200,
-    "type": "Public",
-    "name": "University of South Florida"
    }
   },
   {
