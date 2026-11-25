@@ -202,16 +202,16 @@
     { key: "city", title: "Where", options: L.city, match: (p, v) => p.cities.indexOf(v) >= 0 },
     { key: "israeliPeers", title: "Israeli peers", options: L.israeliPeers, match: (p, v) => p.israeliPeers === v },
     { key: "gender", title: "Setting", options: L.gender, match: (p, v) => p.gender === v },
-    {
-      key: "budget", title: "Tuition (USD)",
-      options: { u15: "Under $15k", "15-25": "$15k–25k", "25-35": "$25k–35k", o35: "$35k+" },
-      match: (p, v) => {
-        if (p.costUSD == null) return true; // unpublished prices stay visible; flagged on the card
-        const c = p.costUSD;
-        return v === "u15" ? c < 15000 : v === "15-25" ? c >= 15000 && c < 25000 : v === "25-35" ? c >= 25000 && c < 35000 : c >= 35000;
-      },
-    },
   ];
+  // Tuition slider (quiz + Browse): $10k–$40k in $1k steps; the top position means no limit.
+  const BUDGET_MIN = 10000, BUDGET_TOP = 40000;
+  const budgetLabel = (v) => (!v ? "No limit" : "Up to $" + Number(v).toLocaleString("en-US"));
+  const budgetValue = (el) => (+el.value >= BUDGET_TOP ? null : +el.value);
+  function budgetSlider(act, val, label) {
+    return '<div class="budget-slider"><div class="bs-val">' + budgetLabel(val) + "</div>" +
+      '<input type="range" class="range" min="' + BUDGET_MIN + '" max="' + BUDGET_TOP + '" step="1000" value="' + (val || BUDGET_TOP) + '" data-act="' + act + '" aria-label="' + esc(label) + '" aria-valuetext="' + budgetLabel(val) + '">' +
+      '<div class="bs-ends small muted"><span>$10k</span><span>$25k</span><span>No limit</span></div></div>';
+  }
   function filters() {
     const f = (state.filters = state.filters || {});
     FILTER_GROUPS.forEach((g) => (f[g.key] = f[g.key] || []));
@@ -226,6 +226,7 @@
         if (sel.length && !sel.some((v) => g.match(p, v))) return false;
       }
       if (f.type && p.type !== f.type) return false;
+      if (f.maxCost && p.costUSD != null && p.costUSD > f.maxCost) return false;
       if (f.semester && !p.semesterOption) return false;
       if (f.credit && !p.credit) return false;
       if (q && (p.name + " " + p.operator + " " + p.base + " " + p.blurb).toLowerCase().indexOf(q) < 0) return false;
@@ -330,7 +331,7 @@
     const f = filters();
     const list = filtered();
     const up = upcomingDeadlines(45);
-    const activeFilters = FILTER_GROUPS.reduce((n, g) => n + f[g.key].length, 0) + (f.semester ? 1 : 0) + (f.credit ? 1 : 0);
+    const activeFilters = FILTER_GROUPS.reduce((n, g) => n + f[g.key].length, 0) + (f.semester ? 1 : 0) + (f.credit ? 1 : 0) + (f.maxCost ? 1 : 0);
     const typeCount = (t) => D.programs.filter((p) => p.type === t).length;
     const filterSummary = (f.type ? TYPE_PLURAL[f.type] : "All types") + (activeFilters ? " · " + activeFilters + " more" : "") + " · " + list.length + " shown";
     $app.innerHTML =
@@ -357,6 +358,7 @@
               '<button class="fchip' + (f[g.key].indexOf(k) >= 0 ? " on" : "") + '" aria-pressed="' + (f[g.key].indexOf(k) >= 0) + '" data-act="filter" data-group="' + g.key + '" data-value="' + k + '">' + esc(g.options[k]) + "</button>"
             ).join("") + "</div></div>"
           ).join("") +
+          '<div class="fgroup"><h3>Tuition (USD)</h3>' + budgetSlider("cost-range", f.maxCost, "Maximum tuition") + "</div>" +
           '<div class="fgroup"><h3>Must have</h3><div class="fchips">' +
           '<label class="check"><input type="checkbox" data-act="toggle" data-key="semester"' + (f.semester ? " checked" : "") + "> Semester option</label>" +
           '<label class="check"><input type="checkbox" data-act="toggle" data-key="credit"' + (f.credit ? " checked" : "") + "> College credit</label></div></div>" +
@@ -816,13 +818,10 @@
     ["peers", "Americans", "Israelis"],
     ["adventure", "Chill", "Lots"],
   ];
-  const BUDGET_MAX = { u15: 15000, "15-25": 25000, "25-35": 35000, o35: Infinity };
   // Screen 1: dealbreakers. Anything left blank doesn't filter.
   const DEAL = {
     orientation: { q: "Which communities feel right?", multi: true,
       options: [["pluralistic", "", "Pluralistic"], ["conservative", "", "Conservative"], ["reform", "", "Reform"], ["mo-coed", "", "Modern Orthodox"], ["orthodox", "", "Yeshiva / seminary"], ["secular", "", "Secular"]] },
-    budget: { q: "Tuition budget", multi: false,
-      options: [["u15", "", "Up to $15k"], ["15-25", "", "Up to $25k"], ["25-35", "", "Up to $35k"], ["o35", "", "No limit"]] },
     gender: { q: "Setting", multi: false, options: [["coed", "", "Co-ed"], ["men", "", "Men's"], ["women", "", "Women's"]] },
     hebrew: { q: "Your Hebrew right now", multi: false, anyLabel: "Skip",
       options: [["none", "", "None yet"], ["basic", "", "Basics"], ["conversational", "", "Conversational"], ["fluent", "", "Fluent"]] },
@@ -840,6 +839,10 @@
     if (!q || q.v !== 3) q = state.quiz = { v: 3, step: 0, done: false, answers: {} }; // older quiz format: start fresh
     const a = q.answers;
     a.deal = a.deal || {};
+    if (a.deal.budget) { // older answers used budget chips
+      if (a.deal.max === undefined) a.deal.max = { u15: 15000, "15-25": 25000, "25-35": 35000 }[a.deal.budget[0]] || null;
+      delete a.deal.budget;
+    }
     a.prefs = a.prefs || {};
     a.field = a.field || [];
     a.city = a.city || [];
@@ -863,7 +866,7 @@
       // --- dealbreakers ---
       if (d.orientation && d.orientation.length && d.orientation.indexOf(p.orientation) < 0) return;
       if (d.gender && d.gender.length && p.gender !== d.gender[0]) return;
-      if (d.budget && d.budget.length && p.costUSD != null && p.costUSD > BUDGET_MAX[d.budget[0]]) return;
+      if (d.max && p.costUSD != null && p.costUSD > d.max) return;
       if (d.must && d.must.indexOf("semester") >= 0 && !p.semesterOption) return;
       if (d.must && d.must.indexOf("credit") >= 0 && p.credit !== true) return;
       const heb = d.hebrew && d.hebrew[0], hr = p.profile.hebrew;
@@ -951,7 +954,9 @@
     if (q.step === 1) {
       body = "<h1>The basics</h1>" +
         '<p class="muted">These rule programs out. Leave a group on "Any" if it doesn\'t matter.</p>' +
-        Object.keys(DEAL).map((k) => choiceGroup(k, DEAL[k], a.deal[k] || [], "deal-pick")).join("");
+        Object.keys(DEAL).map((k) => choiceGroup(k, DEAL[k], a.deal[k] || [], "deal-pick") +
+          (k === "orientation" ? '<div class="qgroup"><h3>Tuition budget</h3>' + budgetSlider("budget-range", a.deal.max, "Maximum tuition") +
+            '<p class="small muted" style="margin-top:4px">Programs that haven\'t posted a US-dollar price stay in.</p></div>' : "")).join("");
     } else {
       body = "<h1>What matters to you?</h1>" +
         '<p class="muted">Rate each from 1 to 5, or "Don\'t care".</p>' +
@@ -1273,7 +1278,8 @@
       const i = arr.indexOf(el.dataset.value);
       if (i >= 0) arr.splice(i, 1); else arr.push(el.dataset.value);
     } else if (act === "clear-filters") {
-      state.filters = { sort: (state.filters || {}).sort, type: (state.filters || {}).type };
+      const old = state.filters || {};
+      state.filters = { sort: old.sort, type: old.type, open: old.open, dlOpen: old.dlOpen };
     } else if (act === "add-rec") {
       s.recs.push({ name: "", role: "", status: "" });
     } else if (act === "del-rec") {
@@ -1327,12 +1333,27 @@
     const act = el.dataset.act;
     if (act === "toggle") { filters()[el.dataset.key] = el.checked; save(); render(); }
     else if (act === "sort") { filters().sort = el.value; save(); render(); }
+    else if (act === "cost-range") { // re-render the grid once the slider is released (or per arrow key)
+      filters().maxCost = budgetValue(el); save();
+      const y = window.scrollY; render(); window.scrollTo(0, y);
+      const r = $app.querySelector('[data-act="cost-range"]'); if (r) r.focus();
+    }
   });
 
   $app.addEventListener("input", (e) => {
     const el = e.target;
     if (el.dataset.bind && (el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && el.type !== "date" && el.type !== "checkbox"))) {
       bound(el, el.value); // typing saves without re-rendering, so focus is kept
+    } else if (el.dataset.act === "budget-range" || el.dataset.act === "cost-range") {
+      const v = budgetValue(el);
+      el.setAttribute("aria-valuetext", budgetLabel(v));
+      el.closest(".budget-slider").querySelector(".bs-val").textContent = budgetLabel(v);
+      if (el.dataset.act === "budget-range") {
+        quiz().answers.deal.max = v;
+        save();
+        const n = matches().length, lc = $app.querySelector(".live-count");
+        if (lc) lc.innerHTML = "<strong>" + n + "</strong> program" + (n === 1 ? "" : "s") + " fit your basics";
+      }
     } else if (el.dataset.act === "college-search") {
       state.collegeQuery = el.value;
       const pos = el.selectionStart;

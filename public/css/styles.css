@@ -673,3 +673,10 @@ html, body { overscroll-behavior-x: none; }
 .mycol-grid .textarea { min-height: 44px; height: 44px; resize: vertical; }
 .mycol-grid select, .mycol-grid .input { height: 38px; box-sizing: border-box; }
 .mycol { gap: 10px; }
+
+/* Tuition slider */
+.budget-slider { max-width: 420px; margin-top: 6px; }
+.bs-val { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+.range { width: 100%; accent-color: var(--accent); cursor: pointer; margin: 4px 0; }
+.bs-ends { display: flex; justify-content: space-between; }
+.filters-panel .budget-slider { max-width: none; }
