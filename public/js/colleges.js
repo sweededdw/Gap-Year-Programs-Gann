@@ -955,7 +955,7 @@ window.GYF_COLLEGES = {
   {
    "name": "Brown University",
    "deferral": "case",
-   "how": "After accepting Brown's offer, email admission@brown.edu with your request. The Board of Admission reviews it.",
+   "how": "Accept Brown's offer, then email admission@brown.edu to request a deferral in writing; the Board of Admission reviews each request. Waitlist admits can also ask.",
    "deadline": "May 15",
    "deadlineDate": "2027-05-15",
    "length": "One year",
@@ -1037,6 +1037,28 @@ window.GYF_COLLEGES = {
     "jewish": 1500,
     "type": "Public",
     "name": "Temple University, Main and Ambler"
+   }
+  },
+  {
+   "name": "Queen's University",
+   "deferral": "case",
+   "how": "Accept your offer, then request a deferral online with your reason. Queen's limits deferrals to extenuating or compelling circumstances.",
+   "deadline": "August 31",
+   "deadlineDate": "2027-08-31",
+   "length": "One year.",
+   "deposit": null,
+   "creditLevel": "none",
+   "credit": "You may not attend another post-secondary institution during the deferral.",
+   "grades": null,
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "source": "https://www.queensu.ca/admission/admission-procedures-and-exceptions",
+   "hillel": {
+    "rank": 56,
+    "jewish": 1500,
+    "type": "Public",
+    "name": "Queen's University"
    }
   },
   {
@@ -1462,8 +1484,8 @@ window.GYF_COLLEGES = {
    "deadlineDate": null,
    "length": "One year",
    "deposit": null,
-   "creditLevel": "unclear",
-   "credit": null,
+   "creditLevel": "none",
+   "credit": "Penn only awards credit for outside courses taken in the summer (pre-approved, C or better); courses at another school during the fall or spring don't earn Penn credit.",
    "israel": null,
    "noApplyingElsewhere": null,
    "source": "https://global.upenn.edu/pennabroad/gap-year-resources",
@@ -1610,13 +1632,13 @@ window.GYF_COLLEGES = {
   {
    "name": "University of Chicago",
    "deferral": "case",
-   "how": "Accept your offer and pay the enrollment fee, then apply through your regional admissions counselor. Approval comes in writing from the Dean of Admissions.",
-   "deadline": "Before June 15",
+   "how": "Accept your offer and pay the nonrefundable enrollment fee, then send your regional admissions counselor a plan for a full year of structured programming, work or community involvement. You'll sign a gap-year conduct agreement.",
+   "deadline": "June 15",
    "deadlineDate": "2027-06-15",
-   "length": "One year",
+   "length": "One year (multi-year requests are rarely approved).",
    "deposit": true,
-   "creditLevel": "unclear",
-   "credit": null,
+   "creditLevel": "none",
+   "credit": "Taking courses elsewhere to transfer isn't an approvable gap-year plan.",
    "israel": null,
    "noApplyingElsewhere": null,
    "source": "https://collegeadmissions.uchicago.edu/apply/uchicago-admissions-faq/",
@@ -1626,7 +1648,8 @@ window.GYF_COLLEGES = {
     "jewish": 800,
     "type": "Private",
     "name": "University of Chicago"
-   }
+   },
+   "note": "An older UChicago Q&A gave June 1; confirm the date with admissions."
   },
   {
    "name": "Oberlin College",
@@ -1670,6 +1693,28 @@ window.GYF_COLLEGES = {
     "jewish": 630,
     "type": "Private",
     "name": "Case Western Reserve University"
+   }
+  },
+  {
+   "name": "Emerson College",
+   "deferral": "case",
+   "how": "Secure your spot with the deposit, then talk to an admission counselor; the Admission Committee reviews deferral requests.",
+   "deadline": null,
+   "deadlineDate": null,
+   "length": "One or two semesters.",
+   "deposit": true,
+   "creditLevel": "limited",
+   "credit": "First-year students may take up to two courses at another institution during the deferral but can't formally enroll elsewhere.",
+   "grades": null,
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "source": "https://admitted.emerson.edu/secure-your-spot/enrollment-options/",
+   "hillel": {
+    "rank": 93,
+    "jewish": 600,
+    "type": "Private",
+    "name": "Emerson College"
    }
   },
   {
@@ -1759,6 +1804,29 @@ window.GYF_COLLEGES = {
     "type": "Private",
     "name": "Skidmore College"
    }
+  },
+  {
+   "name": "Pace University",
+   "deferral": "case",
+   "how": "Email undergradadmission@pace.edu; deferrals of one or two semesters need the Director of Admission's approval.",
+   "deadline": null,
+   "deadlineDate": null,
+   "length": "One or two semesters.",
+   "deposit": null,
+   "creditLevel": "none",
+   "credit": "If you attend another college before Pace you file a new application.",
+   "grades": "Merit awards can be kept for a gap year if you tell Admissions and don't attend another college.",
+   "israel": null,
+   "noApplyingElsewhere": null,
+   "quote": null,
+   "source": "https://www.pace.edu/sites/default/files/files/admission-aid/Undergraduate/2019-Undergraduate-Admission-Application.pdf",
+   "hillel": {
+    "rank": 98,
+    "jewish": 500,
+    "type": "Private",
+    "name": "Pace University"
+   },
+   "note": "Pace's published deferral details are from 2019–2020 materials; confirm with Admissions."
   },
   {
    "name": "University of Denver",
@@ -1961,10 +2029,10 @@ window.GYF_COLLEGES = {
   {
    "name": "Dartmouth College",
    "deferral": "yes",
-   "how": "Confirm your intent to enroll by May 1, then email the Assistant to the Dean of Admissions and Financial Aid with your reasons and plans.",
+   "how": "Confirm your place by May 1, then email the Assistant to the Dean of Admissions and Financial Aid with your reasons and plans. Waitlist and transfer admits can't take a gap year.",
    "deadline": "June 1",
    "deadlineDate": "2027-06-01",
-   "length": "One year (two for obligatory national/military service)",
+   "length": "One year (two for obligatory national or military service).",
    "deposit": null,
    "creditLevel": "unclear",
    "credit": "Dartmouth says students may take courses they couldn't take in high school, but doesn't spell out a college-credit rule.",
@@ -1977,7 +2045,8 @@ window.GYF_COLLEGES = {
     "jewish": 400,
     "type": "Private",
     "name": "Dartmouth College"
-   }
+   },
+   "grades": "Dartmouth can rescind the offer if your academic or personal record doesn't stay satisfactory."
   },
   {
    "name": "Johns Hopkins University",
@@ -2816,15 +2885,6 @@ window.GYF_COLLEGES = {
    }
   },
   {
-   "name": "Queen's University",
-   "hillel": {
-    "rank": 56,
-    "jewish": 1500,
-    "type": "Public",
-    "name": "Queen's University"
-   }
-  },
-  {
    "name": "Concordia University, Sir George and Loyola Campus",
    "hillel": {
     "rank": 71,
@@ -2876,24 +2936,6 @@ window.GYF_COLLEGES = {
     "jewish": 600,
     "type": "Private",
     "name": "University of Hartford"
-   }
-  },
-  {
-   "name": "Emerson College",
-   "hillel": {
-    "rank": 93,
-    "jewish": 600,
-    "type": "Private",
-    "name": "Emerson College"
-   }
-  },
-  {
-   "name": "Pace University",
-   "hillel": {
-    "rank": 98,
-    "jewish": 500,
-    "type": "Private",
-    "name": "Pace University"
    }
   },
   {
