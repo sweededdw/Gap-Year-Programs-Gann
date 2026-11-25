@@ -723,3 +723,18 @@ html, body { overscroll-behavior-x: none; }
 .life-list.sched li { display: grid; grid-template-columns: 52px 1fr; gap: 8px; margin: 2px 0; }
 .life-list.sched .t { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; }
 .school-head .aud-tag { align-self: flex-start; width: fit-content; }
+
+/* Swipe card: quick bullets */
+.scard-points { margin: 2px 0 0; padding-left: 18px; font-size: 15px; line-height: 1.45; display: grid; gap: 4px; }
+.scard-points li::marker { color: var(--accent); }
+.scard-title p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* My list: roomier rows */
+.list-table th { padding: 14px 20px; }
+.list-table td { padding: 18px 20px; line-height: 1.45; }
+.list-table th:first-child, .list-table td:first-child { padding-left: 22px; }
+.list-table th:last-child, .list-table td:last-child { padding-right: 22px; }
+.list-table td .small { margin-top: 3px; }
+.list-table .progress-bar { margin-top: 6px; min-width: 110px; }
+@media (max-width: 600px) { .list-table th, .list-table td { padding: 12px 12px; } }
+.list-table td:nth-child(2), .list-table td:last-child { white-space: nowrap; }

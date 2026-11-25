@@ -1183,6 +1183,49 @@
     if (PHOTOS[p.id]) p.photo = PHOTOS[p.id];
   });
 
+  // ---- Swipe-card highlights: three quick bullets per program, taken from the facts above and in details.js ----
+  const HIGHLIGHTS = {
+    "year-course": ["A semester in Jerusalem, a semester in Tel Aviv", "Tracks: internships, MDA, IDF, coding, kibbutz", "Europe heritage trip included"],
+    aardvark: ["Your own apartment in Jerusalem or Tel Aviv", "Internship or volunteering, about 16–20 hours a week", "Classic, Tech, Service or Culinary track"],
+    nativ: ["Conservative/Masorti movement's gap year", "Egalitarian, Shomer Shabbat community", "Ulpan, accredited courses, volunteering or internships"],
+    kivunim: ["Based in Jerusalem, travel to up to 12 countries", "Arabic, Hebrew and Middle East studies", "Up to 30 college credits"],
+    hevruta: ["Live and learn with Israeli pre-army peers", "Talmud at your level, plus a Yeshiva track", "Weekly volunteering and a nonprofit internship"],
+    "kol-ami": ["Pre-army mechina, half the group Israeli", "Fitness, Krav Maga and hiking Israel", "From $13,000, the lowest-cost serious option"],
+    "bnei-akiva-mechina": ["Religious-Zionist mechina with Israeli peers", "Army prep, fitness 3x a week, desert weeks", "English for 3 months, then all Hebrew"],
+    "bnei-akiva-kadima": ["Modern Orthodox co-ed year in modules", "Kibbutz, work placement, MDA or Marva", "Two-week Shvil Yisrael hike"],
+    "habonim-workshop": ["Labor Zionist youth movement year", "Kibbutz, then your own place in Tel Aviv", "Camp counselor in South Africa"],
+    "tau-eli": ["Tel Aviv University courses for credit", "Workshops in AI, cyber and startups", "On-campus dorms"],
+    "huji-first-year": ["A real first year of university", "Transferable credits", "Mount Scopus dorms with Israeli students"],
+    "bar-ilan-xp": ["Bar-Ilan classes Monday–Thursday", "Judaic studies mornings, general studies afternoons", "Dorms in Ramat Ef'al, trips every other week"],
+    maccabi: ["For Maccabi counselors and young leaders, 18–19", "Sports, leadership and Israeli participants", "Kibbutz, MDA ambulance and Marva stages"],
+    "torah-tech": ["Men's program in Tel Aviv", "Tech internships 3 days a week", "Beit midrash the other 2 days"],
+    arevim: ["Volunteer year, 4 days a week", "Hospitals, schools or welfare placements", "Apartment near Tel Aviv + monthly stipend"],
+    "shnat-netzer": ["Reform/Progressive youth movement year", "Jerusalem Machon, kibbutz and Harduf", "Most participants from the UK and Australia"],
+    "har-etzion": ["Hesder yeshiva in Gush Etzion", "Learn alongside Israeli students", "Joint Yeshiva Application"],
+    hakotel: ["Hesder yeshiva in the Old City", "In-yeshiva Shabbat 2 of every 3 weeks", "Trips to the Galil, Eilat and the Golan"],
+    orayta: ["Yeshiva steps from the Kotel", "Six Gemara shiur levels", "Shabbatot in communities around Israel"],
+    "migdal-hatorah": ["Yeshiva in Modi'in", "Apartments, not dorms, with a madrich", "Three meals a day"],
+    kby: ["Hesder yeshiva in Yavne", "Rooms shared with older Israeli talmidim", "Tiyulim to the north and the Negev"],
+    ashreinu: ["Yeshiva in Beit Shemesh", "Classes average 7 students", "Weekly tiyul day and chessed"],
+    "migdal-oz": ["Women's beit midrash in Gush Etzion", "Live with Israeli students (5 per unit)", "Flexible schedule, Gemara 3–4 mornings"],
+    nishmat: ["Women's Torah learning in Jerusalem", "English-speaking rakezet and mentors", "Tiyulim with Israeli students"],
+    "ein-hanetziv": ["Midrasha on a religious kibbutz in the north", "Rooms for three with a private bathroom", "Tanach, Talmud, Halacha and Chassidut"],
+    michlalah: ["Seminary for overseas students in Jerusalem", "Classes in Tanach, Halacha and Machshava", "Own application, entrance exam and interview"],
+    lindenbaum: ["Midrasha in Arnona, Jerusalem", "Choose a Gemara or Tanach track", "Dorm never closes, even on Shabbat"],
+    "fzy-year-course": ["UK version of Year Course, London flights", "Jerusalem semester, then Tel Aviv", "Internship or Magen David Adom track"],
+    "ba-torani": ["For the UK, Europe and Canada", "Learn at a partner yeshiva or midrasha", "Bnei Akiva seminars, kibbutz and volunteering"],
+    "ba-mta": ["For Australia, NZ and South Africa", "Runs February to December", "Partner yeshivot and midrashot + Poland"],
+    ytva: ["Bnei Akiva Hesder yeshiva in Baka", "Three sedarim a day", "Seder Bayit at the rebbeim's homes"],
+    mtva: ["Bnei Akiva women's midrasha", "Apartments in central Jerusalem", "Service learning, internships and kibbutz"],
+    "yachad-mechinot": ["Join an Israeli mechina", "Learn in Hebrew with Israeli peers", "Volunteering and a self-run group"],
+    "tzofim-sherut": ["Year of service with the Israel Scouts", "Live in a commune with Israeli Tzofim", "Work in schools and community centers"],
+    "garin-tzabar": ["For those making aliyah and joining the IDF", "Live with a host kibbutz or community", "Support through your army service"],
+    "shnat-betar": ["Runs March to November", "Four-month leadership course", "Marva, Poland and a camp in Rome"],
+    "hanoar-hatzioni": ["Hanoar Hatzioni's movement year", "Based in Jerusalem, 8–10 months", "$18,200 (Masa listing)"],
+    "hdoz-shnat": ["Habonim Dror Australia's year", "Runs January to November", "Leadership course and kibbutz living"],
+  };
+  programs.forEach(function (p) { p.highlights = HIGHLIGHTS[p.id] || []; });
+
   // Every program gets the standard documents list and the dual-citizen visa note.
   programs.forEach(function (p) {
     p.app.documents = p.app.documents || DOCS_STANDARD.map(function (d) { return Object.assign({}, d); });

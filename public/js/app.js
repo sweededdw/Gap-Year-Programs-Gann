@@ -753,7 +753,7 @@
             return k(a) < k(b) ? -1 : 1;
           }).map((p) => {
             const pr = progress(p);
-            return '<tr><td><a href="#/program/' + p.id + '" style="display:flex;gap:10px;align-items:center;color:var(--text)"><span class="logo sm o-' + p.orientation + '">' + esc(p.short) + "</span><span><strong>" + esc(p.name) + '</strong><br><span class="small muted">' + esc(L.type[p.type][1]) + " · " + esc(L.orientation[p.orientation]) + "</span></span></a></td>" +
+            return '<tr><td><a href="#/program/' + p.id + '" style="display:flex;gap:14px;align-items:center;color:var(--text)"><span class="logo sm o-' + p.orientation + '">' + esc(p.short) + "</span><span><strong>" + esc(p.name) + '</strong><br><span class="small muted">' + esc(L.type[p.type][1]) + " · " + esc(L.orientation[p.orientation]) + "</span></span></a></td>" +
               "<td>" + deadlineSummary(p) + "</td><td>" + esc(shortCost(p)) + "</td>" +
               '<td style="min-width:120px"><div class="small">' + pr.pct + '%</div><div class="progress-bar"><span style="width:' + pr.pct + '%"></span></div></td>' +
               "<td>" + esc(resultLabel(ps(p.id).result)) + "</td></tr>";
@@ -1109,10 +1109,10 @@
       '<div class="scard-mark ph-mark" aria-hidden="true">' + esc(p.short) + "</div>" +
       '<div class="scard-title">' + typeBadge(p) + ' <span class="scard-tag">' + esc(L.orientation[p.orientation]) + "</span>" +
       (p.audienceTag ? ' <span class="scard-tag aud">' + esc(p.audienceTag) + "</span>" : "") + "<h2>" + esc(p.name) + "</h2>" +
-      "<p>" + I("pin") + " " + esc(p.base) + "</p></div></div>" +
+      "<p>" + I("pin") + " " + esc(p.base.split(" (")[0]) + "</p></div></div>" +
       '<div class="scard-body">' +
-      '<div class="scard-stats"><div>' + I("cost") + "<strong>" + esc(shortCost(p)) + "</strong></div><div>" + I("cal") + "<strong>" + esc(p.length.split(" · ")[0]) + '</strong></div><div>' + I("clock") + "<strong>" + deadline + "</strong></div></div>" +
-      '<p class="scard-blurb">' + esc(p.blurb) + "</p>" +
+      '<div class="scard-stats"><div>' + I("cost") + "<strong>" + esc(compactCost(p)) + "</strong></div><div>" + I("cal") + "<strong>" + esc(p.length.split(" · ")[0].split(" (")[0]) + '</strong></div><div>' + I("clock") + "<strong>" + deadline + "</strong></div></div>" +
+      (p.highlights.length ? '<ul class="scard-points">' + p.highlights.map((h) => "<li>" + esc(h) + "</li>").join("") + "</ul>" : '<p class="scard-blurb">' + esc(p.blurb) + "</p>") +
       (m.reasons.length ? '<div class="chips">' + m.reasons.slice(0, 5).map((r) => '<span class="chip ok">✓ ' + esc(r) + "</span>").join("") + "</div>" : "") +
       '<div class="scard-links">' +
       '<a class="btn sm" href="' + esc(p.website) + '" target="_blank" rel="noopener" tabindex="' + (i === 0 ? 0 : -1) + '">' + (p.websiteLabel ? esc(p.websiteLabel) : "Visit website") + " ↗</a>" +
