@@ -26,10 +26,14 @@
         <a href="#/compare" data-nav="compare">Compare</a>
         <a href="#/colleges" data-nav="colleges">Colleges</a>
         <a href="#/my-list" data-nav="my-list">Saved <span id="saved-count" class="count-pill">0</span></a>
-        <span id="account" class="account" hidden>
-          <span id="user-name" class="user-name"></span>
-          <button id="logout" class="btn ghost sm" type="button">Log out</button>
-        </span>
+        <details id="account" class="account acct-menu" hidden>
+          <summary><span id="user-name" class="user-name"></span></summary>
+          <div class="acct-pop">
+            <button id="acct-download" class="acct-item" type="button">Download my data</button>
+            <button id="acct-delete" class="acct-item danger" type="button">Delete my saved data</button>
+            <button id="logout" class="acct-item" type="button">Log out</button>
+          </div>
+        </details>
       </nav>
     </div>
   </header>
@@ -42,7 +46,7 @@
     <p>Program details were researched on <span id="as-of"></span> for the <span id="cycle"></span> cycle. Programs change dates and prices, so always confirm on the program's own site. <span id="storage-note">Your tracking data is saved only in this browser.</span></p>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js" integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil" crossorigin="anonymous"></script>
   <script src="js/sb.js"></script>
   <script src="js/data.js"></script>
   <script src="js/details.js"></script>

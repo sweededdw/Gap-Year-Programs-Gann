@@ -653,7 +653,7 @@ html, body { overscroll-behavior-x: none; }
 .mycol-head h3 { font-size: 17px; }
 .mycol-head .chips { margin-top: 6px; }
 .mycol-next { padding: 8px 12px; border-radius: 8px; background: var(--surface-2); }
-.mycol-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px 12px; }
+.mycol-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 12px; }
 .mycol-grid .field { display: flex; flex-direction: column; gap: 4px; margin: 0; }
 .mycol-grid .field > span { font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
 .mycol-grid .field.wide { grid-column: 1 / -1; }
@@ -849,3 +849,18 @@ table.cmp { table-layout: fixed; } .cmp .rowh { width: 170px; }
 .mycol-sum.next { color: var(--text); white-space: normal; }
 .mycol-body { padding: 0 18px 16px; display: flex; flex-direction: column; gap: 10px; }
 .mycol-body .hillel-line { margin: 0; }
+
+/* Account menu */
+.acct-menu { position: relative; }
+.acct-menu > summary { list-style: none; cursor: pointer; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; color: var(--text); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct-menu > summary::-webkit-details-marker { display: none; }
+.acct-menu[open] > summary { background: var(--surface-2); }
+.acct-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 210px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.35); display: grid; }
+.acct-item { text-align: left; background: none; border: 0; color: var(--text); font: inherit; font-size: 14px; padding: 9px 10px; border-radius: 8px; cursor: pointer; }
+.acct-item:hover { background: var(--surface-2); }
+.acct-item.danger { color: var(--bad); }
+#banner .btn { margin-left: 8px; }
+@media (max-width: 600px) {
+  .acct-menu .user-name { display: none; }
+  .acct-menu > summary::after { content: "Account"; }
+}

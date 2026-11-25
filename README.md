@@ -88,6 +88,9 @@ Every program has a **1–5 rating in 12 categories** (`PROFILES` in `public/js/
 - Program data (`public/js/data.js`) is public research, so it isn't secret. The login controls who uses the tracker, not who can technically download the list.
 - Each program in `data.js` has an `app` block (`deadlines`, `portal`, `essays`, `interview`, `recs`, `fees`, `aid`, `visa`, `decision`). Leave a value `null` when the program doesn't publish it, and the page will show "Not published". Data was researched on 2026-11-24 for the 2027–28 cycle.
 
+## Backend, security and email
+See [BACKEND.md](BACKEND.md) for how accounts and data are protected, and the Supabase dashboard settings to check (URLs, Gmail SMTP, email templates, password rules).
+
 ## Product questions
 See [PRODUCT-QUESTIONS.md](PRODUCT-QUESTIONS.md): market size, what program data to show, how students decide, data sourcing, and why use this over Masa's search.
 

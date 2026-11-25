@@ -21,6 +21,8 @@
   let userId = null;
   let remoteOk = false;
   let saveTimer = null;
+  let lastSeen = null;     // updated_at of the account copy this device last read or wrote
+  let conflict = false;    // true while another device's newer save is waiting for a decision
 
   const localKey = () => STORE_KEY + (userId ? ":" + userId : "");
   function loadLocal() {
@@ -41,17 +43,56 @@
     b.textContent = text;
     b.hidden = !text;
   }
-  function pushRemote() {
+  // Save to the account copy only if nobody else changed it since we last read it
+  // (another device or tab). Otherwise stop and let the student choose which version to keep.
+  async function pushRemote(force) {
     clearTimeout(saveTimer);
     saveTimer = null;
-    if (!sb || !remoteOk) return Promise.resolve();
-    return sb
-      .from(TABLE)
-      .upsert({ user_id: userId, state: state, updated_at: new Date().toISOString() })
-      .then(({ error }) => {
-        if (error) banner("Couldn't save your latest changes to your account. They're kept in this browser, and we'll retry on your next change.");
-        else banner("");
-      });
+    if (!sb || !remoteOk || (conflict && !force)) return;
+    const now = new Date().toISOString();
+    let res;
+    if (!lastSeen) res = await sb.from(TABLE).insert({ user_id: userId, state: state, updated_at: now }).select("updated_at");
+    else if (force) res = await sb.from(TABLE).update({ state: state, updated_at: now }).eq("user_id", userId).select("updated_at");
+    else res = await sb.from(TABLE).update({ state: state, updated_at: now }).eq("user_id", userId).eq("updated_at", lastSeen).select("updated_at");
+    const { data, error } = res;
+    if (error && !(error.code === "23505")) {
+      banner("Couldn't save your latest changes to your account. They're kept in this browser, and we'll retry on your next change.");
+      return;
+    }
+    if (data && data.length === 1) { lastSeen = data[0].updated_at; conflict = false; banner(""); return; }
+    // No row matched: the account copy changed elsewhere (or was created elsewhere first).
+    const { data: row } = await sb.from(TABLE).select("state, updated_at").eq("user_id", userId).maybeSingle();
+    if (!row) { lastSeen = null; return pushRemote(); }
+    conflict = true;
+    conflictBanner(row);
+  }
+  function conflictBanner(row) {
+    const b = document.getElementById("banner");
+    b.textContent = "Your account was updated on another device or tab. ";
+    const mk = (label, fn, primary) => { const x = document.createElement("button"); x.type = "button"; x.className = "btn sm" + (primary ? " primary" : ""); x.textContent = label; x.addEventListener("click", fn); b.appendChild(x); };
+    mk("Load the newer version", () => {
+      state = Object.assign(blankState(), row.state || {}); lastSeen = row.updated_at; conflict = false; saveLocal(); banner(""); render();
+    }, true);
+    mk("Keep mine", () => { conflict = false; pushRemote(true); });
+    b.hidden = false;
+  }
+  function downloadData(email) {
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), account: email || null, data: state }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "gap-year-finder-my-data.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  async function deleteData() {
+    if (!confirm("Delete everything you've saved: your saved programs, application progress, quiz answers and colleges? This can't be undone.")) return;
+    state = blankState();
+    try { Object.keys(localStorage).filter((k) => k.indexOf(STORE_KEY) === 0).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
+    if (sb && remoteOk) { conflict = false; await pushRemote(true); }
+    saveLocal();
+    location.hash = "#/start";
+    render();
+    banner("Your saved data was deleted.");
   }
   function save() {
     saveLocal(); // always keep a local copy as a safety net
@@ -305,7 +346,7 @@
   // If a photo fails to load, the illustration takes over automatically.
   function photoBox(p, cls, inner) {
     return '<div class="ph ' + cls + " g-" + p.orientation + (p.photo ? " has-photo" : "") + '">' +
-      (p.photo ? '<img src="' + esc(p.photo) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.remove(\'has-photo\');this.remove()">' : "") +
+      (p.photo ? '<img src="' + esc(p.photo) + '" alt="" loading="lazy" referrerpolicy="no-referrer" data-fallback="1">' : "") +
       '<div class="ph-mark" aria-hidden="true">' + esc(p.short) + "</div>" + (inner || "") + "</div>";
   }
   function compactCost(p) {
@@ -976,7 +1017,7 @@
   // What to do next for one college, from its application and deferral status.
   function nextStep(c, ci) {
     const by = (d) => (d ? " by " + fmtDate(d, { month: "short", day: "numeric" }) + " " + countdown(d) : "");
-    if (!c.app) return "Next: submit your application" + by(c.appDeadline);
+    if (!c.app) return "Next: submit your application";
     if (c.app === "applied") return "Waiting on a decision.";
     if (c.app === "waiting") return "Waitlisted or deferred. Send any update the college asks for.";
     if (c.app === "rejected") return "";
@@ -1007,7 +1048,6 @@
           '<div class="mycol-grid">' +
           '<label class="field"><span>Plan</span>' + statusSelect(["colleges", i, "plan"], c.plan, APP_PLAN, "g", "Application plan") + "</label>" +
           '<label class="field"><span>Application</span>' + statusSelect(["colleges", i, "app"], c.app, APP_STATUS, "g", "Application status") + "</label>" +
-          '<label class="field"><span>Application due</span><input class="input" type="date" value="' + esc(c.appDeadline || "") + '"' + bindAttr(["colleges", i, "appDeadline"], "g") + "></label>" +
           '<label class="field"><span>Gap year deferral</span>' + statusSelect(["colleges", i, "status"], c.status, DEFER_STATUS, "g", "Deferral status") + "</label>" +
           '<label class="field"><span>Request deferral by</span><input class="input" type="date" value="' + esc(c.deadline || "") + '"' + bindAttr(["colleges", i, "deadline"], "g") + "></label>" +
           '<label class="field wide"><span>Notes</span><textarea class="textarea" rows="2" placeholder="Portal login, essays, who to email about the deferral…"' + bindAttr(["colleges", i, "notes"], "g") + ">" + esc(c.notes || "") + "</textarea></label>" +
@@ -1288,7 +1328,7 @@
     return (
       '<article class="scard' + (i === 0 ? " top" : "") + '" data-id="' + p.id + '" style="--i:' + i + '"' + (i === 0 ? ' tabindex="0" aria-label="' + esc(p.name) + '"' : ' aria-hidden="true"') + ">" +
       '<div class="scard-hero ph g-' + p.orientation + (p.photo ? " has-photo" : "") + '">' +
-      (p.photo ? '<img src="' + esc(p.photo) + '" alt="" draggable="false" referrerpolicy="no-referrer" onerror="this.parentNode.classList.remove(\'has-photo\');this.remove()">' : "") +
+      (p.photo ? '<img src="' + esc(p.photo) + '" alt="" draggable="false" referrerpolicy="no-referrer" data-fallback="1">' : "") +
       '<span class="stamp like" aria-hidden="true">SAVE</span><span class="stamp nope" aria-hidden="true">PASS</span>' +
       (m.pct != null ? '<span class="scard-match">' + m.pct + "% match</span>" : "") +
       '<div class="scard-mark ph-mark" aria-hidden="true">' + esc(p.short) + "</div>" +
@@ -1651,6 +1691,12 @@
     }
   });
 
+  // A program photo that fails to load falls back to the illustrated card (no inline handlers: the CSP forbids them).
+  document.addEventListener("error", (e) => {
+    const t = e.target;
+    if (t && t.tagName === "IMG" && t.dataset.fallback) { if (t.parentNode) t.parentNode.classList.remove("has-photo"); t.remove(); }
+  }, true);
+
   // Hover tooltip for chart marks ([data-tip]); values are also printed as text, so this is a convenience.
   const tip = document.createElement("div");
   tip.className = "viz-tip"; tip.hidden = true; document.body.appendChild(tip);
@@ -1690,6 +1736,8 @@
     userId = user.id;
     document.getElementById("user-name").textContent = (user.user_metadata && user.user_metadata.name) || user.email;
     document.getElementById("account").hidden = false;
+    document.getElementById("acct-download").addEventListener("click", () => downloadData(user.email));
+    document.getElementById("acct-delete").addEventListener("click", deleteData);
     document.getElementById("logout").addEventListener("click", async () => {
       await pushRemote();
       await sb.auth.signOut();
@@ -1697,7 +1745,7 @@
     });
     sb.auth.onAuthStateChange((event) => { if (event === "SIGNED_OUT") location.replace("/login"); });
 
-    const { data: row, error } = await sb.from(TABLE).select("state").eq("user_id", userId).maybeSingle();
+    const { data: row, error } = await sb.from(TABLE).select("state, updated_at").eq("user_id", userId).maybeSingle();
     if (error) {
       remoteOk = false;
       state = loadLocal();
@@ -1705,6 +1753,7 @@
     } else {
       remoteOk = true;
       const local = loadLocal();
+      if (row) lastSeen = row.updated_at;
       if (row && row.state && typeof row.state === "object") state = Object.assign(blankState(), row.state);
       else if (Object.keys(local.saved).length || Object.keys(local.p).length) { state = local; save(); } // first sync
       document.getElementById("storage-note").textContent = "Your tracking data is saved to your account.";
