@@ -429,7 +429,7 @@ html, body { overscroll-behavior-x: none; }
 .ph-emojis { display: flex; justify-content: center; align-items: center; gap: 12px; font-size: 44px; filter: drop-shadow(0 4px 10px rgba(0,0,0,.25)); }
 .ph.has-photo .ph-emojis { display: none; }
 .scard-hero.has-photo .scard-emojis { display: none; }
-.scard-hero > .stamp, .scard-hero > .scard-match { z-index: 3; }
+.scard-hero > .stamp, .scard-hero > .scard-match { position: absolute; z-index: 3; }
 .scard-emojis { position: absolute !important; }
 .scard-title .type-badge { margin-bottom: 6px; text-shadow: none; }
 
