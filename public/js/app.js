@@ -664,39 +664,59 @@
     if (n.length < 3) return null;
     return COLLEGES.colleges.find((c) => norm(c.name) === n) || null;
   }
-  const DEFER_LABEL = { yes: ["ok", "Deferral allowed"], case: ["warn", "Case-by-case"], no: ["bad", "No deferrals"] };
+  const DEFER_LABEL = { yes: ["ok", "Deferral allowed"], case: ["warn", "Case-by-case"], no: ["bad", "No deferrals"], open: ["ok", "Open enrollment"] };
   const CREDIT_LABEL = { none: ["bad", "No college credit"], limited: ["warn", "Limited credit"], unclear: ["muted", "Credit rule not stated"] };
   const deferBadge = (c) => { const l = DEFER_LABEL[c.deferral] || ["muted", "Not stated"]; return '<span class="pbadge ' + l[0] + '">' + l[1] + "</span>"; };
   const creditBadge = (c) => { const l = CREDIT_LABEL[c.creditLevel] || CREDIT_LABEL.unclear; return '<span class="pbadge ' + l[0] + '">' + l[1] + "</span>"; };
   function collegeSummary(c) {
     return [DEFER_LABEL[c.deferral] ? DEFER_LABEL[c.deferral][1] : "", c.deadline ? "request by " + c.deadline : "", c.credit || ""].filter(Boolean).join(" · ");
   }
+  const COLLEGE_TABS = [["all", "All"], ["public", "Public"], ["private", "Private"], ["defer", "Allows deferral"], ["nocredit", "No college credit"]];
+  function hillelLine(c) {
+    const h = c.hillel;
+    if (!h) return "";
+    return '<p class="hillel-line small">' + (h.rank ? "Hillel #" + h.rank + " · " : "") + Number(h.jewish).toLocaleString("en-US") + " Jewish undergrads · " + esc(h.type) + "</p>";
+  }
   function renderColleges() {
     const q = norm(state.collegeQuery || "");
-    const list = COLLEGES.colleges.filter((c) => !q || norm(c.name).indexOf(q) >= 0);
+    const tab = state.collegeTab || "all";
+    const rank = (c) => (c.hillel && c.hillel.rank) || 999;
+    const list = COLLEGES.colleges.filter((c) => {
+      if (q && norm(c.name).indexOf(q) < 0) return false;
+      const t = c.hillel && c.hillel.type;
+      if (tab === "public" && t !== "Public") return false;
+      if (tab === "private" && t !== "Private") return false;
+      if (tab === "defer" && !(c.deferral === "yes" || c.deferral === "case" || c.deferral === "open")) return false;
+      if (tab === "nocredit" && c.creditLevel !== "none") return false;
+      return true;
+    }).sort((x, y) => rank(x) - rank(y) || x.name.localeCompare(y.name));
+    const notFound = (COLLEGES.notFound || []).map((n) => (typeof n === "string" ? { name: n } : n))
+      .filter((n) => (!q || norm(n.name).indexOf(q) >= 0) && (tab === "all" || (tab === "public" && n.hillel && n.hillel.type === "Public") || (tab === "private" && n.hillel && n.hillel.type === "Private")))
+      .sort((x, y) => rank(x) - rank(y));
     $app.innerHTML =
-      '<div class="hero-intro"><div><h1>College gap year policies</h1>' +
-      "<p>Whether each college lets you defer for a gap year, when to ask, and whether you can earn credit during the year. Researched " + fmtDate(COLLEGES.asOf) +
-      " from each college's own website. Always confirm with the college before you commit.</p></div></div>" +
-      '<div class="callout info" style="margin-bottom:16px"><span aria-hidden="true">💡</span><div><strong>Why credit matters:</strong> several Israel programs (Year Course, Kivunim, Aardvark/JTS, TAU, Hebrew U, Bar-Ilan) offer college credit. Colleges marked <span class="pbadge bad">No college credit</span> may cancel a deferral if you enroll for credit, so skip the credit option or get written approval first.</div></div>' +
+      '<div class="browse-head"><div><h1>College gap year policies</h1>' +
+      '<p class="muted">The ' + (COLLEGES.top || 100) + ' colleges with the most Jewish students (Hillel International, 2025): whether you can defer for a gap year, when to ask, and how gap-year credits and grades are treated. Researched ' + fmtDate(COLLEGES.asOf) + " from each college's own website. Always confirm with the college.</p></div></div>" +
+      '<div class="callout info" style="margin-bottom:14px"><span aria-hidden="true">💡</span><div><strong>Why credit matters:</strong> Israel programs that give college credit (Year Course, Kivunim, Aardvark/JTS, TAU, Hebrew U, Bar-Ilan) can clash with colleges marked <span class="pbadge bad">No college credit</span>. Skip the credit option or get written approval first.</div></div>' +
+      '<div class="type-tabs" role="tablist">' + COLLEGE_TABS.map((t) => '<button class="ttab' + (tab === t[0] ? " on" : "") + '" data-act="college-tab" data-value="' + t[0] + '">' + t[1] + "</button>").join("") + "</div>" +
       '<div class="toolbar"><input class="search" type="search" placeholder="Search colleges…" aria-label="Search colleges" data-act="college-search" value="' + esc(state.collegeQuery || "") + '"><span class="results-count">' + list.length + " with published policies</span></div>" +
       '<div class="college-grid">' + list.map((c) =>
         '<article class="card college">' +
-        '<div class="college-head"><h3>' + esc(c.name) + '</h3><div class="chips">' + deferBadge(c) + creditBadge(c) + (c.noApplyingElsewhere ? '<span class="pbadge warn">Can\'t apply elsewhere</span>' : "") + "</div></div>" +
+        '<div class="college-head"><h3>' + esc(c.name) + "</h3>" + hillelLine(c) + '<div class="chips">' + deferBadge(c) + creditBadge(c) + (c.noApplyingElsewhere ? '<span class="pbadge warn">Can\'t apply elsewhere</span>' : "") + "</div></div>" +
         '<dl class="college-facts">' +
         "<div><dt>Request by</dt><dd>" + (c.deadline ? esc(c.deadline) + (c.deadlineDate ? " " + countdown(c.deadlineDate) : "") : '<span class="muted">Not stated</span>') + "</dd></div>" +
         "<div><dt>How long</dt><dd>" + esc(c.length || "Not stated") + "</dd></div>" +
         '<div class="wide"><dt>How to ask</dt><dd>' + esc(c.how || "Not stated") + (c.deposit ? " Requires your enrollment deposit." : "") + "</dd></div>" +
-        '<div class="wide"><dt>Credit during the gap year</dt><dd>' + esc(c.credit || "The college's page doesn't say. Ask admissions.") + "</dd></div>" +
+        '<div class="wide"><dt>Credit during the gap year</dt><dd>' + esc(c.credit || "Not stated. Ask admissions.") + "</dd></div>" +
+        (c.grades ? '<div class="wide"><dt>Grades & credits from the gap year</dt><dd>' + esc(c.grades) + "</dd></div>" : "") +
         (c.israel ? '<div class="wide"><dt>🇮🇱 Israel programs</dt><dd>' + esc(c.israel) + "</dd></div>" : "") +
         "</dl>" +
         (c.quote ? '<blockquote class="college-quote">“' + esc(c.quote) + "”</blockquote>" : "") +
         (c.note ? '<p class="small" style="color:var(--warn)">⚠ ' + esc(c.note) + "</p>" : "") +
-        '<a class="small" href="' + esc(c.source) + '" target="_blank" rel="noopener">Source: ' + esc(c.source.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]) + " ↗</a></article>"
+        (c.source ? '<a class="small" href="' + esc(c.source) + '" target="_blank" rel="noopener">Source: ' + esc(c.source.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]) + " ↗</a>" : "") + "</article>"
       ).join("") + "</div>" +
-      (COLLEGES.notFound.length
-        ? '<section class="card" style="padding:16px;margin-top:16px"><h3 style="font-size:15px">Still researching</h3><p class="small muted" style="margin-top:4px">We couldn\'t find a current official policy for these yet. Check the college\'s admitted-students page or ask admissions:</p><p class="small" style="margin-top:8px">' +
-          COLLEGES.notFound.map(esc).join(" · ") + "</p></section>"
+      (notFound.length
+        ? '<section class="card" style="padding:16px;margin-top:16px"><h3 style="font-size:15px">No published policy found (' + notFound.length + ')</h3><p class="small muted" style="margin-top:4px">We couldn\'t find a current official gap year policy for these. Ask the college\'s admissions office directly:</p><p class="small" style="margin-top:8px">' +
+          notFound.map((n) => esc(n.name) + (n.hillel && n.hillel.rank ? ' <span class="muted">(#' + n.hillel.rank + ")</span>" : "")).join(" · ") + "</p></section>"
         : "");
   }
 
@@ -718,6 +738,7 @@
     ["service", "A little", "A lot"],
     ["independence", "Dorm & meals", "Own apartment"],
     ["peers", "Americans", "Israelis"],
+    ["hebrew", "English-friendly", "Full immersion"],
     ["adventure", "Chill", "Lots"],
   ];
   const BUDGET_MAX = { u15: 15000, "15-25": 25000, "25-35": 35000, o35: Infinity };
@@ -1156,6 +1177,7 @@
       if (location.hash === "#/start") render(); else location.hash = "#/start";
       return;
     }
+    if (act === "college-tab") { state.collegeTab = el.dataset.value; save(); return render(); }
     if (act === "type-tab") { filters().type = el.dataset.value || ""; save(); return render(); }
     if (act === "toggle-filters") { filters().open = !filters().open; save(); return render(); }
     if (act === "save") {

@@ -836,7 +836,7 @@
         social:       { icon: "🎉", label: "Social scene", low: "Quiet, smaller, more rules", high: "Big, lively, lots of freedom" },
         independence: { icon: "🔑", label: "Independence", low: "Dorm, meals and counselors", high: "Own apartment, cook, budget" },
         peers:        { icon: "🇮🇱", label: "Peer mix", low: "Mostly Americans", high: "Live with Israelis" },
-        hebrew:       { icon: "🗣️", label: "Hebrew", low: "Light ulpan", high: "Intense, aim for fluency" },
+        hebrew:       { icon: "🗣️", label: "Hebrew", low: "English-friendly, light ulpan", high: "Full immersion, aim for fluency" },
         mobility:     { icon: "🧭", label: "Home base", low: "One home base", high: "Move around Israel and the world" },
         adventure:    { icon: "🥾", label: "Adventure", low: "Chill", high: "Hiking, army-style, travel abroad" },
         credit:       { icon: "📜", label: "College credit", low: "Don't need it", high: "Want transferable credit" },

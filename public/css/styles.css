@@ -615,3 +615,4 @@ html, body { overscroll-behavior-x: none; }
   .prow .popt.dc { grid-column: 2; grid-row: 1; }
 }
 @media (min-width: 701px) { .prow { grid-template-columns: 150px 1fr auto; } .pend { width: 78px; } .pnum { min-width: 40px; } }
+.hillel-line { color: var(--accent); font-weight: 600; }

@@ -81,7 +81,7 @@ npm start        # starts the site on http://localhost:3001 and opens your brows
 The quiz has two short screens.
 
 1. **The basics** are dealbreakers that remove programs before any scoring: community, tuition budget, setting, and must-haves (semester option, college credit). Each group defaults to "Any".
-2. **What matters to you** has seven rows: academics, social scene, internships, service, independence, peer mix and adventure. Each row has three answers (low, middle, high, mapped to 1, 3 or 5) or "Don't care". An optional section adds field and city.
+2. **What matters to you** has eight rows: academics, social scene, internships, service, independence, peer mix, Hebrew and adventure. Each row is a 1–5 scale with short labels at each end, or "Don't care". An optional section adds field and city.
 
 Every program has a **1–5 rating in 12 categories** (`PROFILES` in `public/js/data.js`). `e` ratings are estimates from the program type and show as ≈; `p` ratings come from what the program publishes; `-` means unknown. Fit per answered row = 1 − |want − rating| / 4. The match % is the average fit, plus field and city picks. The **Top 3** page explains each match ("Matched on …", weaker spots, a per-category bar), and program pages show all 12 ratings under "How it rates".
 
