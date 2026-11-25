@@ -10,6 +10,7 @@ Questions to keep in mind while building the finder (saved 2026-11-25). The "Sit
 
 ## 2. Program data (what the finder shows)
 - **What's each program's weekly schedule?** Partly answered: Aardvark and the Year Course Pardes track publish one. Hevruta, Israel XP and Kivunim need emails.
+  - *Site now:* `public/js/time.js` holds approximate hours a week per category for 37 programs, shown as charts. Only some numbers come from published schedules (Aardvark internships, Torah Tech, Bar-Ilan XP, Hakotel, Migdal HaTorah, YTVA, Hevruta's intern/volunteer slots, Arevim); the rest are estimates marked ≈. Real schedules from program emails should replace them.
   - *Site now:* The "Daily life" section on program pages (`public/js/details.js`) has a typical week from each program's own site for most programs, including Hevruta, Kivunim and Israel XP's sample schedule. Confirm these by email. Nativ's two sources conflict.
 - **What tracks does each program offer, and what do they cost?** Mostly answered, except Israel XP's tracks.
   - *Site now:* Israel XP shows only its TorahPlus track.
@@ -32,3 +33,4 @@ Questions to keep in mind while building the finder (saved 2026-11-25). The "Sit
 
 ## 5. Your edge
 - **Why would a student use this finder over Masa's program search?** Answer this one well and the rest follows.
+  - *Site now:* Candidates: the head-to-head Compare page (up to three programs side by side, with the leader in each row in bold); Time breakdown charts (hours a week of religious study, academics, internships and volunteering); a quiz with weighted matching; college deferral rules tied to each program's credit; and a per-program application tracker.
