@@ -172,6 +172,10 @@
     else if (parts[0] === "my-list") current = { view: "list", id: null };
     else if (parts[0] === "browse") current = { view: "finder", id: null };
     else if (parts[0] === "colleges") current = { view: "colleges", id: null };
+    else if (parts[0] === "compare") {
+      if (parts[1]) { state.compare = parts[1].split(",").filter((id) => byId[id]).slice(0, 3); save(); }
+      current = { view: "compare", id: null };
+    }
     else if (parts[0] === "results") current = { view: quiz().done ? "results" : "quiz", id: null };
     else if (parts[0] === "start") current = { view: "quiz", id: null };
     else if (parts[0] === "swipe") current = { view: quiz().done ? "swipe" : "quiz", id: null };
@@ -179,13 +183,14 @@
     if (current.view !== "detail") lastListView = current.view;
     render();
   }
-  const NAV_FOR = { quiz: "discover", swipe: "discover", results: "discover", finder: "finder", list: "my-list", colleges: "colleges" };
+  const NAV_FOR = { quiz: "discover", swipe: "discover", results: "discover", finder: "finder", list: "my-list", colleges: "colleges", compare: "compare" };
   function render() {
     if (current.view === "detail") renderDetail(byId[current.id]);
     else if (current.view === "list") renderList();
     else if (current.view === "quiz") renderQuiz();
     else if (current.view === "swipe") renderSwipe();
     else if (current.view === "colleges") renderColleges();
+    else if (current.view === "compare") renderCompare();
     else if (current.view === "results") renderResults();
     else renderFinder();
     document.querySelectorAll("[data-nav]").forEach((a) => {
@@ -456,6 +461,119 @@
       .concat(p.app.aid.outside.map((a) => ({ key: "outside:" + a.name, name: a.name, amount: a.amount, deadline: a.deadline, url: a.url, kind: "Outside" })));
   }
 
+  // ---------- Time charts ----------
+  // Hours a week by category (time.js). Bars share one fixed scale (TIME_SCALE) so programs compare honestly.
+  const TIME = window.GYF_TIME || {};
+  const TCATS = [["rel", "Religious study"], ["acad", "Academic classes"], ["intern", "Internships"], ["vol", "Volunteering"], ["other", "Other structured time"]];
+  const TIME_SCALE = 50;
+  const tTotal = (t) => TCATS.reduce((n, c) => n + (t[c[0]] || 0), 0);
+  const tPub = (t, k) => (t.pub || []).indexOf(k) >= 0;
+  const tVal = (t, k) => (tPub(t, k) ? "" : "≈") + (t[k] || 0) + " h";
+  function stackBar(t, cls) {
+    const tot = tTotal(t) || 1;
+    return '<div class="tstack ' + (cls || "") + '" role="img" aria-label="' + esc(TCATS.filter((c) => t[c[0]]).map((c) => c[1] + " " + Math.round((t[c[0]] / tot) * 100) + "%").join(", ")) + '">' +
+      TCATS.filter((c) => t[c[0]]).map((c) => {
+        const pct = (t[c[0]] / tot) * 100;
+        return '<span class="seg c-' + c[0] + '" style="flex:' + t[c[0]] + '" data-tip="' + esc(c[1] + ": " + tVal(t, c[0]) + " a week (" + Math.round(pct) + "%)") + '">' +
+          (pct >= 14 && cls !== "tstack-sm" ? '<b>' + Math.round(pct) + "%</b>" : "") + "</span>";
+      }).join("") + "</div>";
+  }
+  function timeSection(p) {
+    const t = TIME[p.id];
+    if (!t) return null;
+    const tot = tTotal(t), anyPub = (t.pub || []).length > 0;
+    const rows = TCATS.map((c) => {
+      const v = t[c[0]] || 0;
+      return '<div class="trow"><span class="tlabel"><i class="key c-' + c[0] + '"></i>' + c[1] + '</span><span class="ttrack"><span class="tbar c-' + c[0] + '" style="width:' + Math.min(100, (v / TIME_SCALE) * 100).toFixed(1) + '%" data-tip="' + esc(c[1] + ": " + tVal(t, c[0]) + " a week") + '"></span></span><span class="tval">' + (v ? tVal(t, c[0]) : '<span class="muted">0</span>') + "</span></div>";
+    }).join("");
+    return ["time", "Time breakdown",
+      '<div class="viz">' +
+      '<div class="thead"><div class="hero"><span class="hero-n">' + (TCATS.every((c) => !t[c[0]] || tPub(t, c[0])) ? "" : "≈") + tot + '</span><span class="hero-u">structured hours a week</span></div>' +
+      '<span class="pbadge ' + (anyPub ? "ok" : "muted") + '">' + (anyPub ? "Partly from the published schedule" : "Our estimate") + "</span></div>" +
+      '<h4 class="viz-h">Hours a week by activity</h4><div class="trows">' + rows + '</div><div class="taxis"><span>0</span><span>' + TIME_SCALE / 2 + ' h</span><span>' + TIME_SCALE + " h</span></div>" +
+      '<h4 class="viz-h">Total time: how the week splits</h4>' + stackBar(t) +
+      '<ul class="tlegend">' + TCATS.filter((c) => t[c[0]]).map((c) => '<li><i class="key c-' + c[0] + '"></i>' + c[1] + " <strong>" + Math.round((t[c[0]] / tot) * 100) + "%</strong></li>").join("") + "</ul>" +
+      '<p class="small muted viz-note">' + esc(t.note) + " Free time isn't counted. ≈ = our estimate; numbers without ≈ come from the program's published schedule.</p>" +
+      '<button class="btn sm" data-act="cmp-add" data-id="' + p.id + '">Compare with other programs →</button>' +
+      "</div>"];
+  }
+
+  // ---------- Compare (head to head) ----------
+  const CMP_MAX = 3;
+  const cmpList = () => (state.compare = (state.compare || []).filter((id) => byId[id]).slice(0, CMP_MAX));
+  function renderCompare() {
+    const ids = cmpList();
+    const P = ids.map((id) => byId[id]);
+    const prefs = quiz().answers.prefs || {};
+    const opts = (sel) => '<option value="">' + (sel ? "Change program…" : "Add a program…") + "</option>" +
+      TYPE_ORDER.map((ty) => '<optgroup label="' + esc(TYPE_PLURAL[ty]) + '">' + D.programs.filter((q) => q.type === ty).map((q) => '<option value="' + q.id + '"' + (q.id === sel ? " selected" : "") + ">" + esc(q.name) + "</option>").join("") + "</optgroup>").join("");
+    const slots = [];
+    for (let i = 0; i < CMP_MAX; i++) slots.push(P[i] || null);
+    const head = '<tr><th class="rowh"></th>' + slots.map((q, i) => '<th class="cmp-col">' +
+      (q ? (q.photo ? '<div class="cmp-ph" style="background-image:url(\'' + esc(q.photo) + '\')"></div>' : '<div class="cmp-ph ph g-' + q.orientation + '"><span>' + esc(q.short) + "</span></div>") +
+        typeBadge(q) + '<a class="cmp-name" href="#/program/' + q.id + '">' + esc(q.name) + "</a>" + (q.audienceTag ? '<span class="aud-tag">' + esc(q.audienceTag) + "</span>" : "") : '<div class="cmp-ph empty">' + (i + 1) + "</div>") +
+      '<select class="select sm" data-act="cmp-pick" data-i="' + i + '" aria-label="Program ' + (i + 1) + '">' + opts(q && q.id) + "</select>" +
+      (q ? '<button class="btn ghost sm" data-act="cmp-remove" data-i="' + i + '">Remove</button>' : "") + "</th>").join("") + "</tr>";
+    // row helpers. lead: "max" | "min" | null decides which cell is bold (the leader), Baseball-Reference style.
+    const row = (label, cells, lead, vals) => {
+      let best = null;
+      if (lead && vals) { const v = vals.filter((x) => x != null); if (v.length > 1 && new Set(v).size > 1) best = lead === "min" ? Math.min.apply(null, v) : Math.max.apply(null, v); }
+      return '<tr><th class="rowh" scope="row">' + label + "</th>" + slots.map((q, i) => "<td" + (q && best != null && vals[i] === best ? ' class="lead"' : "") + ">" + (q ? cells(q, i) : "") + "</td>").join("") + "</tr>";
+    };
+    const group = (title, sub) => '<tr class="grp"><th colspan="' + (CMP_MAX + 1) + '">' + title + (sub ? ' <span class="small muted">' + sub + "</span>" : "") + "</th></tr>";
+    const v = (fn) => slots.map((q) => (q ? fn(q) : null));
+    const tm = (q) => TIME[q.id];
+    const nd = (q) => { const n = nextDeadline(q); return n.kind === "date" ? fmtDate(n.d.date, { month: "short", day: "numeric", year: "numeric" }) + " " + countdown(n.d.date) : n.kind === "rolling" ? "Rolling" : '<span class="muted">Not posted</span>'; };
+    const det = (q) => DETAILS[q.id] || {};
+    const clip = (t) => (t ? '<span class="clip">' + esc(t) + "</span>" : '<span class="muted">Not published</span>');
+    let body = "";
+    if (P.length) {
+      body += group("Basics") +
+        row("Community", (q) => esc(L.orientation[q.orientation])) +
+        row("Setting", (q) => esc(L.gender[q.gender])) +
+        row("Where", (q) => esc(q.base.split(" (")[0])) +
+        row("Length", (q) => esc(q.length.split(" · ")[0].split(" (")[0])) +
+        row("Tuition", (q) => esc(compactCost(q)) + '<div class="small muted">' + esc(shortCost(q)) + "</div>", "min", v((q) => q.costUSD)) +
+        row("Next deadline", nd) +
+        row("Israeli peers", (q) => esc(L.israeliPeers[q.israeliPeers])) +
+        row("College credit", (q) => (q.credit === true ? "Yes" : q.credit === false ? "No" : '<span class="muted">Not researched</span>')) +
+        row("Semester option", (q) => (q.semesterOption ? "Yes" : "No"));
+      body += group("Time", "approx. hours a week · bold = most in the row · ≈ = our estimate") +
+        TCATS.map((c) => row('<i class="key c-' + c[0] + '"></i>' + c[1], (q) => {
+          const t = tm(q); if (!t) return '<span class="muted">Not enough info</span>';
+          const x = t[c[0]] || 0;
+          return '<span class="cval">' + (x ? tVal(t, c[0]) : "0") + '</span><span class="ttrack sm"><span class="tbar c-' + c[0] + '" style="width:' + Math.min(100, (x / TIME_SCALE) * 100).toFixed(1) + '%" data-tip="' + esc(q.short + " · " + c[1] + ": " + tVal(t, c[0])) + '"></span></span>';
+        }, "max", v((q) => (tm(q) ? tm(q)[c[0]] || 0 : null)))).join("") +
+        row("<strong>Total structured time</strong>", (q) => (tm(q) ? "<strong>≈" + tTotal(tm(q)) + " h</strong>" : '<span class="muted">—</span>'), "max", v((q) => (tm(q) ? tTotal(tm(q)) : null))) +
+        row("Week split", (q) => (tm(q) ? stackBar(tm(q), "tstack-sm") : ""));
+      const answered = Object.keys(prefs).some((k) => prefs[k] && prefs[k].want);
+      body += group("Ratings (1–5)", answered ? "bold = closest to your quiz answer" : "bold = highest") +
+        Object.keys(L.categories).map((k) => {
+          const c = L.categories[k], want = prefs[k] && prefs[k].want;
+          const vals = v((q) => (q.profile[k] ? (want ? -Math.abs(q.profile[k].v - want) : q.profile[k].v) : null));
+          return row(esc(c.label) + (want ? '<div class="small muted">you: ' + want + "</div>" : ""), (q) => {
+            const rt = q.profile[k];
+            if (!rt) return '<span class="muted">Unknown</span>';
+            return '<span class="rdots">' + [1, 2, 3, 4, 5].map((n) => '<span class="rdot' + (n <= rt.v ? " on" : "") + '"></span>').join("") + '</span> <span class="cval">' + (rt.est ? "≈" : "") + rt.v + "</span>";
+          }, "max", vals);
+        }).join("");
+      body += group("The year") +
+        row("Housing", (q) => clip(det(q).housing)) +
+        row("Meals", (q) => clip(det(q).meals)) +
+        row("Internships", (q) => { const it = det(q).internships; return it && it.offered ? "Yes" + (it.hours ? '<div class="small muted">' + esc(it.hours) + "</div>" : "") : it && it.offered === false ? "No" : '<span class="muted">Not stated</span>'; }) +
+        row("Tracks", (q) => { const tr = det(q).tracks || []; return tr.length ? esc(tr.map((x) => x.name).join(", ")) : '<span class="muted">—</span>'; });
+      body += group("Applying") +
+        row("Interview", (q) => (q.app.interview.required === true ? "Yes" : q.app.interview.required === false ? "No" : '<span class="muted">Not stated</span>')) +
+        row("Deposit", (q) => (q.app.fees.deposit ? esc(q.app.fees.deposit) : '<span class="muted">Not published</span>')) +
+        row("Application fee", (q) => (q.app.fees.application ? esc(q.app.fees.application) : '<span class="muted">Not published</span>'));
+    }
+    $app.innerHTML =
+      '<div class="browse-head"><div><h1>Compare programs</h1><p class="muted">Pick up to three programs to see them head to head. Bold marks the leader in each row.</p></div></div>' +
+      '<div class="card table-wrap cmp-wrap"><table class="cmp"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>" +
+      (P.length ? "" : '<div class="card empty" style="margin-top:12px">Choose programs above, or tap "Compare" on any program page. <a href="#/results">Compare your Top 3</a>.</div>') +
+      (P.length ? '<p class="small muted" style="margin-top:10px">Share this comparison: <a href="#/compare/' + ids.join(",") + '">link</a></p>' : "");
+  }
+
   // ---------- "The year" sections: daily life, internships & tracks, student stories ----------
   const DETAILS = (window.GYF_DETAILS && window.GYF_DETAILS.programs) || {};
   const STORIES = window.GYF_STORIES || {};
@@ -481,6 +599,8 @@
   function yearSections(p) {
     const d = DETAILS[p.id] || {};
     const out = [];
+    const ts = timeSection(p);
+    if (ts) out.push(ts);
     const life = [["cal", "A typical week", d.week], ["clock", "A typical day", d.day], ["home", "Housing", d.housing], ["meals", "Meals", d.meals],
       ["candle", "Shabbat & holidays", d.shabbat], ["map", "Trips & travel", d.trips], ["users", "Staff & support", d.staff], ["check", "Included in the price", d.included]].filter((x) => x[2]);
     if (life.length) out.push(["life", "Daily life", '<div class="life-grid">' + life.map((x) =>
@@ -705,6 +825,7 @@
       '<div class="chips"><span class="chip accent">' + esc(L.orientation[p.orientation]) + '</span><span class="chip">' + esc(L.gender[p.gender]) + '</span><span class="chip">' + esc(L.israeliPeers[p.israeliPeers]) + "</span>" +
       (p.credit ? '<span class="chip">College credit</span>' : "") + (p.semesterOption ? '<span class="chip">Semester option</span>' : "") + "</div></div>" +
       '<div class="actions"><button class="btn' + (saved ? "" : " primary") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '">' + (saved ? I("heart", true) + " On my list" : I("heart") + " Add to my list") + "</button>" +
+      '<button class="btn" data-act="cmp-add" data-id="' + p.id + '">Compare</button>' +
       '<a class="btn" href="' + esc(p.website) + '" target="_blank" rel="noopener">' + (p.websiteLabel ? esc(p.websiteLabel) : "Official website") + " ↗</a></div></header>" +
       '<div class="card stats">' +
       '<div class="stat"><div class="label">Tuition</div><div class="value">' + esc(p.costUSD != null ? money(p.costUSD) : /[₪£]/.test(p.costText) ? shortCost(p) : "—") + '</div><div class="sub">' + esc(p.costUSD != null ? shortCost(p) : p.costText.indexOf("₪") >= 0 ? "Priced in shekels" : p.costText.indexOf("£") >= 0 ? "Priced in pounds" : p.costText) + "</div></div>" +
@@ -1071,7 +1192,7 @@
     $app.innerHTML =
       '<section class="results">' +
       '<div class="results-head"><div><h1>Your top 3</h1><p class="muted">Best fits out of ' + all.length + " programs.</p></div>" +
-      '<div class="swipe-head-actions"><button class="btn ghost sm" data-act="retake">Change answers</button><button class="btn sm" data-act="restart">' + I("undo") + ' Retake quiz</button></div></div>' +
+      '<div class="swipe-head-actions"><button class="btn ghost sm" data-act="retake">Change answers</button><button class="btn sm" data-act="cmp-top3">Compare these 3</button><button class="btn sm" data-act="restart">' + I("undo") + ' Retake quiz</button></div></div>' +
       '<div class="top3">' + top.map((m, i) => {
         const p = m.p, saved = !!state.saved[p.id];
         return '<article class="card topcard">' +
@@ -1343,6 +1464,13 @@
       return;
     }
     if (act === "type-tab") { filters().type = el.dataset.value || ""; save(); return render(); }
+    if (act === "cmp-add") {
+      const l = cmpList();
+      if (l.indexOf(el.dataset.id) < 0) { if (l.length >= CMP_MAX) l.pop(); l.push(el.dataset.id); }
+      save(); location.hash = "#/compare"; return;
+    }
+    if (act === "cmp-remove") { cmpList().splice(+el.dataset.i, 1); save(); return render(); }
+    if (act === "cmp-top3") { state.compare = matches().slice(0, 3).map((m) => m.p.id); save(); location.hash = "#/compare"; return; }
     if (act === "toggle-filters") { filters().open = !filters().open; save(); return render(); }
     if (act === "toggle-deadlines") { filters().dlOpen = !filters().dlOpen; save(); return render(); }
     if (act === "save") {
@@ -1408,6 +1536,11 @@
     const act = el.dataset.act;
     if (act === "toggle") { filters()[el.dataset.key] = el.checked; save(); render(); }
     else if (act === "sort") { filters().sort = el.value; save(); render(); }
+    else if (act === "cmp-pick") {
+      const l = cmpList(), i = +el.dataset.i;
+      if (el.value) { const at = l.indexOf(el.value); if (at >= 0) l.splice(at, 1); l.splice(Math.min(i, l.length), i < l.length ? 1 : 0, el.value); }
+      state.compare = l.slice(0, CMP_MAX); save(); render();
+    }
     else if (act === "cost-range") { // re-render the grid once the slider is released (or per arrow key)
       filters().maxCost = budgetValue(el); save();
       const y = window.scrollY; render(); window.scrollTo(0, y);
@@ -1443,6 +1576,21 @@
       const s = $app.querySelector('[data-act="search"]');
       if (s) { s.focus(); s.setSelectionRange(pos, pos); }
     }
+  });
+
+  // Hover tooltip for chart marks ([data-tip]); values are also printed as text, so this is a convenience.
+  const tip = document.createElement("div");
+  tip.className = "viz-tip"; tip.hidden = true; document.body.appendChild(tip);
+  document.addEventListener("mouseover", (e) => {
+    const t = e.target.closest && e.target.closest("[data-tip]");
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.dataset.tip; tip.hidden = false;
+  });
+  document.addEventListener("mousemove", (e) => {
+    if (tip.hidden) return;
+    const w = tip.offsetWidth;
+    tip.style.left = Math.min(window.innerWidth - w - 8, e.clientX + 12) + "px";
+    tip.style.top = e.clientY + 14 + "px";
   });
 
   window.addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); });
