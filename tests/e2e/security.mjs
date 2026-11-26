@@ -89,10 +89,12 @@ ok('bot check on: reset link sends the token', /^cap-/.test(await J('mock:lastCa
 // --- privacy page ---
 await nav(B+'/privacy');
 ok('privacy page loads and covers storage, deletion and analytics', /What we store/.test(await ev('document.body.textContent')) && /Delete my account/.test(await ev('document.body.textContent')) && /Web Analytics/.test(await ev('document.body.textContent')));
+ok('privacy page lists the contact email', await ev(`!!document.querySelector('a[href="mailto:israelgapyearfinder@gmail.com"]')`));
 await shot('sec-privacy', 390, 900);
 ok('privacy page fits a phone', !(await ev('document.documentElement.scrollWidth > window.innerWidth + 1')));
 await nav(B+'/login');
 ok('login page links to privacy', await ev(`!!document.querySelector('a[href="/privacy"]')`));
+ok('login page has a contact link', await ev(`!!document.querySelector('a[href="mailto:israelgapyearfinder@gmail.com"]')`));
 
 ok('no JS errors', errs.length===0); if(errs.length) console.log(errs.slice(0,5));
 ws.close(); process.exit(0);
