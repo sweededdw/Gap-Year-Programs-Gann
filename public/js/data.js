@@ -4049,6 +4049,21 @@
     "midreshet-ora": prof(SEMINARY, "text")
   });
 
+  // Photos from each program's own website (checked by eye: real photos, not logos), added 2026-11-26.
+  Object.assign(PHOTOS, {
+    "tiferet-tj": "https://www.yeshivatiferet.com/uploads/1/1/9/2/119243265/editor/nac-2694.jpg?1716979855",
+    "mayanot": "https://mayanot.edu/wp-content/uploads/2019/01/Maynot_home1.jpg",
+    "machon-meir": "https://machonmeir.net/wp-content/uploads/2020/12/maxresdefault-1.jpg",
+    "mmy": "https://mevaseret.org/wp-content/uploads/2020/03/Tiyulim.jpg",
+    "harova": "https://www.harova.org/media/zbohfg32/dsc_1078.jpg",
+    "machon-maayan": "https://machonmaayan.org/wp-content/uploads/bb-plugin/cache/home_03-landscape-3bbedfcb8bdd63805e5c9f54d3aaef41-5f60f34a43f46.jpg",
+    "amudim": "https://images.squarespace-cdn.com/content/v1/576c2a7de4fcb5bcdb38afbd/1730966118102-EGA6QZUY8CTM4YS9Z6RX/Copy+of+Banner.jpg",
+    "tomer-devorah": "https://www.tomerdevorah.net/wp-content/uploads/2017/11/home_campus-stairs-new.jpg",
+    "moreshet-yerushalayim": "https://www.moreshetyerushalayim.com/media/rd/share.jpg",
+    "torat-shraga": "https://toratshraga.com/wp-content/uploads/2025/12/Hero-slider-mb3.png",
+    "shapells": "https://images.squarespace-cdn.com/content/v1/6a26e3055159b035dec216ba/1780933382813-FZRYQK8QE0O17T9KGSBM/Jordan+and+Josh+chavrusa.jpeg",
+    "mitzpe-yericho": "https://ymy.org.il/wp-content/uploads/2024/11/IMG_5109-0.2-1024x819.jpg",
+  });
   programs.forEach(function (p) {
     p.profile = PROFILES[p.id] || prof("- - - - - - - - - - - -", "light");
     p.learning = p.profile.learning;
