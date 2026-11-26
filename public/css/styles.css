@@ -898,6 +898,32 @@ table.cmp { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 
 .cmp-more .cmp { min-width: 720px; }
 .cmp-more .rowh { width: 170px; }
 table.cmp { table-layout: fixed; } .cmp .rowh { width: 170px; }
+/* Compare: roomier rows and columns so each program reads as its own column */
+table.cmp { font-size: 15px; line-height: 1.55; min-width: 780px; }
+.cmp th, .cmp td { padding: 16px 22px; }
+.cmp .rowh, .cmp-more .rowh { width: 190px; padding-left: 20px; font-size: 13.5px; }
+.cmp-col { width: calc((100% - 190px) / 3); }
+.cmp td + td, .cmp th + th { border-left: 1px solid color-mix(in srgb, var(--border) 65%, transparent); }
+.cmp-headrow th { padding-top: 20px; padding-bottom: 18px; }
+.cmp-col > * { margin-bottom: 12px; }
+.cmp-top { gap: 12px; margin-bottom: 12px; }
+.cmp-board td { padding-top: 20px; padding-bottom: 20px; }
+.best-at { margin-top: 10px; line-height: 1.5; }
+.cmp .grp th { padding-top: 22px; padding-bottom: 10px; }
+.cbar { margin-top: 9px; height: 9px; }
+.cmp td .win-tag { margin-top: 6px; }
+.cmp-more { margin-top: 24px; }
+.cmp-more > summary { padding: 10px 0; }
+.cmp-more .cmp { min-width: 780px; margin-top: 8px; }
+@media (max-width: 700px) {
+  table.cmp, .cmp-more .cmp { font-size: 14px; min-width: 700px; }
+  .cmp th, .cmp td { padding: 12px 14px; }
+  .cmp .rowh, .cmp-more .rowh { width: 140px; padding-left: 14px; }
+  .cmp-col { width: calc((100% - 140px) / 3); }
+  .cmp-top { grid-template-columns: 1fr auto; row-gap: 10px; }
+  .cmp-top .cmp-ph { grid-column: 1 / -1; grid-row: 1; width: 100%; height: 72px; }
+  .cmp-id .cmp-name { font-size: 14.5px; }
+}
 
 /* Selected "Any" / "Skip" / "Don't care" look selected, same blue as any other choice */
 .qchip.any.on { background: var(--accent-soft); border-color: var(--accent); color: var(--text); font-weight: 600; }
