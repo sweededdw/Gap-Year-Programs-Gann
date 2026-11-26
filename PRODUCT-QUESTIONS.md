@@ -14,8 +14,9 @@ Questions to keep in mind while building the finder (saved 2026-11-25). The "Sit
   - *Site now:* The "Daily life" section on program pages (`public/js/details.js`) has a typical week from each program's own site for most programs, including Hevruta, Kivunim and Israel XP's sample schedule. Confirm these by email. Nativ's two sources conflict.
 - **What tracks does each program offer, and what do they cost?** Mostly answered, except Israel XP's tracks.
   - *Site now:* Israel XP shows only its TorahPlus track.
-- **What's the real cost after Masa grants, aid, flights and insurance?** Still open for every program.
-  - *Site now:* Pages show the published tuition and "included in the price", and note when flights, meals or insurance are extra. There's no net-cost calculation yet.
+- **What's the real cost after Masa grants, aid, flights and insurance?** Partly answered (2026-11-26).
+  - *Site now:* Each program page has a "Real cost" calculator (`public/js/cost.js`). It applies Masa's 2026–27 North American grant table by age and program type (under 22: academic gap $600–$800, academic $1,250, career $1,000–$2,000, youth movement $0–$200, and no base grant for Jewish studies, meaning yeshiva and seminary). It skips the grant when the price is already "after Masa", reads the program's "included" text to add flights (Masa's 2026 fare ranges by city), insurance and food when they're extra, and converts shekel and pound prices at an editable rate. Students type in need-based aid, program scholarships and community grants. A "Ways to pay" list covers Federations (Atlanta up to $10,000), JNF, free loans, NCSY's list and FAFSA/529 through YU, Touro or HTC.
+  - *Still open:* Which programs are Masa-recognized and under which Masa type (the calculator guesses from the program type and lets the student change it); real program scholarship amounts; several "Ways to pay" amounts come from NCSY's 2023 list and are marked "confirm".
 - **How many credits does each program give, and which colleges accept them?** Still open.
   - *Site now:* The Colleges page shows each college's rule on gap-year credit (76 colleges with sourced policies, mostly from Hillel's top 100). Per-program credit counts are only partial.
 - **What are the cohort size and mix, and how much free time is there?** Still open.

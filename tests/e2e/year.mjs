@@ -18,7 +18,7 @@ await go('#/browse'); await ev('localStorage.clear(); true');
 // Aardvark: the deep sections
 await go('#/program/aardvark');
 const tabs = await ev('[...document.querySelectorAll(".tabs a")].map(a=>a.textContent)');
-ok('tabs: Overview, Time breakdown, Daily life, Internships & tracks, Student stories, then application', tabs.slice(0,5).join("|")==="Overview|Time breakdown|Daily life|Internships & tracks|Student stories" && tabs.includes("Deadlines"));
+ok('tabs: Overview, Time breakdown, Daily life, Real cost, Internships & tracks, Student stories, then application', tabs.slice(0,6).join("|")==="Overview|Time breakdown|Daily life|Real cost|Internships & tracks|Student stories" && tabs.includes("Deadlines"));
 ok('Daily life: housing near Machane Yehuda, meals budget, 24/7 counselors', /Machane Yehuda/.test(await txt('#sec-life')) && /₪1,000/.test(await txt('#sec-life')) && /24\/7/.test(await txt('#sec-life')));
 ok('Internships: how placements work + 16–20 hours + sectors + 4 tracks', /Placement coordinators/.test(await txt('#sec-tracks')) && /16–20 hours/.test(await txt('#sec-tracks')) && await ev('document.querySelectorAll("#sec-tracks .track").length')===4 && await ev('document.querySelectorAll("#sec-tracks .intern .chip").length')>=8);
 ok('Student stories: testimonial + alumni contact placeholders', /Testimonials coming soon/.test(await txt('#sec-stories')) && /Alumni contacts coming soon/.test(await txt('#sec-stories')));

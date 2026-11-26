@@ -1223,3 +1223,38 @@ a.acct-item { color: var(--text); text-decoration: none; }
   .cmp-pin span { padding: 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cmp-pin span + span { border-left: 1px solid var(--border); }
 }
+
+/* ---------- Real cost calculator (program pages) ---------- */
+.cc-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 22px; align-items: start; }
+.cc-inputs { display: grid; gap: 14px; min-width: 0; }
+.cc-group { border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px 16px; margin: 0; display: grid; gap: 12px; min-width: 0; }
+.cc-group legend { padding: 0 6px; margin-left: -6px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--gold); }
+.cc-field { display: grid; gap: 5px; font-size: 13.5px; font-weight: 600; }
+.cc-field .small { font-weight: 400; line-height: 1.4; }
+.cc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cc-money { position: relative; display: block; }
+.cc-money > span { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.cc-money .input { width: 100%; padding-left: 24px; font-variant-numeric: tabular-nums; }
+.cc-cov { gap: 6px; }
+.cc-out { position: sticky; top: calc(var(--bar-h) + 12px); }
+.cc-card { padding: 18px; background: linear-gradient(160deg, var(--gold-soft), var(--surface) 70%); border-color: color-mix(in srgb, var(--gold) 35%, var(--border)); }
+.cc-label { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.cc-net { font-family: var(--serif); font-size: 40px; font-weight: 700; line-height: 1.1; color: var(--gold); margin: 4px 0 6px; font-variant-numeric: tabular-nums; }
+.cc-bar { height: 8px; border-radius: 4px; background: var(--surface-2); margin: 10px 0 14px; overflow: hidden; }
+.cc-bar > span { display: block; height: 100%; border-radius: 4px; background: var(--ok); }
+.cc-lines { display: grid; gap: 6px; font-size: 14px; }
+.cc-line { display: flex; justify-content: space-between; gap: 10px; font-variant-numeric: tabular-nums; }
+.cc-line span:first-child { color: var(--muted); }
+.cc-total { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px; font-weight: 700; }
+.cc-total span:first-child { color: var(--text); }
+.cc-ways { margin-top: 18px; }
+.cc-ways > summary { cursor: pointer; font-weight: 700; color: var(--accent); padding: 6px 0; }
+.cc-list { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 10px; }
+.cc-list li { padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; display: grid; gap: 3px; }
+.cc-list .chip { font-size: 11px; padding: 0 7px; vertical-align: 1px; }
+.cc-foot { margin-top: 14px; }
+@media (max-width: 900px) {
+  .cc-grid { grid-template-columns: 1fr; }
+  .cc-out { position: static; order: -1; }
+}
+@media (max-width: 520px) { .cc-row { grid-template-columns: 1fr; } .cc-net { font-size: 34px; } }

@@ -784,6 +784,7 @@
     if (n) {
       basics =
         row("Tuition", (q) => '<span title="' + esc(q.costText) + '">' + esc(compactCost(q)) + "</span>", { lead: "min", vals: v((q) => q.costUSD), tag: "Lowest", win: "Lowest tuition", keep: true }) +
+        (COST ? row("Masa grant <span class=\"small muted\">(under 22)</span>", (q) => esc(COST.compactMasa(q))) : "") +
         row("Length", (q) => esc(q.length.split(" · ")[0].split(" (")[0])) +
         row("Next deadline", nd) +
         row("Israeli peers", (q) => esc(L.israeliPeers[q.israeliPeers]), { lead: "max", vals: v((q) => PEERS[q.israeliPeers]), tag: "Most", win: "Most Israeli contact" }) +
@@ -873,6 +874,7 @@
   // ---------- "The year" sections: daily life, internships & tracks, student stories ----------
   const DETAILS = (window.GYF_DETAILS && window.GYF_DETAILS.programs) || {};
   const STORIES = window.GYF_STORIES || {};
+  const COST = window.GYF_COST || null;
   function infoSection(key, title, body, sub) {
     return '<section class="card sec" id="sec-' + key + '"><div class="sec-head"><h2>' + esc(title) + "</h2>" + (sub ? '<span class="small muted">' + sub + "</span>" : "") + "</div>" + body + "</section>";
   }
@@ -901,6 +903,7 @@
       ["candle", "Shabbat & holidays", d.shabbat], ["map", "Trips & travel", d.trips], ["users", "Staff & support", d.staff], ["check", "Included in the price", d.included]].filter((x) => x[2]);
     if (life.length) out.push(["life", "Daily life", '<div class="life-grid">' + life.map((x) =>
       '<div class="life-item"><span class="life-ic">' + I(x[0]) + "</span><div><h4>" + x[1] + "</h4>" + bulletList(x[2]) + "</div></div>").join("") + "</div>"]);
+    if (COST) out.push(["cost", "Real cost", COST.render(p, d, ps(p.id).cost, { esc, I })]);
     const it = d.internships, tracks = d.tracks || [];
     if ((it && it.offered) || tracks.length) {
       const title = it && it.offered && tracks.length ? "Internships & tracks" : it && it.offered ? "Internships" : "Tracks";
@@ -1849,6 +1852,7 @@
 
   $app.addEventListener("change", (e) => {
     const el = e.target;
+    if (el.dataset.cost) { if (el.tagName === "SELECT" || el.type === "checkbox") costInput(el, true); return; }
     if (el.dataset.bind) {
       const isText = el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && el.type !== "date" && el.type !== "checkbox");
       if (isText) return; // already saved on input; re-rendering on blur would swallow the next click
@@ -1872,8 +1876,25 @@
     }
   });
 
+  // Real cost calculator: typing updates the total in place (keeps focus); selects and checkboxes redraw the calculator.
+  function costInput(el, redraw) {
+    const id = el.dataset.id, p = byId[id], s = ps(id), c = (s.cost = s.cost || {}), k = el.dataset.cost;
+    c[k] = el.type === "checkbox" ? el.checked : el.value;
+    if (k === "city") c.flights = ""; // new city: use its fare range
+    save();
+    const box = el.closest(".costcalc");
+    if (!box || !p) return;
+    if (!redraw) { const out = box.querySelector(".cc-out"); if (out) out.innerHTML = COST.summary(p, DETAILS[id] || {}, c, { esc, I }); return; }
+    const ways = box.querySelector(".cc-ways"), open = ways && ways.open, y = window.scrollY;
+    box.outerHTML = COST.render(p, DETAILS[id] || {}, c, { esc, I });
+    const nb = $app.querySelector('.costcalc[data-cost-for="' + id + '"]');
+    if (nb && open) nb.querySelector(".cc-ways").open = true;
+    window.scrollTo(0, y);
+    const again = nb && nb.querySelector('[data-cost="' + k + '"]'); if (again) again.focus();
+  }
   $app.addEventListener("input", (e) => {
     const el = e.target;
+    if (el.dataset.cost && el.tagName === "INPUT" && el.type !== "checkbox") return costInput(el, false);
     if (el.dataset.bind && (el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && el.type !== "date" && el.type !== "checkbox"))) {
       bound(el, el.value); // typing saves without re-rendering, so focus is kept
     } else if (el.dataset.act === "budget-range" || el.dataset.act === "cost-range") {
