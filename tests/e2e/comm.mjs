@@ -47,7 +47,7 @@ ok('linked gap years all exist', await ev(`window.GYF_ORGS.orgs.every(o=>o.progr
 let t = await text();
 ok('private student never appears anywhere', !/Private Pat|Secret School/.test(t));
 ok('tiles show only the name (no description)', await ev(`[...document.querySelectorAll('.org-tile')].every(t=>!t.querySelector('p') && t.innerText.trim().length<60)`) && !/Teen-led chapters/.test(await text()));
-ok('tiles use the site colors (sunset gold logo)', await ev(`getComputedStyle(document.querySelector('.org-tile .org-logo')).color`)==='rgb(232, 192, 125)');
+ok('tiles use the site colors (theme gold logo)', await ev(`getComputedStyle(document.querySelector('.org-tile .org-logo')).color`)===await ev(`(()=>{const d=document.createElement('i');d.style.color='var(--gold)';document.body.appendChild(d);const c=getComputedStyle(d).color;d.remove();return c;})()`));
 await go('#/community/org/bbyo');
 ok('BBYO page has the description and counts only visible students', /Teen-led chapters/.test(await text()) && /Students \(1\)/.test(await text()));
 await go('#/community');

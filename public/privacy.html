@@ -1,19 +1,28 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="sunset">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="/js/theme.js"></script>
   <title>Privacy · Israel Gap Year Finder</title>
   <meta name="description" content="What Israel Gap Year Finder stores about you, where it's kept, and how to download or delete it." />
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
   <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png" />
-  <meta name="theme-color" content="#0f1217" />
+  <meta name="theme-color" content="#15110d" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@600&display=swap" />
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body class="auth-body">
+  <div class="theme-corner"><details class="theme-menu">
+    <summary aria-label="Color theme" title="Color theme"><svg class="ic" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg><span class="theme-label">Theme</span></summary>
+    <div class="theme-pop" role="menu" aria-label="Color theme">
+      <button type="button" role="menuitemradio" data-theme-pick="sunset"><span class="sw sw-sunset" aria-hidden="true"></span>Sunset</button>
+      <button type="button" role="menuitemradio" data-theme-pick="daylight"><span class="sw sw-daylight" aria-hidden="true"></span>Daylight</button>
+      <button type="button" role="menuitemradio" data-theme-pick="sea"><span class="sw sw-sea" aria-hidden="true"></span>Sea</button>
+    </div>
+  </details></div>
   <main class="legal">
     <a class="brand auth-brand" href="/" aria-label="Israel Gap Year Finder"><img class="logo-mark" src="/static/logo-mark.svg" alt="" width="48" height="48" /><span class="wordmark wm-auth"><span class="wm-title">Israel Gap Year</span><span class="wm-sub">Finder</span></span></a>
 

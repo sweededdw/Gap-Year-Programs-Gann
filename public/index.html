@@ -1,13 +1,14 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="sunset">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="js/theme.js"></script>
   <title>Israel Gap Year Finder</title>
   <meta name="description" content="Find and track Israel gap year programs for Jewish high school seniors: program details, deadlines, essays, aid, visas and college deferral in one place." />
   <link rel="icon" type="image/svg+xml" href="static/favicon.svg" />
   <link rel="apple-touch-icon" sizes="180x180" href="static/apple-touch-icon.png" />
-  <meta name="theme-color" content="#0f1217" />
+  <meta name="theme-color" content="#15110d" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@600&display=swap" />
@@ -28,6 +29,14 @@
         <a href="#/colleges" data-nav="colleges">Colleges</a>
         <a href="#/community" data-nav="community">Community</a>
         <a href="#/my-list" data-nav="my-list">Saved <span id="saved-count" class="count-pill">0</span></a>
+        <details class="theme-menu">
+          <summary aria-label="Color theme" title="Color theme"><svg class="ic" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg><span class="theme-label">Theme</span></summary>
+          <div class="theme-pop" role="menu" aria-label="Color theme">
+            <button type="button" role="menuitemradio" data-theme-pick="sunset"><span class="sw sw-sunset" aria-hidden="true"></span>Sunset</button>
+            <button type="button" role="menuitemradio" data-theme-pick="daylight"><span class="sw sw-daylight" aria-hidden="true"></span>Daylight</button>
+            <button type="button" role="menuitemradio" data-theme-pick="sea"><span class="sw sw-sea" aria-hidden="true"></span>Sea</button>
+          </div>
+        </details>
         <details id="account" class="account acct-menu" hidden>
           <summary><span id="user-name" class="user-name"></span></summary>
           <div class="acct-pop">

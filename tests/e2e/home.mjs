@@ -17,7 +17,8 @@ await cmd('Page.navigate',{url:B}); await sleep(500); await ev('localStorage.cle
 ok('bare address opens the about-us homepage', /Every Israel gap year, in one place/.test(await ev('document.querySelector(".about-hero h1").textContent')));
 ok('highlights total gap years and total college rules', await ev('document.querySelectorAll(".about-stat").length')===2 && await ev('document.querySelector(".about-stat.gold strong").textContent')===String(await ev('window.GYF_DATA.programs.length')) && await ev('document.querySelector(".about-stat.sea strong").textContent')===String(await ev('window.GYF_COLLEGES.colleges.length')));
 ok('no links to other parts of the site on the homepage', await ev('document.getElementById("app").querySelectorAll("a, button").length')===0);
-ok('uses the logo colors (sunset gold, sea blue)', await ev('getComputedStyle(document.querySelector(".about-stat.gold strong")).color')==='rgb(232, 192, 125)' && await ev('getComputedStyle(document.querySelector(".about-stat.sea strong")).color')==='rgb(126, 162, 255)');
+const tok=n=>ev(`(()=>{const d=document.createElement("i");d.style.color="var(${n})";document.body.appendChild(d);const c=getComputedStyle(d).color;d.remove();return c;})()`);
+ok('stats use the theme gold and sea tokens', await ev('getComputedStyle(document.querySelector(".about-stat.gold strong")).color')===await tok('--gold') && await ev('getComputedStyle(document.querySelector(".about-stat.sea strong")).color')===await tok('--sea'));
 ok('before the quiz: Home first, then Discover', (await navOrder()).startsWith('home,discover,'));
 ok('Home is highlighted on the homepage', await ev('document.querySelector("[data-nav=home]").classList.contains("active")'));
 await shot('home-new');
@@ -30,7 +31,37 @@ await ev('document.querySelector("[data-nav=home]").click(); true'); await sleep
 ok('Home link opens the homepage', !!(await ev('!!document.querySelector(".about-hero")')));
 await ev('location.hash="#/browse"; true'); await sleep(300);
 ok('menu order stays the same on other pages', (await navOrder())==='home,finder,compare,colleges,community,my-list,discover');
+// Color themes
+const rgb=c=>c.match(/\d+/g).map(Number);
+const bgOf=()=>ev('getComputedStyle(document.documentElement).getPropertyValue("--bg").trim()');
+const pick=async t=>{ await ev('document.querySelector(".theme-menu").open=true; true'); await click(`[data-theme-pick=${t}]`); };
+await ev('localStorage.removeItem("gyf:theme"); location.hash="#/"; location.reload(); true'); await sleep(900);
+ok('a theme is always set', ['sunset','daylight','sea'].includes(await ev('document.documentElement.dataset.theme')));
+ok('theme picker lists Sunset, Daylight and Sea', (await ev('[...document.querySelectorAll(".theme-pop [data-theme-pick]")].map(b=>b.textContent.trim()).join(",")'))==='Sunset,Daylight,Sea');
+await pick('sunset');
+ok('Sunset: picker switches the theme', await ev('document.documentElement.dataset.theme')==='sunset' && await ev('document.querySelector("[data-theme-pick=sunset]").getAttribute("aria-checked")')==='true');
+ok('Sunset: menu closes after picking', !(await ev('document.querySelector(".theme-menu").open')));
+{ const [r,g,b]=rgb(await ev('getComputedStyle(document.body).backgroundColor')); ok('Sunset: warm background (more red than blue)', r>b && r<60); }
+{ const [r,g,b]=rgb(await tok('--accent')); ok('Sunset: sunny gold accent', r>220 && g>150 && b<110); }
+ok('Sunset: white palm logo', /logo-mark\.svg$/.test(await ev('document.querySelector("img.logo-mark").getAttribute("src")')));
+ok('Sunset: phone toolbar color matches', await ev('document.querySelector("meta[name=theme-color]").content')==='#15110d');
+await shot('theme-sunset');
+await pick('daylight');
+ok('Daylight: light warm background token', (await bgOf())==='#fbf5ea');
+{ const [r,g,b]=rgb(await ev('getComputedStyle(document.body).backgroundColor')); ok('Daylight: page is light and warm', r>240 && r>b); }
+ok('Daylight: logo switches to the light-background version', /logo-mark-light\.svg$/.test(await ev('document.querySelector("img.logo-mark").getAttribute("src")')));
+ok('Daylight: wordmark is dark text', rgb(await ev('getComputedStyle(document.querySelector(".wm-title")).color'))[0]<80);
+await shot('theme-daylight');
+await ev('location.reload(); true'); await sleep(900);
+ok('the chosen theme is remembered after reload', await ev('document.documentElement.dataset.theme')==='daylight' && await ev('localStorage.getItem("gyf:theme")')==='daylight');
+ok('remembered Daylight still shows the light logo', /logo-mark-light\.svg$/.test(await ev('document.querySelector("img.logo-mark").getAttribute("src")')));
+await pick('sea');
+ok('Sea: cool background', (await bgOf())==='#0f1217');
+ok('Sea: logo back to the white palm', /logo-mark\.svg$/.test(await ev('document.querySelector("img.logo-mark").getAttribute("src")')));
+await shot('theme-sea');
+await pick('sunset');
 await vp(390,900); await ev('location.hash="#/"; true'); await sleep(400); await shot('home-mobile');
+ok('phone: theme button fits in the top bar', await ev('(()=>{const r=document.querySelector(".theme-menu > summary").getBoundingClientRect();return r.right<=innerWidth && r.width>0;})()'));
 ok('phone: no sideways scroll', await ev('document.documentElement.scrollWidth<=innerWidth'));
 ok('no JS errors', errs.length===0); if(errs.length) console.log(errs);
 console.log(out.join('\n')); process.exit(0);

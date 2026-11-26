@@ -37,7 +37,7 @@
     window.onTurnstileReady = () => {
       captcha.widget = window.turnstile.render(box, {
         sitekey: siteKey,
-        theme: "dark",
+        theme: document.documentElement.getAttribute("data-theme") === "daylight" ? "light" : "dark",
         action: "auth",
         callback: (t) => { captcha.token = t; },
         "expired-callback": () => { captcha.token = null; },
