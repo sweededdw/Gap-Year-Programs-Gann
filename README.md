@@ -28,6 +28,7 @@ Browser ──► Supabase Auth (sign up / log in / reset password)
 | `public/js/admin.js` | The admin page for editing program and college data (`#/admin`). Loads only for admins. |
 | `api/delete-account.js` | Deletes the logged-in student's account. Needs `SUPABASE_SECRET_KEY` in Vercel. |
 | `public/privacy.html` | The privacy page. |
+| `public/js/community.js`, `public/js/orgs.js` | The Community page (`#/community`): opt-in profiles, organizations (BBYO, NCSY, ...) and who's interested in each program. The organization list, with sources, is in `orgs.js`. |
 | `tests/` | Browser and API tests (`npm test`); GitHub runs them on every push. |
 | `vercel.json` | Serves `public/`, gives clean URLs (`/login`), sets security headers |
 | `dev-server.js` | Local preview (`npm run dev`) |
@@ -101,7 +102,7 @@ See [PRODUCT-QUESTIONS.md](PRODUCT-QUESTIONS.md): market size, what program data
 
 ## Ideas for later
 - **Social layer** (inspired by Facebook's Wall, Friends, News Feed and People You May Know):
-  - **See who else is interested.** Students mark interest in a gap year, and others can see who's interested in the same program.
+  - **See who else is interested.** Built (Community page, 2026-11-26): opt-in profiles, 19 organizations to join, "I'm interested" on each program, and who from your groups is looking at what. The profiles table and privacy rules are in `supabase/migrations/0003_community.sql`; Friends, Wall and Feed can build on them.
   - **Friends.** Connect with other students. In graph terms, each student is a node and each friendship an edge.
   - **Wall.** A profile page showing the programs you're interested in or applying to, where friends can leave posts.
   - **Feed.** Friends' activity, newest first: saved a program, applied, got in, committed.

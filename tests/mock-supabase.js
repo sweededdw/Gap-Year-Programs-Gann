@@ -1,7 +1,8 @@
 // A stand-in for supabase-js used by the browser tests. Everything lives in localStorage:
 //   mock:users, mock:session        accounts
 //   mock:rows                       gap_year_trackers (keyed by user id)
-//   mock:t:<table>                  every other table, as an array of rows
+//   mock:t:<table>                  every other table, as an array of rows (profiles, org_members,
+//                                   program_interest and community_bans follow the 0003 privacy rules)
 //   mock:admin = "1"                makes is_admin() return true
 //   mock:notable = "1"              every table "doesn't exist" (migrations not run)
 //   mock:lastCaptcha                the captchaToken sent with the last auth call
@@ -64,6 +65,38 @@ window.supabase = { createClient: function () {
     return api;
   };
 
+  // Community tables, with the same visibility rules as supabase/migrations/0003_community.sql.
+  const COMMUNITY = { profiles: ['user_id'], org_members: ['user_id', 'org_id'], program_interest: ['user_id', 'program_id'], community_bans: ['user_id'] };
+  const community = (name, q, hit) => {
+    const key = 'mock:t:' + name, all = J(key, '[]'), uid = uidNow(), admin = !!LS.getItem('mock:admin');
+    const bans = J('mock:t:community_bans', '[]'), profs = J('mock:t:profiles', '[]');
+    const banned = (u) => bans.some((b) => b.user_id === u);
+    const shown = (u) => profs.some((p) => p.user_id === u && p.visible) && !banned(u);
+    const mineOk = (r) => (name === 'community_bans' ? admin : r.user_id === uid);
+    const sees = (r) => name === 'community_bans' ? admin : name === 'profiles' ? r.user_id === uid || shown(r.user_id) || (admin && banned(r.user_id)) : r.user_id === uid || shown(r.user_id);
+    const denied = { data: null, error: { code: '42501', message: 'new row violates row-level security policy for table "' + name + '"' } };
+    if (!uid) return denied;
+    if (q.op === 'select') { let out = all.filter(sees).filter(hit); if (q.limit != null) out = out.slice(0, q.limit); return { data: out, error: null }; }
+    if (q.op === 'insert') {
+      const row = Object.assign({}, q.payload);
+      if (!mineOk(row)) return denied;
+      if (name === 'profiles' && !(row.display_name || '').trim()) return { data: null, error: { code: '23514', message: 'violates check constraint' } };
+      if (all.some((r) => COMMUNITY[name].every((k) => r[k] === row[k]))) return { data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint' } };
+      if ((name === 'org_members' || name === 'program_interest') && all.filter((r) => r.user_id === uid).length >= 30) return { data: null, error: { code: '23514', message: 'You can add up to 30 here.' } };
+      all.push(Object.assign({ created_at: stamp() }, row)); W(key, all); return { data: [row], error: null };
+    }
+    if (q.op === 'update') {
+      if (name !== 'profiles') return denied;
+      const out = all.filter((r) => hit(r) && r.user_id === uid);
+      out.forEach((r) => Object.assign(r, q.payload, { updated_at: stamp() }));
+      W(key, all); return { data: out, error: null };
+    }
+    if (q.op === 'delete') {
+      const out = all.filter((r) => hit(r) && mineOk(r));
+      W(key, all.filter((r) => out.indexOf(r) < 0)); return { data: out, error: null };
+    }
+  };
+
   // Every other table: programs, colleges (admin-only writes, history on change), content_history, client_errors.
   const CONTENT = { programs: 1, colleges: 1 };
   const table = (name) => {
@@ -72,6 +105,7 @@ window.supabase = { createClient: function () {
       if (LS.getItem('mock:notable')) return { data: null, error: { code: '42P01', message: 'relation "public.' + name + '" does not exist' } };
       const key = 'mock:t:' + name, all = J(key, '[]');
       const hit = (r) => q.filters.every(([c, v]) => String(r[c]) === String(v));
+      if (COMMUNITY[name]) return community(name, q, hit);
       const admin = !!LS.getItem('mock:admin');
       const history = (old) => { const h = J('mock:t:content_history', '[]'); h.push({ id: h.length + 1, table_name: name, item_id: old.id, data: old.data, changed_at: stamp(), changed_by: uidNow() }); W('mock:t:content_history', h); };
       if (q.op !== 'select' && CONTENT[name] && !admin) return { data: null, error: { code: '42501', message: 'new row violates row-level security policy for table "' + name + '"' } };

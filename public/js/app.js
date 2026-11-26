@@ -218,8 +218,10 @@
     mk("Keep mine", () => { conflict = false; pushRemote(true); });
     b.hidden = false;
   }
-  function downloadData(email) {
-    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), account: email || null, data: state }, null, 2)], { type: "application/json" });
+  async function downloadData(email) {
+    let community = null;
+    if (sb) { try { await COMM.load(true); community = COMM.mine(); } catch (e) { community = null; } }
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), account: email || null, data: state, community: community }, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "gap-year-finder-my-data.json";
@@ -227,8 +229,9 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
   async function deleteData() {
-    if (!confirm("Delete everything you've saved: your saved programs, application progress, quiz answers and colleges? This can't be undone.")) return;
+    if (!confirm("Delete everything you've saved: your saved programs, application progress, quiz answers, colleges and your community profile? This can't be undone.")) return;
     state = blankState();
+    if (sb) { try { await COMM.deleteAll(); } catch (e) { /* the tables may not exist yet */ } }
     try { Object.keys(localStorage).filter((k) => k.indexOf(STORE_KEY) === 0).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
     if (sb && remoteOk) { conflict = false; await pushRemote(true); }
     saveLocal();
@@ -356,6 +359,7 @@
     else if (parts[0] === "browse") current = { view: "finder", id: null };
     else if (parts[0] === "colleges") current = { view: "colleges", id: null };
     else if (parts[0] === "admin") current = { view: "admin", id: parts.slice(1).join("/") || null };
+    else if (parts[0] === "community") current = { view: "community", id: parts.slice(1).join("/") || null };
     else if (parts[0] === "compare") {
       if (parts[1]) { state.compare = parts[1].split(",").filter((id) => byId[id]).slice(0, 3); save(); }
       current = { view: "compare", id: null };
@@ -367,7 +371,7 @@
     if (current.view !== "detail") lastListView = current.view;
     render();
   }
-  const NAV_FOR = { home: "home", quiz: "discover", swipe: "discover", results: "discover", finder: "finder", list: "my-list", colleges: "colleges", compare: "compare" };
+  const NAV_FOR = { home: "home", quiz: "discover", swipe: "discover", results: "discover", finder: "finder", list: "my-list", colleges: "colleges", compare: "compare", community: "community" };
   // Once the quiz is done, Discover moves to the end of the menu (the other pages come first).
   function orderNav() {
     const nav = document.querySelector(".topnav"), disc = nav && nav.querySelector('[data-nav="discover"]');
@@ -387,6 +391,7 @@
     else if (current.view === "compare") renderCompare();
     else if (current.view === "results") renderResults();
     else if (current.view === "admin") renderAdmin();
+    else if (current.view === "community") COMM.renderPage($app, current.id);
     else renderFinder();
     navState();
   }
@@ -1131,6 +1136,7 @@
       "</div>" +
       '<aside class="side">' +
       '<div class="card"><div class="ring">' + ring + '<div><div class="big">' + pr.pct + '%</div><div class="small muted">' + (pr.done % 1 ? pr.done.toFixed(1) : pr.done) + " of " + pr.total + " items done</div></div></div></div>" +
+      COMM.programCard(p) +
       '<div class="card"><h3>Checklist</h3><div class="toc">' + SECTIONS.map((x) => {
         const v = status[x[0]];
         return '<a href="#sec-' + x[0] + '" data-jump="sec-' + x[0] + '"><span>' + x[1] + "</span>" + (v ? '<span class="dot ' + v + '" aria-label="' + v + '"></span>' : "") + "</a>";
@@ -1744,6 +1750,7 @@
     e.preventDefault();
     e.stopPropagation();
     if (/^(quiz-|deal-pick|pref-pick|city-pick|field-pick)/.test(act)) return quizAct(act, el);
+    if (act.indexOf("comm-") === 0) return COMM.click(act, el);
     if (act === "swipe-like") return decide("like");
     if (act === "swipe-pass") return decide("pass");
     if (act === "swipe-undo") return undoSwipe();
@@ -1939,6 +1946,12 @@
   const adminCtx = () => ({
     sb, $app, esc, I, fmtDate, D, byId, userId, BUILTIN, EDITS, COLLEGES: RAW_COLLEGES, DETAILS: RAW_DETAILS, TIME: RAW_TIME,
     programProblems, collegeProblems, setEdit, clone, banner,
+  });
+
+  // ---------- Community (community.js) ----------
+  const COMM = window.GYF_COMMUNITY({
+    sb: () => sb, userId: () => userId, isAdmin: () => isAdmin, isView: (v) => current.view === v,
+    esc, I, byId, D, banner, render, fmtDate,
   });
 
   // ---------- Delete my account ----------

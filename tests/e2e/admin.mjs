@@ -194,6 +194,7 @@ ok('error log: admins can read it on the Errors tab', (await ev(`document.queryS
 // --- no tables yet (migration not run) ---
 await ev(`localStorage.setItem('mock:notable','1'); true`);
 await nav(B+'/#/browse');
+for (let i=0;i<20 && (await ev(`document.querySelectorAll('.bcard').length`))!==builtinCount;i++) await sleep(250); // slow machines: wait for the grid
 ok('no edit tables: site still works on built-in data', (await ev(`document.querySelectorAll('.bcard').length`))===builtinCount && await ev(`document.getElementById('acct-admin').hidden`));
 await ev(`localStorage.removeItem('mock:notable'); true`);
 

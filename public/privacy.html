@@ -19,19 +19,20 @@
 
     <article class="card legal-card">
       <h1>Privacy</h1>
-      <p class="muted">Last updated November 25, 2026</p>
+      <p class="muted">Last updated November 26, 2026</p>
 
       <h2>What we store</h2>
       <ul>
         <li><strong>Your account:</strong> your name, email address and password. Passwords are stored hashed by our login provider, so nobody can read them, including us.</li>
         <li><strong>What you save on the site:</strong> programs you save or pass on, your quiz answers, application progress and notes, and the colleges you track.</li>
+        <li><strong>Community profile (only if you make one):</strong> the name you choose to show, and optionally your school and graduation year, the groups you join (like BBYO or NCSY) and the programs you mark as interested. It's private until you turn on "Show my profile to other students". Once it's on, logged-in students on this site can see it. Logged-out visitors never can. You can make it private or delete it any time on the Community page.</li>
         <li><strong>Error reports:</strong> when something breaks in your browser, the site records the page address, the error message and your browser type, linked to your account. Only the site's admins can see these, and they're used only to fix problems.</li>
         <li><strong>Visit counts:</strong> we use Vercel Web Analytics to count page views. It doesn't use cookies.</li>
       </ul>
 
       <h2>Where it's kept</h2>
       <ul>
-        <li>Accounts and saved data are stored with <strong>Supabase</strong> (our database and login provider). Database rules make sure your account can read and change only your own saved data.</li>
+        <li>Accounts and saved data are stored with <strong>Supabase</strong> (our database and login provider). Database rules make sure your account can read and change only your own saved data, and that other students see only the community profiles people chose to show. Site admins can hide a community profile that breaks the rules.</li>
         <li>The site runs on <strong>Vercel</strong>.</li>
         <li>A copy of what you save is also kept in your own browser, so it still works if the connection drops.</li>
         <li>Emails to confirm your account or reset your password are sent through our login provider.</li>
@@ -48,7 +49,7 @@
       <p>Once you're logged in, open the account menu (top right) to:</p>
       <ul>
         <li><strong>Download my data:</strong> a copy of everything you've saved, as a file.</li>
-        <li><strong>Delete my saved data:</strong> clears your saved programs, progress, quiz answers and colleges, but keeps your login.</li>
+        <li><strong>Delete my saved data:</strong> clears your saved programs, progress, quiz answers, colleges and community profile, but keeps your login.</li>
         <li><strong>Delete my account:</strong> removes your login and everything saved with it.</li>
       </ul>
 

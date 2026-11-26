@@ -26,8 +26,9 @@ await db.exec(`insert into public.admins (user_id) select id from auth.users whe
 await db.exec(`insert into public.admins (user_id) select id from auth.users where email = 'admin@x' on conflict do nothing;`);
 ok("admin snippet works twice", (await db.query("select count(*)::int n from admins")).rows[0].n === 1);
 
+const USERS = { c: "00000000-0000-0000-0000-00000000000c", d: "00000000-0000-0000-0000-00000000000d" };
 const as = async (who, sql, params) => {
-  const uid = who === "admin" ? "00000000-0000-0000-0000-00000000000a" : who === "student" ? "00000000-0000-0000-0000-00000000000b" : "";
+  const uid = who === "admin" ? "00000000-0000-0000-0000-00000000000a" : who === "student" ? "00000000-0000-0000-0000-00000000000b" : USERS[who] || "";
   await db.exec(`set role ${who === "anon" ? "anon" : "authenticated"}; select set_config('request.uid', '${uid}', false);`);
   try { return { rows: (await db.query(sql, params)).rows }; } catch (e) { return { error: e.message }; } finally { await db.exec("reset role;"); }
 };
@@ -71,3 +72,48 @@ ok("anon can't log errors", !!(await as("anon", `insert into client_errors (mess
 await db.exec(`delete from auth.users where email = 'student@x'`);
 ok("deleting a user removes their error rows", (await db.query("select count(*)::int n from client_errors")).rows[0].n === 0);
 ok("admins can't add themselves (no insert grant)", !!(await as("student", `insert into admins (user_id) values ('00000000-0000-0000-0000-00000000000a')`)).error);
+
+// ---- 0003 community: profiles, groups, interests
+const C = USERS.c, Dd = USERS.d;
+await db.exec(`insert into auth.users values ('${C}','c@x'), ('${Dd}','d@x')`);
+ok("anon can't read profiles", !!(await as("anon", "select * from profiles")).error);
+r = await as("c", `insert into profiles (user_id, display_name, school, grad_year) values ('${C}', 'Noa L.', 'Gann Academy', 2027) returning visible`);
+ok("student makes own profile; private by default", !r.error && r.rows[0].visible === false);
+ok("owner sees own private profile", (await as("c", "select * from profiles")).rows.length === 1);
+ok("others can't see a private profile", (await as("d", "select * from profiles")).rows.length === 0);
+ok("can't make a profile for someone else", !!(await as("c", `insert into profiles (user_id, display_name) values ('${Dd}', 'Fake')`)).error);
+ok("empty name refused", !!(await as("d", `insert into profiles (user_id, display_name) values ('${Dd}', '   ')`)).error);
+ok("link in name refused", !!(await as("d", `insert into profiles (user_id, display_name) values ('${Dd}', 'see https://spam.example')`)).error);
+ok("bad grad year refused", !!(await as("d", `insert into profiles (user_id, display_name, grad_year) values ('${Dd}', 'Maya', 1990)`)).error);
+await as("c", `insert into org_members (user_id, org_id) values ('${C}', 'bbyo')`);
+await as("c", `insert into program_interest (user_id, program_id) values ('${C}', 'aardvark')`);
+ok("private student's groups and interests are hidden", (await as("d", "select * from org_members")).rows.length === 0 && (await as("d", "select * from program_interest")).rows.length === 0);
+ok("owner sees own groups and interests", (await as("c", "select * from org_members")).rows.length === 1 && (await as("c", "select * from program_interest")).rows.length === 1);
+r = await as("c", `update profiles set visible = true where user_id = '${C}' returning updated_at`);
+ok("turning the profile on works", r.rows && r.rows.length === 1);
+ok("shown profile, groups and interests are visible to other students", (await as("d", "select * from profiles")).rows.length === 1 && (await as("d", "select * from org_members")).rows.length === 1 && (await as("d", "select * from program_interest")).rows.length === 1);
+ok("anon still sees nothing", !!(await as("anon", "select * from org_members")).error);
+r = await as("d", `update profiles set display_name = 'hacked' where user_id = '${C}' returning user_id`);
+ok("can't edit someone else's profile", !r.error ? r.rows.length === 0 : true);
+ok("can't move a profile to another account", !!(await as("c", `update profiles set user_id = '${Dd}' where user_id = '${C}'`)).error);
+ok("can't join a group as someone else", !!(await as("d", `insert into org_members (user_id, org_id) values ('${C}', 'ncsy')`)).error);
+ok("bad group id refused", !!(await as("c", `insert into org_members (user_id, org_id) values ('${C}', 'Bad ID; drop')`)).error);
+ok("joining the same group twice refused", !!(await as("c", `insert into org_members (user_id, org_id) values ('${C}', 'bbyo')`)).error);
+r = await as("d", `delete from org_members where user_id = '${C}' returning org_id`);
+ok("can't remove someone else from a group", !r.error ? r.rows.length === 0 : true);
+for (let i = 0; i < 29; i++) await as("d", `insert into program_interest (user_id, program_id) values ('${Dd}', 'p${i}')`);
+ok("30th interest allowed", !(await as("d", `insert into program_interest (user_id, program_id) values ('${Dd}', 'p29')`)).error);
+ok("31st interest refused", !!(await as("d", `insert into program_interest (user_id, program_id) values ('${Dd}', 'p30')`)).error);
+ok("students can't hide profiles", !!(await as("d", `insert into community_bans (user_id) values ('${C}')`)).error);
+ok("students can't see the hidden list", (await as("d", "select * from community_bans")).rows?.length === 0);
+r = await as("admin", `insert into community_bans (user_id) values ('${C}') returning banned_by`);
+ok("admin can hide a profile", !r.error && r.rows[0].banned_by === "00000000-0000-0000-0000-00000000000a");
+ok("hidden profile, groups and interests disappear for students", (await as("d", "select * from profiles")).rows.length === 0 && (await as("d", "select * from org_members")).rows.length === 0);
+ok("admin still sees the hidden profile (to unhide it)", (await as("admin", "select * from profiles")).rows.length === 1);
+await as("c", `delete from profiles where user_id = '${C}'`);
+await as("c", `insert into profiles (user_id, display_name, visible) values ('${C}', 'Back again', true)`);
+ok("re-making the profile doesn't undo the hide", (await as("d", "select * from profiles")).rows.length === 0);
+r = await as("admin", `delete from community_bans where user_id = '${C}' returning user_id`);
+ok("admin can unhide", r.rows && r.rows.length === 1 && (await as("d", "select * from profiles")).rows.length === 1);
+await db.exec(`delete from auth.users where id = '${C}'`);
+ok("deleting an account deletes its profile, groups and interests", (await db.query(`select (select count(*) from profiles where user_id = '${C}') + (select count(*) from org_members where user_id = '${C}') + (select count(*) from program_interest where user_id = '${C}') as n`)).rows[0].n == 0);

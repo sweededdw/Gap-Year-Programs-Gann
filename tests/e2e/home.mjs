@@ -24,7 +24,7 @@ await shot('home-new');
 await ev('document.querySelector(".home-ctas a.primary").click(); true'); await sleep(400);
 ok('quiz button opens the quiz', await ev('location.hash')==='#/start');
 await ev(`localStorage.setItem("gyf:v1", JSON.stringify({saved:{aardvark:1},quiz:{v:3,done:true,step:0,answers:{deal:{},prefs:{academics:{want:4,weight:2}},field:[],city:[]}}})); location.hash="#/"; location.reload(); true`); await sleep(900);
-ok('after the quiz: Discover moves to the end of the menu', (await navOrder())==='home,finder,compare,colleges,my-list,discover');
+ok('after the quiz: Discover moves to the end of the menu', (await navOrder())==='home,finder,compare,colleges,community,my-list,discover');
 ok('after the quiz: "See your top 3" + your top match card', /See your top 3/.test(await ev('document.querySelector(".home-ctas").textContent')) && /Your top match/.test(await ev('document.querySelector(".home-top")?.textContent||""')) && /% match/.test(await ev('document.querySelector(".home-top").textContent')));
 ok('saved count shows 1', /1\s*programs saved/.test(await ev('document.querySelector(".home-stats").textContent')));
 await shot('home-done');
@@ -33,7 +33,7 @@ ok('logo goes home', await ev('document.querySelector(".brand").getAttribute("hr
 await ev('document.querySelector("[data-nav=home]").click(); true'); await sleep(300);
 ok('Home link opens the homepage', !!(await ev('!!document.querySelector(".home-hero")')));
 await ev('location.hash="#/browse"; true'); await sleep(300);
-ok('menu order stays the same on other pages', (await navOrder())==='home,finder,compare,colleges,my-list,discover');
+ok('menu order stays the same on other pages', (await navOrder())==='home,finder,compare,colleges,community,my-list,discover');
 await vp(390,900); await ev('location.hash="#/"; true'); await sleep(400); await shot('home-mobile');
 ok('phone: no sideways scroll', await ev('document.documentElement.scrollWidth<=innerWidth'));
 ok('no JS errors', errs.length===0); if(errs.length) console.log(errs);
