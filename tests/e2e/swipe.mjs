@@ -55,6 +55,6 @@ ok('"review passed" refills deck', !!(await ev('!!document.querySelector(".scard
 await click('[data-act=retake]'); await sleep(200);
 ok('retake -> dealbreakers, answers kept', await ev('document.querySelectorAll(".qchip.on:not(.any)").length')===2);
 await click('[data-nav=finder]'); await sleep(300);
-ok('Browse all lists 38', await ev('document.querySelectorAll(".bcard").length')===38);
+ok('Browse all lists every program', await ev('document.querySelectorAll(".bcard").length')===await ev('window.GYF_DATA.programs.length'));
 ok('no JS errors', errs.length===0); if (errs.length) console.log(errs);
 console.log(out.join('\n')); ws.close(); process.exit(0);

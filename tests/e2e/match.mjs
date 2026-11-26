@@ -36,7 +36,7 @@ const slide=async v=>{ await ev(`(()=>{const r=document.querySelector("[data-act
 ok('budget is a slider that starts at "No limit"', await ev('document.querySelector("[data-act=budget-range]").type')==='range' && /No limit/.test(await ev('document.querySelector(".budget-slider .bs-val").textContent')) && await ev('document.querySelectorAll("[data-key=budget]").length')===0);
 await slide(35000);
 const c2 = await count();
-ok(`basics knock programs out (${c0} -> ${c1} -> ${c2})`, c0===38 && c1<c0 && c2<c1 && c2>0);
+ok(`basics knock programs out (${c0} -> ${c1} -> ${c2})`, c0===await ev('window.GYF_DATA.programs.length') && c1<c0 && c2<c1 && c2>0);
 ok('slider label + live count update while dragging', /Up to \$35,000/.test(await ev('document.querySelector(".budget-slider .bs-val").textContent')));
 await slide(40000);
 ok('sliding to the end = No limit (count back)', await count()===c1 && /No limit/.test(await ev('document.querySelector(".budget-slider .bs-val").textContent')));

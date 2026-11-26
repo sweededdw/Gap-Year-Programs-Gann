@@ -1,5 +1,5 @@
 // Jewish high school organizations students can say they belong to (Community page).
-// Researched 2026-11-26 from each organization's own site plus the sources listed. Grades and details
+// Researched 2026-11-26 (Hartman, JSC, Ramah, Tikvah, AIPAC and Friendship Circle added the same day) from each organization's own site plus the sources listed. Grades and details
 // vary by local chapter, so `grades` is left null where the organization doesn't publish one range.
 // `programs` = gap year programs on this site that the same organization (or its world movement) runs.
 window.GYF_ORGS = {
@@ -90,6 +90,20 @@ window.GYF_ORGS = {
       programs: ["tzofim-sherut", "garin-tzabar"],
     },
     {
+      id: "jsc", name: "Jewish Student Connection (JSC)", short: "JSC", kind: "movement", community: "Any background", grades: "High school",
+      blurb: "Student-led Jewish culture clubs in public and secular private high schools, open to Jewish and non-Jewish students. About 65 clubs across the US.",
+      website: "https://www.myjsc.org",
+      sources: ["https://www.juf.org/guide/jewish-student-connection-jsc/", "https://www.jewishcolorado.org/program/jewish-student-connection/"],
+      programs: [],
+    },
+    {
+      id: "ramah", name: "Camp Ramah", short: "Ramah", kind: "movement", community: "Conservative", grades: null,
+      blurb: "The Conservative movement's camps in the US, Canada and Israel, with teen leadership programs and Tichon Ramah Yerushalayim, a high school semester in Jerusalem.",
+      website: "https://www.campramah.org",
+      sources: ["https://www.campramah.org/mission", "https://en.wikipedia.org/wiki/Camp_Ramah"],
+      programs: [],
+    },
+    {
       id: "diller", name: "Diller Teen Fellows", short: "Diller", kind: "fellowship", community: "Pluralist", grades: "Grades 10–11",
       blurb: "A year-long leadership fellowship run in 32 communities worldwide, with about 20 fellows in each. Fellows meet for workshops and retreats, and some communities add a summer trip to Israel.",
       website: "https://www.dillerteenfellows.org",
@@ -101,6 +115,20 @@ window.GYF_ORGS = {
       blurb: "Selective fellowship for 26 North American high school juniors a year. It starts with a free summer in Israel before senior year.",
       website: "https://bronfman.org",
       sources: ["https://bronfman.org", "https://en.wikipedia.org/wiki/The_Bronfman_Fellowship"],
+      programs: [],
+    },
+    {
+      id: "hartman", name: "Hartman Teen Fellowship", short: "Hartman", kind: "fellowship", community: "Pluralist", grades: "Grades 10–12",
+      blurb: "The Shalom Hartman Institute's year-long leadership fellowship for Jewish high schoolers across North America, studying Jewish identity, peoplehood and values with Hartman faculty. Hartman also runs the Hevruta gap year.",
+      website: "https://www.hartman.org.il/program/teen-fellowship/",
+      sources: ["https://www.hartman.org.il/program/teen-fellowship/", "https://www.hartman.org.il/teen-fellowship-faq/"],
+      programs: ["hevruta"],
+    },
+    {
+      id: "tikvah", name: "Tikvah Scholars", short: "Tikvah", kind: "fellowship", community: "Any background", grades: "Rising 11th–12th",
+      blurb: "The Tikvah Fund's residential summer institutes on Jewish thought, history and politics, including an 11-day flagship program at Princeton.",
+      website: "https://tikvah.org/hs",
+      sources: ["https://tikvah.org/hs", "https://tikvah.org/tsp/home/"],
       programs: [],
     },
     {
@@ -118,6 +146,13 @@ window.GYF_ORGS = {
       programs: [],
     },
     {
+      id: "aipac-hs", name: "AIPAC High School Summit", short: "AIPAC", kind: "advocacy", community: "Any background", grades: "High school",
+      blurb: "AIPAC's Schusterman Advocacy Institute summit in Washington, D.C., training several hundred high school leaders in pro-Israel advocacy, with visits to congressional offices. Schools and youth groups send delegations.",
+      website: "https://www.aipac.org",
+      sources: ["https://www.hebrewacademymiami.org/about/news/five-students-lobby-israel-aipacs-schusterman-advocacy-institute-high-school-summit", "https://jta.org/2007/11/13/default/teens-in-d-c-for-lobbying-lessons"],
+      programs: [],
+    },
+    {
       id: "yachad", name: "Yachad", short: "Yachad", kind: "service", community: "Orthodox", grades: null,
       blurb: "The Orthodox Union's disability inclusion group. High schoolers volunteer at Shabbatons and local events, and Yad B'Yad is its summer Israel trip.",
       website: "https://www.yachad.org",
@@ -129,6 +164,13 @@ window.GYF_ORGS = {
       blurb: "Small teen groups led by trained mentors: Rosh Hodesh for girls, Shevet for boys and Tzelem for LGBTQ+ teens. They run through synagogues, schools and JCCs.",
       website: "https://www.movingtraditions.org",
       sources: ["https://www.movingtraditions.org/teen-groups/", "https://en.wikipedia.org/wiki/Moving_Traditions"],
+      programs: [],
+    },
+    {
+      id: "friendship-circle", name: "Friendship Circle", short: "FC", kind: "service", community: "Chabad", grades: "Grades 8–12 (varies by chapter)",
+      blurb: "Teen volunteers are paired with children with disabilities for weekly visits, Sunday programs and holiday events. Local chapters recruit from day schools, youth groups and public schools.",
+      website: "https://www.friendshipcircle.org",
+      sources: ["https://en.wikipedia.org/wiki/Friendship_Circle_(organization)", "https://jewishlink.news/teen-volunteers-at-friendship-circle-get-back-what-they-give/"],
       programs: [],
     },
     {

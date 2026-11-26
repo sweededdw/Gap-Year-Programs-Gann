@@ -12,7 +12,7 @@ const shot=async n=>{const r=await cmd('Page.captureScreenshot',{format:'png'});
 const out=[]; const ok=(n,c)=>out.push((c?'PASS ':'FAIL ')+n);
 await cmd('Page.enable'); await cmd('Runtime.enable'); await vp(1280,1000);
 await cmd('Page.navigate',{url:B+'#/browse'}); await sleep(500); await ev('localStorage.clear(); location.reload(); true'); await sleep(4000);
-ok('38 photo cards', await ev('document.querySelectorAll(".bcard").length')===38);
+ok('a photo card for every program', await ev('document.querySelectorAll(".bcard").length')===await ev('window.GYF_DATA.programs.length') && await ev('window.GYF_DATA.programs.length')>=150);
 ok('filter panel hidden by default', !(await ev('!!document.querySelector(".filters-panel")')));
 const loaded = await ev('[...document.querySelectorAll(".bcard-photo img")].filter(i=>i.complete&&i.naturalWidth>0).length');
 const withPhoto = await ev('document.querySelectorAll(".bcard-photo.has-photo").length');
@@ -33,7 +33,7 @@ await ev('document.querySelector("[data-act=toggle-filters]").click(); true'); a
 ok('Filters bar opens panel with program types', !!(await ev('!!document.querySelector(".filters-panel [data-act=type-tab][data-value=yeshiva]")')));
 await shot('b-filters');
 await ev('document.querySelector("[data-act=type-tab][data-value=yeshiva]").click(); true'); await sleep(300);
-ok('Yeshivot type shows only yeshivot (8) and bar summary says so', await ev('document.querySelectorAll(".bcard").length')===8 && await ev('[...document.querySelectorAll(".bcard .type-badge")].every(b=>/Yeshiva/.test(b.textContent))') && /Yeshivot/.test(await ev('document.querySelector("[data-act=toggle-filters] .ds").textContent')));
+ok('Yeshivot type shows only yeshivot and bar summary says so', await ev('document.querySelectorAll(".bcard").length')===await ev('window.GYF_DATA.programs.filter(p=>p.type==="yeshiva").length') && await ev('[...document.querySelectorAll(".bcard .type-badge")].every(b=>/Yeshiva/.test(b.textContent))') && /Yeshivot/.test(await ev('document.querySelector("[data-act=toggle-filters] .ds").textContent')));
 await ev('document.querySelector("[data-act=type-tab][data-value=\\"\\"]").click(); true'); await sleep(200);
 ok('More filters opens panel', !!(await ev('!!document.querySelector(".filters-panel")')));
 await ev('document.querySelector("[data-act=filter][data-group=city][data-value=tel-aviv]").click(); true'); await sleep(200);
@@ -46,7 +46,7 @@ ok(`Field filter: Medicine & health -> ${nMed} programs`, nMed>=5 && await ev('d
 await ev('document.querySelector("[data-act=clear-filters]").click(); true'); await sleep(200);
 await ev(`(()=>{const r=document.querySelector("[data-act=cost-range]"); r.value=25000; r.dispatchEvent(new Event("input",{bubbles:true})); r.dispatchEvent(new Event("change",{bubbles:true})); return true})()`); await sleep(250);
 const under = await ev('(()=>{const P=GYF_DATA.programs; return [...document.querySelectorAll(".bcard")].map(c=>P.find(p=>"#/program/"+p.id===c.dataset.href).costUSD)})()');
-ok(`tuition slider: up to $25k (${under.length} shown, none priced above)`, under.length<38 && under.every(c=>c==null||c<=25000) && /Up to \$25,000/.test(await ev('document.querySelector(".filters-panel .bs-val").textContent')) && await ev('document.activeElement.dataset.act')==='cost-range');
+ok(`tuition slider: up to $25k (${under.length} shown, none priced above)`, under.length<await ev('window.GYF_DATA.programs.length') && under.every(c=>c==null||c<=25000) && /Up to \$25,000/.test(await ev('document.querySelector(".filters-panel .bs-val").textContent')) && await ev('document.activeElement.dataset.act')==='cost-range');
 await shot('b-slider');
 await ev('document.querySelector("[data-act=clear-filters]").click(); true'); await sleep(200);
 await ev('document.querySelector("[data-act=toggle-filters]").click(); true'); await sleep(200);
