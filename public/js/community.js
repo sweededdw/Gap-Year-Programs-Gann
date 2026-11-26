@@ -143,13 +143,14 @@
         '<button class="btn ghost sm danger" data-act="comm-delete">Delete profile</button></div></section>';
     }
     const STATUS_CHIP = { pending: '<span class="chip warn">Waiting for admin review</span>', review: '<span class="chip bad">Hidden: reported, under review</span>', rejected: '<span class="chip bad">Not approved</span>' };
+    // On the main page each organization is just its name; the description, Join button, members and
+    // sources are on its own page (#/community/org/<id>).
     function orgCard(o) {
-      const n = membersOf(o.id).length;
+      const on = isMember(o.id);
       const st = o.group && o.group.status !== "approved" ? STATUS_CHIP[o.group.status] || "" : "";
-      return '<article class="card org-card' + (o.group ? " student-group" : "") + '"><div class="org-top"><span class="org-logo">' + esc(o.short) + "</span><div>" +
-        "<h3>" + esc(o.name) + '</h3><p class="small muted">' + esc([o.community, o.parent ? "part of " + o.parent.short : "", o.grades].filter(Boolean).join(" · ")) + "</p>" + st + "</div></div>" +
-        '<p class="small org-blurb">' + (o.blurb ? esc(o.blurb) : '<span class="muted">No description yet.</span>') + "</p>" +
-        '<div class="org-foot"><a class="small" href="#/community/org/' + o.id + '">' + plural(n, "student") + " →</a>" + joinButton(o) + "</div></article>";
+      return '<a class="org-tile' + (o.group ? " student-group" : "") + (on ? " joined" : "") + '" href="#/community/org/' + o.id + '">' +
+        '<span class="org-logo" aria-hidden="true">' + esc(o.short) + '</span><span class="org-tile-body"><span class="org-name">' + esc(o.name) + "</span>" + st + "</span>" +
+        (on ? '<span class="org-joined" title="Joined">' + I("check") + '<span class="sr-only">Joined</span></span>' : "") + "</a>";
     }
     function groupForm() {
       const opts = ORGS.orgs.map((o) => '<option value="' + o.id + '">' + esc(o.name) + "</option>").join("");
@@ -230,7 +231,7 @@
         (myOrgs.length ? '<section class="card sec"><div class="sec-head"><h2>Students in your groups</h2><span class="small muted">' + myOrgs.map((o) => esc(label(o))).join(", ") + "</span></div>" +
           (peers.length ? '<ul class="people">' + peers.slice(0, 40).map((id) => personRow(id)).join("") + "</ul>"
             : '<p class="small muted">Nobody else from your groups has a visible profile yet. Share the site with friends from ' + esc(label(myOrgs[0])) + ".</p>") + "</section>" : "") +
-        '<h2 class="group-h" id="orgs">Organizations</h2><p class="small muted" style="margin:4px 0 12px">Join the ones you\'re part of. Anyone can join any group here, so treat it as what students say, not an official membership list.</p>' +
+        '<h2 class="group-h" id="orgs">Organizations</h2><p class="small muted" style="margin:4px 0 12px">Tap one to learn more and join. Anyone can join any group here, so treat it as what students say, not an official membership list.</p>' +
         kinds.map((k) => {
           const list = ORGS.orgs.filter((o) => o.kind === k);
           return list.length ? '<h3 class="comm-kind">' + esc(ORGS.kinds[k]) + '</h3><div class="org-grid">' + list.map(orgCard).join("") + "</div>" : "";

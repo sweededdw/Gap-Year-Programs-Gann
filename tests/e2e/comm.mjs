@@ -40,13 +40,17 @@ await nav(B+'/login'); await ev(`localStorage.clear(); ${Object.entries(seed).ma
 await nav(B+'/#/community');
 
 ok('nav has Community and it is active', await ev(`document.querySelector('[data-nav=community]').classList.contains('active')`));
-ok('Community page lists every organization', await ev(`document.querySelectorAll('.org-card').length`) === await ev(`window.GYF_ORGS.orgs.length`) && await ev(`window.GYF_ORGS.orgs.length`) >= 19);
+ok('Community page lists every organization', await ev(`document.querySelectorAll('.org-tile').length`) === await ev(`window.GYF_ORGS.orgs.length`) && await ev(`window.GYF_ORGS.orgs.length`) >= 19);
 ok('organizations are grouped by kind', await ev(`document.querySelectorAll('.comm-kind').length`) === 5);
 ok('every organization has a website and at least one source', await ev(`window.GYF_ORGS.orgs.every(o=>/^https:\\/\\//.test(o.website) && o.sources.length && o.sources.every(u=>/^https:\\/\\//.test(u)))`));
 ok('linked gap years all exist', await ev(`window.GYF_ORGS.orgs.every(o=>o.programs.every(id=>window.GYF_DATA.programs.some(p=>p.id===id)))`));
 let t = await text();
 ok('private student never appears anywhere', !/Private Pat|Secret School/.test(t));
-ok('BBYO counts only visible students', /1 student →/.test(await ev(`[...document.querySelectorAll('.org-card')].find(c=>c.querySelector('h3').textContent==='BBYO').innerText`)));
+ok('tiles show only the name (no description)', await ev(`[...document.querySelectorAll('.org-tile')].every(t=>!t.querySelector('p') && t.innerText.trim().length<60)`) && !/Teen-led chapters/.test(await text()));
+ok('tiles use the site colors (sunset gold logo)', await ev(`getComputedStyle(document.querySelector('.org-tile .org-logo')).color`)==='rgb(232, 192, 125)');
+await go('#/community/org/bbyo');
+ok('BBYO page has the description and counts only visible students', /Teen-led chapters/.test(await text()) && /Students \(1\)/.test(await text()));
+await go('#/community');
 ok('Popular: Aardvark first with 2 visible students', (await ev(`document.querySelector('.comm-rank li').innerText`)).replace(/\s+/g,' ').trim() === 'Aardvark Israel 2');
 ok('new profile is private by default (box unchecked)', await ev(`document.getElementById('cp-visible').checked`) === false);
 await shot('comm-page');
@@ -63,12 +67,13 @@ ok('profile saved with name, school, year and visible', me && me.display_name===
 ok('saved message and "Visible to students"', /Other students can now see your profile/.test(await text()) && /Visible to students/.test(await text()));
 
 // Groups
-await click('[data-act=comm-join][data-id=bbyo]');
+await go('#/community/org/bbyo'); await click('[data-act=comm-join][data-id=bbyo]'); await go('#/community');
 ok('joining BBYO saves the membership', (await T('org_members')).some(m=>m.user_id==='uid-me' && m.org_id==='bbyo'));
 t = await text();
 ok('"Students in your groups" shows Maya (and not the private student)', /Students in your groups/.test(t) && /Maya K\./.test(t) && !/Private Pat/.test(t));
-ok('BBYO button now says Joined and the count is 2', await ev(`document.querySelector('[data-act=comm-join][data-id=bbyo]').getAttribute('aria-pressed')`)==='true' && /2 students →/.test(await ev(`[...document.querySelectorAll('.org-card')].find(c=>c.querySelector('h3').textContent==='BBYO').innerText`)));
+ok('BBYO tile shows a Joined check', await ev(`document.querySelector('.org-tile[href="#/community/org/bbyo"]').classList.contains('joined')`));
 await go('#/community/org/bbyo');
+ok('BBYO page: button says Joined', await ev(`document.querySelector('[data-act=comm-join][data-id=bbyo]').getAttribute('aria-pressed')`)==='true');
 t = await text();
 ok('org page: students list has Maya and you', /Students \(2\)/.test(t) && /Maya K\./.test(t) && /You/.test(t));
 ok('org page: what BBYO students are looking at -> Aardvark', /What BBYO students are looking at/.test(t) && (await ev(`document.querySelector('.comm-rank li').innerText`)).includes('Aardvark'));
@@ -136,7 +141,7 @@ ok('other students are untouched', (await T('profiles')).length===3 && (await T(
 ok('form is back for a new profile', await ev(`!!document.getElementById('cp-name')`));
 
 // "Delete my saved data" also clears community rows
-await click('[data-act=comm-join][data-id=ncsy]'); await go('#/program/kivunim'); await click('#comm-card [data-act=comm-interest]');
+await go('#/community/org/ncsy'); await click('[data-act=comm-join][data-id=ncsy]'); await go('#/program/kivunim'); await click('#comm-card [data-act=comm-interest]');
 await noConfirm(); await ev(`document.getElementById('acct-delete').click(); true`); await sleep(900);
 ok('"Delete my saved data" also clears your groups and interests', !(await T('org_members')).some(m=>m.user_id==='uid-me') && !(await T('program_interest')).some(m=>m.user_id==='uid-me'));
 
@@ -159,7 +164,7 @@ let groups = await T('student_groups');
 ok('group saved as pending, with type and parent', groups.length===1 && groups[0].status==='pending' && groups[0].kind==='chapter' && groups[0].parent_org==='bbyo' && groups[0].created_by==='uid-me');
 ok('creator sees it with "Waiting for admin review"', /sent for review/.test(await text()) && /Waiting for admin review/.test(await ev(`document.querySelector('.student-group').innerText`)));
 const gid = groups[0].id;
-await click(`[data-act=comm-join][data-id="g-${gid}"]`);
+await go(`#/community/org/g-${gid}`); await click(`[data-act=comm-join][data-id="g-${gid}"]`); await go('#/community');
 ok('creator can join their pending group', (await T('org_members')).some(m=>m.user_id==='uid-me' && m.org_id==='g-'+gid));
 await shot('comm-group-pending');
 // another student can't see it yet

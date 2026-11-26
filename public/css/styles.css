@@ -982,14 +982,9 @@ a.acct-item { color: var(--text); text-decoration: none; }
 .people.compact .avatar { width: 28px; height: 28px; font-size: 11.5px; }
 .comm-card .btn { margin-top: 2px; }
 .comm-kind { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 8px 0 -2px; }
-.org-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-.org-card { display: flex; flex-direction: column; gap: 10px; padding: 16px; }
-.org-top { display: flex; gap: 12px; align-items: center; }
-.org-top h3 { font-size: 15px; }
-.org-logo { flex: none; min-width: 46px; height: 46px; padding: 0 8px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 12.5px; letter-spacing: .02em; }
-.logo.org-logo-lg { width: auto; min-width: 56px; padding: 0 10px; font-size: 15px; }
-.org-blurb { margin: 0; color: var(--text); flex: 1; }
-.org-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.org-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.org-logo { flex: none; min-width: 42px; height: 42px; padding: 0 8px; border-radius: 11px; display: grid; place-items: center; background: var(--gold-soft); color: var(--gold); font-weight: 800; font-size: 12px; letter-spacing: .02em; }
+.logo.org-logo-lg { width: auto; min-width: 56px; padding: 0 10px; font-size: 15px; background: var(--gold-soft); color: var(--gold); }
 .comm-rank { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
 .comm-rank a { display: flex; justify-content: space-between; gap: 10px; color: var(--text); font-size: 14px; }
 .comm-rank a:hover .cr-name { color: var(--accent); }
@@ -999,9 +994,24 @@ a.acct-item { color: var(--text); text-decoration: none; }
 .cr-bar span { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
 .comm-mine { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
 @media (max-width: 980px) { .detail.comm { grid-template-columns: minmax(0, 1fr); } }
-.org-card.student-group { border-style: dashed; }
-.org-card .chip.warn, .org-card .chip.bad, .school-head .chip.warn, .school-head .chip.bad { margin-top: 6px; white-space: normal; }
+.org-tile .chip.warn, .org-tile .chip.bad, .school-head .chip.warn, .school-head .chip.bad { margin-top: 6px; white-space: normal; }
 .comm-rules { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: var(--surface-2); font-size: 13.5px; }
 .comm-rules ul { margin: 6px 0 4px; padding-left: 18px; color: var(--muted); }
 .group-form { margin-bottom: 12px; }
 .comm-report { color: var(--muted); }
+
+/* Organization tiles: just the name, in the logo's sunset gold and sea blue */
+:root { --gold: #8a5a12; --gold-soft: #f6ead5; --sea: #2b59c3; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --gold: #e8c07d; --gold-soft: #2a2417; --sea: #7ea2ff; } }
+:root[data-theme="dark"] { --gold: #e8c07d; --gold-soft: #2a2417; --sea: #7ea2ff; }
+.org-tile { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 14px; min-height: 66px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); transition: border-color .15s, background .15s, transform .15s; }
+.org-tile:hover { text-decoration: none; border-color: var(--gold); background: linear-gradient(135deg, var(--gold-soft), var(--surface) 70%); transform: translateY(-1px); }
+.org-tile:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.org-tile-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.org-name { font-weight: 650; font-size: 14.5px; line-height: 1.3; }
+.org-tile.joined { border-color: color-mix(in srgb, var(--sea) 55%, var(--border)); }
+.org-tile.joined .org-logo { background: color-mix(in srgb, var(--sea) 18%, var(--surface)); color: var(--sea); }
+.org-joined { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--sea); color: var(--bg); font-size: 13px; }
+.org-tile.student-group { border-style: dashed; }
+.comm-kind { color: var(--gold); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
