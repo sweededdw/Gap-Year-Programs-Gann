@@ -16,7 +16,7 @@ ok('a photo card for every program', await ev('document.querySelectorAll(".bcard
 ok('filter panel hidden by default', !(await ev('!!document.querySelector(".filters-panel")')));
 const loaded = await ev('[...document.querySelectorAll(".bcard-photo img")].filter(i=>i.complete&&i.naturalWidth>0).length');
 const withPhoto = await ev('document.querySelectorAll(".bcard-photo.has-photo").length');
-ok(`photos load (${loaded} loaded, ${withPhoto} shown; broken ones fall back to illustration)`, withPhoto === 35);
+ok(`photos load (${loaded} loaded, ${withPhoto} shown; broken ones fall back to illustration)`, withPhoto >= 40 && loaded >= 20);
 ok('every card has a website link + details link', await ev('[...document.querySelectorAll(".bcard")].every(c=>c.querySelector("a[target=_blank]") && c.querySelector("a[href^=\\"#/program/\\"]"))'));
 ok('yeshiva label shown up front', /Yeshiva · Men only/.test(await ev('document.querySelector(".bcard[data-href=\\"#/program/hakotel\\"] .type-badge").textContent')));
 ok('seminary label shown up front', /Seminary · Women only/.test(await ev('document.querySelector(".bcard[data-href=\\"#/program/nishmat\\"] .type-badge").textContent')));
