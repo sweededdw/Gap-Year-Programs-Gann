@@ -476,7 +476,7 @@
     list.sort((a, b) =>
       sort === "cost" ? (a.costUSD == null ? 1e9 : a.costUSD) - (b.costUSD == null ? 1e9 : b.costUSD)
         : sort === "name" ? a.name.localeCompare(b.name)
-        : sort === "featured" ? (b.photo ? 1 : 0) - (a.photo ? 1 : 0) || D.programs.indexOf(a) - D.programs.indexOf(b)
+        : sort === "featured" ? (b.photo ? 2 : b.logo ? 1 : 0) - (a.photo ? 2 : a.logo ? 1 : 0) || D.programs.indexOf(a) - D.programs.indexOf(b)
         : dkey(a) < dkey(b) ? -1 : dkey(a) > dkey(b) ? 1 : a.name.localeCompare(b.name)
     );
     return list;
@@ -537,9 +537,12 @@
   }
   // A photo from the program's own site when we have one; otherwise an illustrated gradient.
   // If a photo fails to load, the illustration takes over automatically.
+  // A program's photo; if it has none, its logo on a light panel; otherwise the illustrated card.
+  const logoImg = (p, lazy) => '<img class="ph-logo" src="' + esc(p.logo) + '" alt="" ' + (lazy ? 'loading="lazy" ' : "") + 'referrerpolicy="no-referrer" data-fallback="1">';
   function photoBox(p, cls, inner) {
-    return '<div class="ph ' + cls + " g-" + p.orientation + (p.photo ? " has-photo" : "") + '">' +
-      (p.photo ? '<img src="' + esc(p.photo) + '" alt="" loading="lazy" referrerpolicy="no-referrer" data-fallback="1">' : "") +
+    const logo = !p.photo && p.logo;
+    return '<div class="ph ' + cls + " g-" + p.orientation + (p.photo ? " has-photo" : logo ? " has-logo" : "") + '">' +
+      (p.photo ? '<img src="' + esc(p.photo) + '" alt="" loading="lazy" referrerpolicy="no-referrer" data-fallback="1">' : logo ? logoImg(p, true) : "") +
       '<div class="ph-mark" aria-hidden="true">' + esc(p.short) + "</div>" + (inner || "") + "</div>";
   }
   function compactCost(p) {
@@ -827,7 +830,7 @@
     const soloBest = pcts.filter((x) => x === bestPct).length === 1;
     const most = Math.max.apply(null, wins.map((w) => w.length));
     const head = '<tr class="cmp-headrow"><th class="rowh"></th>' + slots.map((q, i) => '<th class="cmp-col">' +
-      (q ? '<div class="cmp-top">' + (q.photo ? '<div class="cmp-ph" style="background-image:url(\'' + esc(q.photo) + '\')"></div>' : '<div class="cmp-ph ph g-' + q.orientation + '"><span>' + esc(q.short) + "</span></div>") +
+      (q ? '<div class="cmp-top">' + (q.photo ? '<div class="cmp-ph" style="background-image:url(\'' + esc(q.photo) + '\')"></div>' : q.logo ? '<div class="cmp-ph ph has-logo">' + logoImg(q, true) + "</div>" : '<div class="cmp-ph ph g-' + q.orientation + '"><span>' + esc(q.short) + "</span></div>") +
           '<div class="cmp-id"><a class="cmp-name" href="#/program/' + q.id + '">' + esc(q.name) + "</a>" + typeBadge(q) + "</div>" +
           '<button class="cmp-x" data-act="cmp-remove" data-i="' + i + '" aria-label="Remove ' + esc(q.name) + '">' + I("x") + "</button></div>"
         : '<div class="cmp-empty">Add a program</div>') +
@@ -1099,7 +1102,7 @@
     $app.innerHTML =
       '<a class="back" href="' + ({ list: "#/my-list", finder: "#/browse", results: "#/results" }[lastListView] || "#/swipe") + '">← ' + ({ list: "Saved programs", finder: "All programs", results: "Your top 3" }[lastListView] || "Back to swiping") + "</a>" +
       (p.photo ? photoBox(p, "detail-banner", "") : "") +
-      '<header class="card school-head' + (p.photo ? " with-banner" : "") + '"><span class="logo o-' + p.orientation + '">' + esc(p.short) + '</span><div class="info">' + typeBadge(p) + "<h1>" + esc(p.name) + "</h1>" +
+      '<header class="card school-head' + (p.photo ? " with-banner" : "") + '"><span class="logo o-' + p.orientation + (p.logo ? " has-logo-img" : "") + '">' + (p.logo ? '<img src="' + esc(p.logo) + '" alt="' + esc(p.name) + ' logo" referrerpolicy="no-referrer" data-fallback="1">' : esc(p.short)) + '</span><div class="info">' + typeBadge(p) + "<h1>" + esc(p.name) + "</h1>" +
       (p.audienceTag ? '<p class="aud-tag">' + I("users") + " " + esc(p.audienceTag) + "</p>" : "") +
       '<p class="muted">' + esc(p.operator) + " · " + esc(p.base) + "</p>" +
       '<div class="chips"><span class="chip accent">' + esc(L.orientation[p.orientation]) + '</span><span class="chip">' + esc(L.gender[p.gender]) + '</span><span class="chip">' + esc(L.israeliPeers[p.israeliPeers]) + "</span>" +
@@ -1521,8 +1524,8 @@
     const deadline = nd.kind === "date" ? fmtDate(nd.d.date, { month: "short", day: "numeric" }) + " " + countdown(nd.d.date) : nd.kind === "rolling" ? "Rolling — apply early" : "Not posted yet";
     return (
       '<article class="scard' + (i === 0 ? " top" : "") + '" data-id="' + p.id + '" style="--i:' + i + '"' + (i === 0 ? ' tabindex="0" aria-label="' + esc(p.name) + '"' : ' aria-hidden="true"') + ">" +
-      '<div class="scard-hero ph g-' + p.orientation + (p.photo ? " has-photo" : "") + '">' +
-      (p.photo ? '<img src="' + esc(p.photo) + '" alt="" draggable="false" referrerpolicy="no-referrer" data-fallback="1">' : "") +
+      '<div class="scard-hero ph g-' + p.orientation + (p.photo ? " has-photo" : p.logo ? " has-logo" : "") + '">' +
+      (p.photo ? '<img src="' + esc(p.photo) + '" alt="" draggable="false" referrerpolicy="no-referrer" data-fallback="1">' : p.logo ? logoImg(p).replace("<img ", '<img draggable="false" ') : "") +
       '<span class="stamp like" aria-hidden="true">SAVE</span><span class="stamp nope" aria-hidden="true">PASS</span>' +
       (m.pct != null ? '<span class="scard-match">' + m.pct + "% match</span>" : "") +
       '<div class="scard-mark ph-mark" aria-hidden="true">' + esc(p.short) + "</div>" +
@@ -1889,7 +1892,11 @@
   // A program photo that fails to load falls back to the illustrated card (no inline handlers: the CSP forbids them).
   document.addEventListener("error", (e) => {
     const t = e.target;
-    if (t && t.tagName === "IMG" && t.dataset.fallback) { if (t.parentNode) t.parentNode.classList.remove("has-photo"); t.remove(); }
+    if (t && t.tagName === "IMG" && t.dataset.fallback) {
+      const box = t.parentNode;
+      if (box) { box.classList.remove("has-photo", "has-logo", "has-logo-img"); if (box.classList.contains("logo") && !box.textContent) box.textContent = (byId[current.id] || {}).short || ""; }
+      t.remove();
+    }
   }, true);
 
   // Hover tooltip for chart marks ([data-tip]); values are also printed as text, so this is a convenience.

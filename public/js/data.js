@@ -4145,12 +4145,50 @@
     delete p.websiteLabel;
     if (p.sources.indexOf(w) < 0) p.sources.push(w);
   });
+  // Logos from each program's own website, shown when there's no photo (checked by eye on the card background).
+  const LOGOS = {
+    "migdal-oz": "https://skamigdaloz.org/wp-content/uploads/2020/12/\u05dc\u05d5\u05d2\u05d5-\u05d2\u05e8\u05e4\u05d9\u05e7\u05d4-\u05e6\u05d1\u05e2\u05d5\u05e0\u05d9.png",
+    "netiv-aryeh": "https://yna.edu/Assets/img/logo.png?version=3",
+    "shaalvim": "https://yeshivatshaalvim.org/wp-content/uploads/2026/01/YeshivatShaalvim-color-logo.png",
+    "yishrei-lev": "https://yishrei.org/wp-content/uploads/2022/04/circle-e1533588431343-1.png",
+    "heichal-yerushalayim": "https://img1.wsimg.com/isteam/ip/6b5f0b6c-730f-4d11-a2a6-921b531e2210/logo%20final-Photoroom.png/:/rs=h:164,cg:true,m/qt=q:95",
+    "darchei-yonatan": "https://static.wixstatic.com/media/8212ba_f3fd5935fbd54cd698c6de6989ae8642~mv2.png/v1/fill/w_188,h_80,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Yeshivat%20Darchei%20Yonatan%20logo.png",
+    "diaspora-yeshiva": "https://diasporayeshiva.com/wp-content/uploads/2022/05/newfavicon2-180x180.jpg",
+    "matisyahu": "https://images.squarespace-cdn.com/content/v1/63722ecfd191dc48d9626e64/f401028a-d59f-43e5-bbe4-74dabb41ddc9/DB61016D-D436-4008-A164-D952B64B67E5+1+%28Traced%29.png?format=1500w",
+    "aderes-hatorah": "https://www.adereshatorah.com/images/logo.jpg",
+    "imrei-binah": "https://static.wixstatic.com/media/e1205b_bfe741f056684640b40b30095fcbbdb3~mv2.webp/v1/fill/w_293,h_160,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/imreilogo.webp",
+    "chosein-yehoshua": "https://yeshivascy.org/_image?href=%2F_emdash%2Fapi%2Fmedia%2Ffile%2F01M5WM8T078FA30QSW34QAR0MD.png",
+    "toras-simcha": "https://torassimcha.org/wp-content/uploads/2024/12/Yeshivas-Torah-Simcha-logo-1024x1024.png",
+    "toras-chaim": "https://www.ytchaim.com/uploads/9/8/3/3/98331294/published/new-toras-chaim-vector-logo-2020-bronze.png?1649878642",
+    "tehillah": "https://midreshettehillah.com/wp-content/uploads/2024/09/MT_Logo_No-Neve-GOLD-300x81-1.png",
+    "shaalvim-women": "https://shaalvimforwomen.org/wp-content/uploads/2026/01/Shaalvim-for-Women-blue-cranberry.png",
+    "darchei-binah": "https://darcheibinah.org/wp-content/uploads/2021/01/db1.png",
+    "machon-alte": "https://machonalte.com/wp-content/uploads/2025/11/Group-514-1.png",
+    "shoshanat-yerushalayim": "https://www.msy.org.il/images/dddhre-min.jpg",
+    "pninim": "https://pninimseminary.com/wp-content/uploads/2026/10/pninim-logo.png",
+    "ki-tov": "https://kitovseminary.com/assets/logo.png",
+    "bnos-sarah": "https://nevey.org/wp-content/uploads/2022/08/nevesitelogo-2.png",
+    "darkaynu-women": "https://darkaynu.org.il/wp-content/uploads/2019/10/logo.png",
+    "shvilim": "https://www.shvilim-gap-year.com/wp-content/uploads/2024/11/shvilim-logo-300x238.jpg",
+    "kibbutz-ulpan": "https://kibbutzulpan.org/wp-content/uploads/2021/06/cropped-kibbutz-ulpan-logo-small-circle-1.png",
+    "amichai": "https://static.wixstatic.com/media/9bb2de_a8e86e06da3f4010a0abd5449c0f30e9%7Emv2.webp/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/9bb2de_a8e86e06da3f4010a0abd5449c0f30e9%7Emv2.webp",
+    "keshet-yehuda": "https://www.keshetyehuda.org/wp-content/uploads/2020/03/logo-01-1024x196-1.png",
+    "beeri": "https://mechinat-beeri.com/wp-content/uploads/2020/11/cropped-\u05dc\u05d5\u05d2\u05d5-\u05d7\u05d3\u05e9-\u05de\u05db\u05d9\u05e0\u05ea-\u05d1\u05d0\u05e8\u05d9-1-180x180.png",
+    "beit-yisrael-mechina": "https://reut.org.il/wp-content/uploads/2022/01/logo-25-200x76.png",
+    "telem-jaffa": "https://www.hamechina.org.il/assets/img/logo.png",
+    "aderet": "https://static.wixstatic.com/media/abc277_9893d448746740e29f1f2c0196048f7d~mv2.png/v1/fill/w_303,h_159,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/%D7%9C%D7%95%D7%92%D7%95%20%D7%95%D7%A7%D7%98%D7%95%D7%A8_page-0001_edited.png",
+    "nachshon": "https://m-nachshon.org/wp-content/uploads/2024/08/logo-1.png",
+    "melach-haaretz": "https://melach.org.il/wp-content/uploads/2019/12/Melach-logo-trans-300x125.png",
+    "mevaseret-zion": "https://static.wixstatic.com/media/b877de_01b1495a71144169a1d0b9186edea99a%7Emv2.jpeg/v1/fit/w_2500,h_1330,al_c,q_90/b877de_01b1495a71144169a1d0b9186edea99a%7Emv2.jpeg",
+    "midreshet-ora": "https://static.wixstatic.com/media/10a9d7_5ffdfa028fc74c889041a1487e0e3f22%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/10a9d7_5ffdfa028fc74c889041a1487e0e3f22%7Emv2.jpg",
+  };
   programs.forEach(function (p) {
     p.profile = PROFILES[p.id] || prof("- - - - - - - - - - - -", "light");
     p.learning = p.profile.learning;
     p.type = TYPES[p.id] || "gap";
     p.fields = FIELDS[p.id] || (p.type === "yeshiva" || p.type === "seminary" ? { jewish: TEXT.jewish } : {});
     if (PHOTOS[p.id]) p.photo = PHOTOS[p.id];
+    if (LOGOS[p.id]) p.logo = LOGOS[p.id];
   });
 
   // ---- Swipe-card highlights: three quick bullets per program, taken from the facts above and in details.js ----
