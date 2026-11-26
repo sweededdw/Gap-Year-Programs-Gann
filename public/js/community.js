@@ -1,5 +1,5 @@
-// Community: opt-in student profiles, the organizations students belong to (BBYO, NCSY, ...), and who's
-// interested in each gap year. The privacy rules live in the database (supabase/migrations/0003_community.sql):
+// Community: opt-in student profiles, the organizations students belong to (BBYO, NCSY, ...), and which
+// programs are on students' lists (only for students who choose to share their list). The privacy rules live in the database (supabase/migrations/0003_community.sql):
 // this page only shows what the database returns, which is your own rows plus profiles other students chose to show.
 (function () {
   window.GYF_COMMUNITY = function (ctx) {
@@ -33,7 +33,7 @@
       if (S.loading) return S.loading;
       const sb = ctx.sb();
       const qs = [
-        sb.from("profiles").select("user_id, display_name, school, grad_year, visible").limit(5000),
+        sb.from("profiles").select("user_id, display_name, school, grad_year, visible, share_list").limit(5000),
         sb.from("org_members").select("user_id, org_id").limit(20000),
         sb.from("program_interest").select("user_id, program_id").limit(20000),
       ];
@@ -58,6 +58,7 @@
           ((res[3] && res[3].data) || []).forEach((b) => (S.bans[b.user_id] = 1));
         }
         S.loaded = true;
+        syncSaved(true);
       }).finally(() => { S.loading = null; });
       return S.loading;
     }
@@ -81,7 +82,7 @@
       return Object.keys(n).map((id) => ({ p: byId[id], n: n[id] })).sort((a, b) => b.n - a.n || a.p.name.localeCompare(b.p.name));
     }
     function mine() {
-      return { profile: me(), organizations: orgsOf(uid()).map((o) => (o.group ? { id: o.id, name: o.name } : o.id)), interestedIn: interestsOf(uid()).map((p) => p.id),
+      return { profile: me(), organizations: orgsOf(uid()).map((o) => (o.group ? { id: o.id, name: o.name } : o.id)), sharedList: interestsOf(uid()).map((p) => p.id),
         groupsCreated: Object.keys(S.groups).map((id) => S.groups[id]).filter((g) => g.created_by === uid()).map((g) => ({ name: g.name, description: g.description, status: g.status })) };
     }
 
@@ -119,6 +120,7 @@
         '<label class="field">Graduating<select class="input" id="cp-year"><option value="">Choose</option>' +
         years.sort().map((y) => '<option value="' + y + '"' + (p && p.grad_year === y ? " selected" : "") + ">" + y + "</option>").join("") + "</select></label></div>" +
         '<label class="check"><input type="checkbox" id="cp-visible"' + (p && p.visible ? " checked" : "") + "> Show my profile to other students on this site</label>" +
+        '<label class="check"><input type="checkbox" id="cp-share"' + (p && p.share_list ? " checked" : "") + "> Show the programs on my list</label>" +
         '<p class="small muted comm-note">Only logged-in students can see profiles. Don\'t add your phone number, address or social media.</p>' +
         '<div class="comm-actions"><button class="btn primary" data-act="comm-save">Save profile</button>' +
         (p ? '<button class="btn ghost" data-act="comm-cancel">Cancel</button>' : "") + "</div></div>";
@@ -136,10 +138,12 @@
       return '<section class="card sec comm-profile">' + flash +
         '<div class="person me"><span class="avatar big" aria-hidden="true">' + esc(initials(p.display_name)) + "</span>" +
         '<div class="person-body"><div class="person-name"><strong>' + esc(p.display_name) + "</strong> " +
-        (p.visible ? '<span class="chip ok">Visible to students</span>' : '<span class="chip">Private: only you</span>') + "</div>" +
+        (p.visible ? '<span class="chip ok">Visible to students</span>' : '<span class="chip">Private: only you</span>') +
+        (p.share_list ? '<span class="chip ok">List shared</span>' : '<span class="chip">List private</span>') + "</div>" +
         (sub ? '<div class="small muted">' + esc(sub) + "</div>" : "") + "</div></div>" +
         '<div class="comm-actions"><button class="btn sm" data-act="comm-edit">Edit</button>' +
         '<button class="btn sm" data-act="comm-visible">' + (p.visible ? "Make private" : "Show to students") + "</button>" +
+        '<button class="btn sm" data-act="comm-share">' + (p.share_list ? "Keep my list private" : "Share my list") + "</button>" +
         '<button class="btn ghost sm danger" data-act="comm-delete">Delete profile</button></div></section>';
     }
     const STATUS_CHIP = { pending: '<span class="chip warn">Waiting for admin review</span>', review: '<span class="chip bad">Hidden: reported, under review</span>', rejected: '<span class="chip bad">Not approved</span>' };
@@ -221,11 +225,11 @@
       const peers = [];
       myOrgs.forEach((o) => membersOf(o.id).forEach((id) => { if (id !== uid() && peers.indexOf(id) < 0) peers.push(id); }));
       const everyone = Object.keys(S.profiles).filter(listed).concat(S.profiles[uid()] ? [] : [uid()]);
-      const myInts = interestsOf(uid());
+      const myList = ctx.savedIds().map((id) => byId[id]).filter(Boolean);
       const kinds = Object.keys(ORGS.kinds);
       const hidden = ctx.isAdmin() ? Object.keys(S.bans).filter((id) => S.profiles[id]) : [];
       $app.innerHTML =
-        '<div class="browse-head"><h1>Community</h1><p class="muted">See which gap years other students are looking at. Join the groups you\'re part of, mark the programs you\'re interested in, and find students from your groups.</p></div>' +
+        '<div class="browse-head"><h1>Community</h1><p class="muted">See which gap years other students have on their lists. Join the groups you\'re part of, choose whether to share your own list, and find students from your groups.</p></div>' +
         '<div class="detail comm"><div class="sections">' +
         profileCard() +
         (myOrgs.length ? '<section class="card sec"><div class="sec-head"><h2>Students in your groups</h2><span class="small muted">' + myOrgs.map((o) => esc(label(o))).join(", ") + "</span></div>" +
@@ -239,10 +243,11 @@
         groupsSection() +
         "</div>" +
         '<aside class="side">' +
-        '<div class="card"><h3>Popular with students</h3>' + rankList(rank(everyone), "No one has marked a program yet. Open any program and tap “I'm interested”.") + "</div>" +
-        '<div class="card"><h3>You\'re interested in</h3>' + (myInts.length
-          ? '<ul class="comm-mine">' + myInts.map((p) => '<li><a href="#/program/' + p.id + '">' + esc(p.name) + "</a></li>").join("") + "</ul>" + (meShown() ? "" : '<p class="small muted">Only you can see these until your profile is visible.</p>')
-          : '<p class="small muted">Tap “I\'m interested” on any program page and it shows up here.</p>') + "</div>" +
+        '<div class="card"><h3>Most saved by students</h3>' + rankList(rank(everyone), "No shared lists yet.") + "</div>" +
+        '<div class="card"><h3>Your list</h3>' + (myList.length
+          ? '<ul class="comm-mine">' + myList.map((p) => '<li><a href="#/program/' + p.id + '">' + esc(p.name) + "</a></li>").join("") + "</ul>" +
+            '<p class="small muted">' + (me() && me().share_list && meShown() ? "Shared with other students." : me() && me().share_list ? "Shared, but your profile is private, so no one else sees it yet." : "Private. Only you can see it.") + "</p>"
+          : '<p class="small muted">Save programs with the heart and they show up here.</p>') + "</div>" +
         adminCards() +
         (hidden.length ? '<div class="card"><h3>Hidden profiles (admin)</h3><ul class="people">' + hidden.map((id) =>
           '<li class="person"><span class="avatar" aria-hidden="true">' + esc(initials(S.profiles[id].display_name)) + '</span><div class="person-body"><strong>' + esc(S.profiles[id].display_name) + '</strong></div><button class="btn sm" data-act="comm-unhide" data-id="' + esc(id) + '">Unhide</button></li>').join("") + "</ul></div>" : "") +
@@ -284,18 +289,19 @@
       return '<div class="card comm-card" id="comm-card" data-pid="' + p.id + '">' + cardInner(p) + "</div>";
     }
     function cardInner(p) {
-      const h = "<h3>Students interested</h3>";
+      const h = "<h3>On students' lists</h3>";
       if (!S.loaded) { load().then(refreshCard); return h + '<p class="small muted">Loading…</p>'; }
-      if (S.off) return h + '<p class="small muted">Coming soon: see which students are interested in this program.</p>';
+      if (S.off) return h + '<p class="small muted">Coming soon: see which students have this program on their list.</p>';
       if (S.failed) return h + '<p class="small muted">Couldn\'t load this right now.</p><button class="btn sm" data-act="comm-retry">Try again</button>';
-      const ids = interestedIn(p.id), others = ids.filter((id) => id !== uid()), on = isInterested(p.id);
+      const others = interestedIn(p.id).filter((id) => id !== uid()), mineSaved = ctx.savedIds().indexOf(p.id) >= 0;
+      const shared = !!(me() && me().share_list), seen = mineSaved && shared && meShown();
+      const n = others.length + (seen ? 1 : 0);
       return h +
-        '<p class="small muted">' + (ids.length ? plural(ids.length, "student") + " interested" + (on ? ", including you" : "") : "No one yet. Be the first.") + "</p>" +
+        '<p class="small muted">' + (n ? plural(n, "student has", "students have") + " this on their list" + (seen ? ", including you" : "") : "No shared lists include it yet.") + "</p>" +
         (others.length ? '<ul class="people compact">' + others.slice(0, 6).map((id) => personRow(id, { interests: false })).join("") + "</ul>" +
           (others.length > 6 ? '<p class="small muted">and ' + (others.length - 6) + " more</p>" : "") : "") +
-        '<button class="btn sm' + (on ? " on" : " primary") + '" data-act="comm-interest" data-id="' + p.id + '" aria-pressed="' + on + '">' + (on ? I("check") + " You're interested" : "I'm interested") + "</button>" +
-        (on && !meShown() ? '<p class="small muted comm-note">Only you can see this until you <a href="#/community">turn on your profile</a>.</p>'
-          : !on && !me() ? '<p class="small muted comm-note">Your name shows once you <a href="#/community">make a profile</a>.</p>' : "");
+        (mineSaved && !shared ? '<p class="small muted comm-note">It\'s on your list, which is private. <a href="#/community">Share your list</a> to appear here.</p>'
+          : mineSaved && !seen ? '<p class="small muted comm-note">Your list is shared, but your profile is private, so other students don\'t see you here. <a href="#/community">Turn on your profile</a>.</p>' : "");
     }
     function refreshCard() {
       const c = document.getElementById("comm-card");
@@ -330,15 +336,14 @@
           ctx.banner("");
           return rerender();
         }
-        if (act === "comm-interest") {
-          const on = isInterested(id);
-          const { error } = on ? await sb.from("program_interest").delete().eq("user_id", uid()).eq("program_id", id)
-            : await sb.from("program_interest").insert({ user_id: uid(), program_id: id });
-          if (error && error.code !== "23505") return fail(error, "programs");
-          S.interest = S.interest.filter((m) => !(m.user_id === uid() && m.program_id === id));
-          if (!on) S.interest.push({ user_id: uid(), program_id: id });
-          ctx.banner("");
-          return rerender();
+        if (act === "comm-share") {
+          const next = !me().share_list;
+          const { error } = await sb.from("profiles").update({ share_list: next }).eq("user_id", uid());
+          if (error) return fail(error);
+          me().share_list = next;
+          if (next) await syncSaved(true); else S.interest = S.interest.filter((m) => m.user_id !== uid());
+          S.flash = next ? "Your list is shared." + (meShown() ? "" : " Turn on your profile so other students can see it.") : "Your list is private again.";
+          return ctx.render();
         }
         if (act === "comm-visible") {
           const next = !me().visible;
@@ -349,7 +354,7 @@
           return ctx.render();
         }
         if (act === "comm-delete") {
-          if (!confirm("Delete your community profile? This also takes you out of your groups and clears the programs you marked as interested.")) return;
+          if (!confirm("Delete your community profile? This also takes you out of your groups and stops sharing your list. Your saved programs stay on your list.")) return;
           const ok = await deleteAll();
           if (!ok) return ctx.banner("Couldn't delete your profile. Try again.");
           S.flash = "";
@@ -419,7 +424,8 @@
       const again = (msg) => { S.formError = msg; ctx.render(); const f = document.getElementById("cp-name"); if (f) f.focus(); };
       if (!name) return again("Add a name to show, like your first name and last initial.");
       if (LINK.test(name + " " + school)) return again("Links aren't allowed in profiles.");
-      const row = { display_name: name.slice(0, 40), school: school ? school.slice(0, 80) : null, grad_year: year, visible: visible };
+      const share = !!(document.getElementById("cp-share") || {}).checked;
+      const row = { display_name: name.slice(0, 40), school: school ? school.slice(0, 80) : null, grad_year: year, visible: visible, share_list: share };
       el.disabled = true;
       const sb = ctx.sb(), had = !!me();
       const { error } = had ? await sb.from("profiles").update(row).eq("user_id", uid())
@@ -427,7 +433,9 @@
       el.disabled = false;
       if (error) return again(wordingMsg(error) || "Couldn't save your profile. Check your connection and try again.");
       S.profiles[uid()] = Object.assign({ user_id: uid() }, me() || {}, row);
+      if (!share) S.interest = S.interest.filter((m) => m.user_id !== uid());
       S.editing = false; S.formError = "";
+      if (share) await syncSaved(true);
       S.flash = visible ? "Saved. Other students can now see your profile." : "Saved. Your profile is private until you choose to show it.";
       ctx.render();
     }
@@ -454,6 +462,24 @@
       S.flash = "Your group was sent for review. Other students will see it once an admin approves it. You can join it now.";
       ctx.render();
     }
+    // The shared list mirrors the saved list (up to 60 programs), only for students who chose to share it.
+    let syncTimer = null;
+    function syncSaved(now) {
+      clearTimeout(syncTimer);
+      if (!now) { syncTimer = setTimeout(() => syncSaved(true), 800); return Promise.resolve(); }
+      const sb = ctx.sb();
+      if (!sb || !S.loaded || S.off || S.failed || !me() || !me().share_list) return Promise.resolve();
+      const want = ctx.savedIds().slice(0, 60), have = S.interest.filter((m) => m.user_id === uid()).map((m) => m.program_id);
+      const add = want.filter((id) => have.indexOf(id) < 0), drop = have.filter((id) => want.indexOf(id) < 0);
+      if (!add.length && !drop.length) return Promise.resolve();
+      const jobs = drop.map((id) => sb.from("program_interest").delete().eq("user_id", uid()).eq("program_id", id));
+      if (add.length) jobs.push(sb.from("program_interest").insert(add.map((id) => ({ user_id: uid(), program_id: id }))));
+      return Promise.all(jobs).then((res) => {
+        if (res.some((r) => r.error && r.error.code !== "23505")) return;
+        S.interest = S.interest.filter((m) => !(m.user_id === uid() && drop.indexOf(m.program_id) >= 0)).concat(add.map((id) => ({ user_id: uid(), program_id: id })));
+        if (ctx.isView("detail")) refreshCard();
+      }).catch(() => {});
+    }
     // Removes the student's profile, groups and interests. Used by "Delete profile" and "Delete my saved data".
     async function deleteAll() {
       const sb = ctx.sb();
@@ -472,6 +498,6 @@
       return true;
     }
 
-    return { load, renderPage, programCard, click, mine, deleteAll };
+    return { load, renderPage, programCard, click, mine, deleteAll, syncSaved };
   };
 })();

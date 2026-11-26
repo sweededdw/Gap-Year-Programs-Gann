@@ -71,7 +71,7 @@ window.supabase = { createClient: function () {
   // A few of the 0004 blocked terms, enough to test the "wording isn't allowed" path.
   const dirty = (t) => /\b(nazi|kike|wetback)s?\b|hitler|white\s*power/i.test(String(t || '').replace(/0/g, 'o').replace(/1/g, 'i').replace(/4|@/g, 'a').replace(/3/g, 'e').replace(/\$|5/g, 's'));
   const wording = { data: null, error: { code: '23514', message: "That wording isn't allowed here." } };
-  const community = (name, q, hit) => {
+  const community = async (name, q, hit) => {
     const key = 'mock:t:' + name, all = J(key, '[]'), uid = uidNow(), admin = !!LS.getItem('mock:admin');
     const bans = J('mock:t:community_bans', '[]'), profs = J('mock:t:profiles', '[]');
     const banned = (u) => bans.some((b) => b.user_id === u);
@@ -110,14 +110,21 @@ window.supabase = { createClient: function () {
     const denied = { data: null, error: { code: '42501', message: 'new row violates row-level security policy for table "' + name + '"' } };
     if (!uid) return denied;
     if (q.op === 'select') { let out = all.filter(sees).filter(hit); if (q.limit != null) out = out.slice(0, q.limit); return { data: out, error: null }; }
+    if (q.op === 'insert' && Array.isArray(q.payload)) {
+      const done = [];
+      for (const one of q.payload) { const r = await community(name, Object.assign({}, q, { payload: one }), hit); if (r.error) return r; done.push(r.data[0]); }
+      return { data: done, error: null };
+    }
     if (q.op === 'insert') {
       const row = Object.assign({}, q.payload);
       if (!mineOk(row)) return denied;
+      if (name === 'program_interest' && !profs.some((p) => p.user_id === uid && p.share_list)) return denied;
       if (name === 'profiles' && !(row.display_name || '').trim()) return { data: null, error: { code: '23514', message: 'violates check constraint' } };
       if (name === 'profiles' && (dirty(row.display_name) || dirty(row.school))) return wording;
       if (name === 'org_members' && /^g-/.test(row.org_id) && !groups.some((g) => 'g-' + g.id === row.org_id && (g.status === 'approved' || g.created_by === uid))) return { data: null, error: { code: '23514', message: "That group isn't open to join." } };
       if (all.some((r) => COMMUNITY[name].every((k) => r[k] === row[k]))) return { data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint' } };
-      if ((name === 'org_members' || name === 'program_interest') && all.filter((r) => r.user_id === uid).length >= 30) return { data: null, error: { code: '23514', message: 'You can add up to 30 here.' } };
+      const cap = name === 'program_interest' ? 60 : 30;
+      if ((name === 'org_members' || name === 'program_interest') && all.filter((r) => r.user_id === uid).length >= cap) return { data: null, error: { code: '23514', message: 'You can add up to ' + cap + ' here.' } };
       all.push(Object.assign({ created_at: stamp() }, row)); W(key, all); return { data: [row], error: null };
     }
     if (q.op === 'update') {
@@ -125,11 +132,15 @@ window.supabase = { createClient: function () {
       if (dirty(q.payload.display_name) || dirty(q.payload.school)) return wording;
       const out = all.filter((r) => hit(r) && r.user_id === uid);
       out.forEach((r) => Object.assign(r, q.payload, { updated_at: stamp() }));
-      W(key, all); return { data: out, error: null };
+      W(key, all);
+      if (q.payload.share_list === false) W('mock:t:program_interest', J('mock:t:program_interest', '[]').filter((m) => m.user_id !== uid));
+      return { data: out, error: null };
     }
     if (q.op === 'delete') {
       const out = all.filter((r) => hit(r) && mineOk(r));
-      W(key, all.filter((r) => out.indexOf(r) < 0)); return { data: out, error: null };
+      W(key, all.filter((r) => out.indexOf(r) < 0));
+      if (name === 'profiles' && out.length) W('mock:t:program_interest', J('mock:t:program_interest', '[]').filter((m) => m.user_id !== uid));
+      return { data: out, error: null };
     }
   };
 

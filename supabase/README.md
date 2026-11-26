@@ -14,6 +14,7 @@ replacing old rules with the same ones; choose **Run this query**.
 | `migrations/0002_content_admin.sql` | Admin editing of program and college data, edit history, error log | Done 2026-11-26 |
 | `migrations/0003_community.sql` | Community: opt-in student profiles, groups (BBYO, NCSY, ...), who's interested in each program, admin hide | Run this next |
 | `migrations/0004_student_groups.sql` | Student-created groups with admin review, a hateful-wording filter (`blocked_terms`, editable in the table editor), reports, and limits | Run after 0003 |
+| `migrations/0005_list_sharing.sql` | "Interested" = on your list; a student chooses to share their list (off by default) | Run after 0004 |
 
 New database changes always go in a new numbered file (`0003_...sql`), never by editing an old one, so every
 copy of the database (production, a staging copy, a fresh project) can be brought to the same state.

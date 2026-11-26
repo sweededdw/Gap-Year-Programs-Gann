@@ -241,6 +241,7 @@
   }
   function save() {
     saveLocal(); // always keep a local copy as a safety net
+    if (sb && COMM) COMM.syncSaved(); // the shared list follows the saved list (if the student shares it)
     if (sb && remoteOk) {
       clearTimeout(saveTimer);
       saveTimer = setTimeout(pushRemote, 500); // batch rapid typing into one request
@@ -1952,6 +1953,7 @@
   const COMM = window.GYF_COMMUNITY({
     sb: () => sb, userId: () => userId, isAdmin: () => isAdmin, isView: (v) => current.view === v,
     esc, I, byId, D, banner, render, fmtDate,
+    savedIds: () => Object.keys(state.saved).filter((k) => state.saved[k] && byId[k]),
   });
 
   // ---------- Delete my account ----------

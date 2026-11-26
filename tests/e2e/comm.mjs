@@ -1,4 +1,4 @@
-// Community: profiles, organizations, "who's interested", privacy, admin hide, and the not-set-up state.
+// Community: profiles, organizations, shared lists, privacy, admin hide, groups and the not-set-up state.
 import { readFileSync, writeFileSync } from 'node:fs';
 const SP = process.argv[2], B = 'http://localhost:3124', MOCK = readFileSync(new URL('../mock-supabase.js', import.meta.url), 'utf8');
 let list; for (let i=0;i<40;i++){ try { list = await (await fetch('http://localhost:9342/json/list')).json(); break; } catch { await new Promise(r=>setTimeout(r,250)); } }
@@ -29,9 +29,9 @@ const seed = {
   'mock:users': { 'me@x': { id:'uid-me', email:'me@x', password:'gapyear2027', confirmed:true, user_metadata:{ name:'Noa Levi' } } },
   'mock:session': { access_token:'tok-uid-me', user:{ id:'uid-me', email:'me@x', user_metadata:{ name:'Noa Levi' } } },
   'mock:t:profiles': [
-    { user_id:'uid-b', display_name:'Maya K.', school:'Gann Academy', grad_year:2027, visible:true },
+    { user_id:'uid-b', display_name:'Maya K.', school:'Gann Academy', grad_year:2027, visible:true, share_list:true },
     { user_id:'uid-c', display_name:'Private Pat', school:'Secret School', grad_year:2027, visible:false },
-    { user_id:'uid-d', display_name:'Eli R.', school:'Ramaz', grad_year:2028, visible:true },
+    { user_id:'uid-d', display_name:'Eli R.', school:'Ramaz', grad_year:2028, visible:true, share_list:true },
   ],
   'mock:t:org_members': [ { user_id:'uid-b', org_id:'bbyo' }, { user_id:'uid-c', org_id:'bbyo' }, { user_id:'uid-d', org_id:'ncsy' } ],
   'mock:t:program_interest': [ { user_id:'uid-b', program_id:'aardvark' }, { user_id:'uid-c', program_id:'aardvark' }, { user_id:'uid-c', program_id:'kivunim' }, { user_id:'uid-d', program_id:'aardvark' }, { user_id:'uid-d', program_id:'kivunim' }, { user_id:'uid-d', program_id:'nativ' } ],
@@ -84,25 +84,31 @@ ok('USY page links Nativ (the gap year USY runs)', /Gap years run by USY/.test(a
 await go('#/community/org/not-a-real-org');
 ok('unknown org falls back to the main page', /Organizations/.test(await text()));
 
-// Program page card
+// Program page card: "On students' lists" comes from the lists students chose to share
 await go('#/program/aardvark'); await sleep(300);
-t = await ev(`document.getElementById('comm-card').innerText`);
-ok('program card: 2 students interested, names shown', /2 students interested/.test(t) && /Maya K\./.test(t) && /Eli R\./.test(t) && !/Private Pat/.test(t));
-await click('#comm-card [data-act=comm-interest]');
-ok("I'm interested saves the row", (await T('program_interest')).some(m=>m.user_id==='uid-me' && m.program_id==='aardvark'));
-ok('card updates: 3 students, including you', /3 students interested, including you/.test(await ev(`document.getElementById('comm-card').innerText`)));
+const card=()=>ev(`document.getElementById('comm-card').innerText`);
+t = await card();
+ok('program card: 2 students have it on their list, names shown', /2 students have this on their list/.test(t) && /Maya K\./.test(t) && /Eli R\./.test(t) && !/Private Pat/.test(t));
+ok('no separate "interested" button', !(await ev(`[...document.querySelectorAll('#comm-card button, [data-act=comm-interest]')].some(b=>/interested/i.test(b.textContent) || b.dataset.act==='comm-interest')`)));
+await click('.school-head [data-act=save]'); await sleep(1300);
+ok('saving with sharing off keeps your list private', !(await T('program_interest')).some(m=>m.user_id==='uid-me') && /on your list, which is private/.test(await card()));
+await go('#/community'); await click('[data-act=comm-share]'); await sleep(600);
+ok('"Share my list" shares your saved programs', (await T('program_interest')).some(m=>m.user_id==='uid-me' && m.program_id==='aardvark') && /List shared/.test(await text()) && (await T('profiles')).find(p=>p.user_id==='uid-me').share_list===true);
+await go('#/program/aardvark'); await sleep(300);
+ok('card: 3 students, including you', /3 students have this on their list, including you/.test(await card()));
 await shot('comm-card');
-await click('#comm-card [data-act=comm-interest]');
-ok('clicking again removes it', !(await T('program_interest')).some(m=>m.user_id==='uid-me' && m.program_id==='aardvark') && /2 students interested/.test(await ev(`document.getElementById('comm-card').innerText`)));
-await click('#comm-card [data-act=comm-interest]');
+await click('.school-head [data-act=save]'); await sleep(1300);
+ok('taking it off your list takes it off the shared list', !(await T('program_interest')).some(m=>m.user_id==='uid-me' && m.program_id==='aardvark') && /2 students have/.test(await card()));
+await click('.school-head [data-act=save]'); await sleep(1300);
+ok('saving it again shares it again', (await T('program_interest')).some(m=>m.user_id==='uid-me' && m.program_id==='aardvark'));
 
 // Private mode
 await go('#/community');
 await click('[data-act=comm-visible]');
 ok('"Make private" turns the profile off', (await T('profiles')).find(p=>p.user_id==='uid-me').visible === false && /Private: only you/.test(await text()));
-ok('your interests list says only you can see them', /Only you can see these/.test(await text()) && /Aardvark Israel/.test(await ev(`document.querySelector('.comm-mine').innerText`)));
+ok('"Your list" shows your saved programs and says no one else sees it yet', /no one else sees it yet/.test(await text()) && /Aardvark Israel/.test(await ev(`document.querySelector('.comm-mine').innerText`)));
 await go('#/program/aardvark'); await sleep(200);
-ok('program card warns that your interest is private', /Only you can see this/.test(await ev(`document.getElementById('comm-card').innerText`)));
+ok('program card explains your profile is private', /your profile is private/.test(await card()) && !/including you/.test(await card()));
 await go('#/community');
 await click('[data-act=comm-edit]');
 ok('Edit keeps your answers in the form', await ev(`document.getElementById('cp-name').value`)==='Noa L.' && await ev(`document.getElementById('cp-year').value`)==='2027');
@@ -112,7 +118,7 @@ ok('editing saves (visible again)', (await T('profiles')).find(p=>p.user_id==='u
 // Download my data includes community
 await ev(`window.__blob=null; URL.createObjectURL=(b)=>{ window.__blob=b; return 'blob:x'; }; HTMLAnchorElement.prototype.click=function(){}; document.getElementById('acct-download').click(); true`); await sleep(600);
 const dl = JSON.parse(await ev(`window.__blob ? window.__blob.text() : '{}'`));
-ok('Download my data includes profile, groups and interests', dl.community && dl.community.profile.display_name==='Noa L.' && dl.community.organizations.join()==='bbyo' && dl.community.interestedIn.join()==='aardvark');
+ok('Download my data includes profile, groups and shared list', dl.community && dl.community.profile.display_name==='Noa L.' && dl.community.organizations.join()==='bbyo' && dl.community.sharedList.join()==='aardvark');
 
 // Admin: hide and unhide
 await ev(`localStorage.setItem('mock:admin','1'); true`); await nav(B+'/#/community'); await sleep(300);
@@ -141,9 +147,9 @@ ok('other students are untouched', (await T('profiles')).length===3 && (await T(
 ok('form is back for a new profile', await ev(`!!document.getElementById('cp-name')`));
 
 // "Delete my saved data" also clears community rows
-await go('#/community/org/ncsy'); await click('[data-act=comm-join][data-id=ncsy]'); await go('#/program/kivunim'); await click('#comm-card [data-act=comm-interest]');
+await go('#/community/org/ncsy'); await click('[data-act=comm-join][data-id=ncsy]'); await go('#/program/kivunim'); await click('.school-head [data-act=save]'); await sleep(1000);
 await noConfirm(); await ev(`document.getElementById('acct-delete').click(); true`); await sleep(900);
-ok('"Delete my saved data" also clears your groups and interests', !(await T('org_members')).some(m=>m.user_id==='uid-me') && !(await T('program_interest')).some(m=>m.user_id==='uid-me'));
+ok('"Delete my saved data" also clears your groups and shared list', !(await T('org_members')).some(m=>m.user_id==='uid-me') && !(await T('program_interest')).some(m=>m.user_id==='uid-me'));
 
 // Student groups: create (review first), word filter, rules, approve, join, report, delete
 await ev(`localStorage.removeItem('mock:admin'); true`); await nav(B+'/#/community'); await sleep(300);
