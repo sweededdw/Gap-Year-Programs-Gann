@@ -172,3 +172,6 @@ ok("admin can add a blocked term", !(await as("admin", `insert into blocked_term
 ok("other students can't delete someone's group", (await as("f", `delete from student_groups where id = '${gid}' returning id`)).rows?.length === 0);
 r = await as("e", `delete from student_groups where id = '${gid}' returning id`);
 ok("creator deletes the group; memberships and reports go with it", r.rows.length === 1 && (await db.query(`select count(*)::int n from org_members where org_id = 'g-${gid}'`)).rows[0].n === 0 && (await db.query(`select count(*)::int n from community_reports where target_id = '${gid}'`)).rows[0].n === 0);
+r = await as("f", `insert into student_groups (name, description, kind) values ('Camp Ramah Poconos alumni', 'Campers and staff from recent summers', 'camp') returning id, status, kind`);
+ok("student creates a camp group; it starts pending", !r.error && r.rows[0].kind === "camp" && r.rows[0].status === "pending");
+ok("unknown group type refused", !!(await as("f", `insert into student_groups (name, kind) values ('Mystery crew', 'cult')`)).error);

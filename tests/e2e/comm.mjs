@@ -158,6 +158,7 @@ await ev(`document.getElementById('cp-name').value='Noa L.'; document.getElement
 await click('[data-act=comm-group-new]');
 ok('group form shows the community rules', /No racism, antisemitism, xenophobia/.test(await text()) && await ev(`!!document.getElementById('cg-rules')`));
 await ev(`document.getElementById('cg-name').value='Gann seniors to Israel'; true`); await click('[data-act=comm-group-save]');
+ok('group type includes Camp', (await ev(`[...document.querySelectorAll('#cg-kind option')].map(o=>o.value+':'+o.textContent).join(',')`)).includes('camp:Camp'));
 ok('must agree to the rules', /agree to the community rules/.test(await text()) && !(await T('student_groups')).length);
 ok('form keeps what you typed after an error', await ev(`document.getElementById('cg-name').value`)==='Gann seniors to Israel');
 await ev(`document.getElementById('cg-name').value='N4zi club'; document.getElementById('cg-rules').checked=true; true`); await click('[data-act=comm-group-save]');

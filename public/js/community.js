@@ -9,7 +9,7 @@
     ORGS.orgs.forEach((o) => (orgById[o.id] = o));
     const S = { loaded: false, loading: null, off: false, failed: false, profiles: {}, members: [], interest: [], bans: {}, editing: false, formError: "", flash: "",
       groups: {}, groupsOff: false, reports: [], groupForm: false, groupError: "" };
-    const GROUP_KIND = { chapter: "Chapter of an organization", school: "School club", friends: "Friends", other: "Student group" };
+    const GROUP_KIND = { chapter: "Chapter of an organization", school: "School club", camp: "Camp", friends: "Friends", other: "Student group" };
     const RULES = ["No racism, antisemitism, xenophobia or hate toward any group of people", "No bullying, threats or harassment", "No phone numbers, addresses, links or social media", "An admin reviews every new group before other students can see it"];
     // Organizations from orgs.js, or a student group from the database ("g-" + its id).
     function org(id) {
