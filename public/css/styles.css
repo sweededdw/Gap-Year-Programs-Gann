@@ -1130,3 +1130,96 @@ a.acct-item { color: var(--text); text-decoration: none; }
 .theme-corner { position: fixed; top: 12px; right: 12px; z-index: 40; }
 .theme-corner .theme-menu > summary { background: var(--surface); }
 @media (max-width: 600px) { .topbar .theme-label { display: none; } }
+
+/* ---------- Top bar: tools on the right; on phones the links fold behind "Menu" ---------- */
+.topnav { margin-left: auto; }
+.topbar-tools { display: flex; align-items: center; gap: 6px; flex: none; }
+.topbar-tools .account { margin-left: 2px; }
+.nav-toggle { display: none; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; }
+.nav-toggle .ic { font-size: 18px; }
+.topbar.nav-open .nav-toggle { color: var(--accent); background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+:root { --bar-h: 65px; }
+@media (max-width: 860px) {
+  :root { --bar-h: 53px; }
+  .topbar-inner { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
+  .brand { gap: 8px; }
+  .brand .logo-mark { width: 34px; height: 34px; }
+  .wm-header .wm-title { font-size: 17px; }
+  .wm-header .wm-sub { font-size: 6.5px; margin-top: 3px; }
+  .topbar-tools { margin-left: auto; }
+  .topbar .theme-label { display: none; }
+  .nav-toggle { display: inline-flex; }
+  .topnav { display: none; order: 3; flex-basis: 100%; margin: 0; }
+  .topbar.nav-open .topnav { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 2px 0 8px; }
+  .topnav a { padding: 11px 12px; font-size: 15px; border-radius: 10px; background: var(--surface-2); color: var(--text); }
+  .topnav a.active { background: var(--accent-soft); color: var(--accent); }
+}
+
+/* ---------- Swipe on phones: the card, its buttons and the header all fit on one screen ---------- */
+@media (max-width: 700px) {
+  .swipe-head { align-items: center; margin-bottom: 10px; }
+  .swipe-head h1 { font-size: 20px; }
+  .swipe-head-actions { display: flex; gap: 2px; }
+  .swipe-head-actions .btn { padding: 4px 8px; }
+  .swipe-stage { height: 560px; height: clamp(300px, calc(100svh - var(--bar-h) - 172px), 600px); }
+  .scard-hero { height: 44%; min-height: 130px; padding: 14px; }
+  .scard-title h2 { font-size: 20px; }
+  .scard-title p { font-size: 13px; }
+  .scard-match { top: 10px; right: 10px; }
+  .scard-body { padding: 12px 14px; gap: 8px; }
+  .scard-stats { font-size: 13.5px; gap: 4px; }
+  .scard-points { font-size: 14px; gap: 2px; }
+  .scard-points, .scard-blurb { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  .scard-body .chips { flex-wrap: nowrap; overflow: hidden; flex: none; }
+  .swipe-actions { margin-top: 14px; gap: 14px; }
+  .sbtn { width: 56px; height: 56px; font-size: 23px; }
+  .sbtn.small { width: 42px; height: 42px; font-size: 17px; }
+  .swipe-hint { display: none; }
+}
+@media (max-width: 700px) and (max-height: 620px) {
+  .scard-points { display: block; flex: none; }
+  .scard-points li:nth-child(n+2) { display: none; }
+  .scard-hero { height: 40%; }
+  .scard-body .chips { display: none; }
+}
+
+/* ---------- Compare on phones: no sideways scrolling. Each row becomes a label with the three
+   programs side by side under it, and a slim bar of program names stays pinned while you scroll. ---------- */
+.cmp-pin { display: none; }
+@media (max-width: 700px) {
+  .cmp-headline .check { font-size: 13px; }
+  .cmp-wrap { overflow: visible; }
+  table.cmp, .cmp-more .cmp { display: block; min-width: 0; font-size: 14px; line-height: 1.45; table-layout: auto; }
+  .cmp thead, .cmp tbody { display: block; }
+  .cmp tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--border); }
+  .cmp th, .cmp td { display: block; padding: 4px 10px 12px; border-bottom: 0; min-width: 0; overflow-wrap: anywhere; }
+  .cmp td + td { border-left: 1px solid color-mix(in srgb, var(--border) 65%, transparent); }
+  .cmp th + th { border-left: 0; }
+  .cmp .rowh, .cmp-more .rowh { grid-column: 1 / -1; width: auto; position: static; background: transparent; padding: 10px 10px 4px; font-size: 12px; letter-spacing: .02em; }
+  .cmp-col { width: auto; }
+  .cmp-headrow .rowh { display: none; }
+  .cmp-headrow th { padding: 10px 8px 12px; }
+  .cmp-headrow th + th { border-left: 1px solid color-mix(in srgb, var(--border) 65%, transparent); }
+  .cmp-top { grid-template-columns: 1fr auto; row-gap: 8px; column-gap: 4px; margin-bottom: 8px; }
+  .cmp-top .cmp-ph { grid-column: 1 / -1; grid-row: 1; width: 100%; height: 64px; }
+  .cmp-id { grid-column: 1; }
+  .cmp-id .cmp-name { font-size: 13.5px; line-height: 1.25; }
+  .cmp-id .type-badge { font-size: 10px; padding: 1px 6px; white-space: normal; }
+  .cmp-x { padding: 2px; align-self: start; }
+  .cmp-col .select { font-size: 12px; padding: 5px 4px; }
+  .cmp-empty { height: 64px; font-size: 12px; text-align: center; }
+  .cmp .grp th { grid-column: 1 / -1; padding: 14px 10px 8px; }
+  .cmp .grp-sub { display: block; margin: 2px 0 0; }
+  .cmp-board th.rowh { padding-top: 12px; }
+  .cmp-board td { padding-top: 6px; padding-bottom: 14px; }
+  .score-n { font-size: 24px; }
+  .best-at { font-size: 12.5px; margin-top: 6px; }
+  .cmp .win-tag { display: inline-block; margin: 4px 0 0; }
+  .cmp td.lead { box-shadow: inset 0 3px 0 var(--accent); }
+  .cbar { max-width: none; }
+  .cmp-more .cmp { margin-top: 6px; }
+  .cmp-pin { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); position: sticky; top: var(--bar-h); z-index: 9; margin: 0 -16px 0; padding: 8px 16px; background: var(--topbar); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); font-size: 12.5px; font-weight: 700; height: 35px; margin-bottom: -35px; pointer-events: none; visibility: hidden; opacity: 0; transition: opacity .15s; }
+  .cmp-pin.show { visibility: visible; opacity: 1; }
+  .cmp-pin span { padding: 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cmp-pin span + span { border-left: 1px solid var(--border); }
+}

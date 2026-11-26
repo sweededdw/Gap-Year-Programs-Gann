@@ -847,6 +847,7 @@
     $app.innerHTML =
       '<div class="browse-head cmp-headline"><div><h1>Compare programs</h1><p class="muted">Up to three programs head to head. The winner of each row is highlighted.</p></div>' +
       (n > 1 ? '<label class="check small"><input type="checkbox" data-act="cmp-same"' + (showSame ? " checked" : "") + "> Show rows where they're the same</label>" : "") + "</div>" +
+      (n ? '<div class="cmp-pin" aria-hidden="true">' + slots.map((q) => "<span>" + (q ? esc(q.name) : "") + "</span>").join("") + "</div>" : "") +
       '<div class="card table-wrap cmp-wrap"><table class="cmp"><thead>' + head + "</thead><tbody>" + board +
       (n ? group("Basics") + basics + group("Time", "approx. hours a week · ≈ = our estimate") + time +
         (ratings ? group("Your quiz picks", "ratings 1–5") + ratings : "") : "") +
@@ -856,6 +857,17 @@
       (n && hidden ? '<p class="small muted" style="margin-top:8px">' + hidden + " row" + (hidden === 1 ? " is" : "s are") + " hidden because the programs match.</p>" : "") +
       (n ? "" : '<div class="card empty" style="margin-top:12px">Choose programs above, or tap "Compare" on any program page. <a href="#/results">Compare your Top 3</a>.</div>') +
       (n ? '<p class="small muted" style="margin-top:8px">Share this comparison: <a href="#/compare/' + ids.join(",") + '">link</a></p>' : "");
+    pinCompareNames();
+  }
+  // Phones: once the program header scrolls away, a slim bar of the three names stays pinned under the top bar.
+  let cmpPinObs = null;
+  function pinCompareNames() {
+    if (cmpPinObs) { cmpPinObs.disconnect(); cmpPinObs = null; }
+    const pin = $app.querySelector(".cmp-pin"), headRow = $app.querySelector(".cmp-headrow");
+    if (!pin || !headRow || !("IntersectionObserver" in window)) return;
+    const bar = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--bar-h"), 10) || 0;
+    cmpPinObs = new IntersectionObserver((es) => es.forEach((e) => pin.classList.toggle("show", !e.isIntersecting && e.boundingClientRect.top < bar)), { rootMargin: "-" + (bar + 36) + "px 0px 0px 0px" });
+    cmpPinObs.observe(headRow);
   }
 
   // ---------- "The year" sections: daily life, internships & tracks, student stories ----------
@@ -1915,7 +1927,13 @@
     tip.style.top = e.clientY + 14 + "px";
   });
 
-  window.addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); });
+  // Phone menu: the page links fold behind a "Menu" button so the top bar stays one slim row.
+  const topbar = document.querySelector(".topbar"), navBtn = document.querySelector(".nav-toggle");
+  const setNav = (open) => { if (!topbar || !navBtn) return; topbar.classList.toggle("nav-open", open); navBtn.setAttribute("aria-expanded", String(open)); };
+  if (navBtn) navBtn.addEventListener("click", () => setNav(!topbar.classList.contains("nav-open")));
+  document.addEventListener("click", (e) => { if (!e.target.closest(".topbar") || e.target.closest(".topnav a")) setNav(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setNav(false); });
+  window.addEventListener("hashchange", () => { setNav(false); route(); window.scrollTo(0, 0); });
   document.getElementById("as-of").textContent = fmtDate(D.asOf);
   document.getElementById("cycle").textContent = D.cycle;
 
