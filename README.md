@@ -28,7 +28,7 @@ Browser ──► Supabase Auth (sign up / log in / reset password)
 | `public/js/admin.js` | The admin page for editing program and college data (`#/admin`). Loads only for admins. |
 | `api/delete-account.js` | Deletes the logged-in student's account. Needs `SUPABASE_SECRET_KEY` in Vercel. |
 | `public/privacy.html` | The privacy page. |
-| `public/js/community.js`, `public/js/orgs.js` | The Community page (`#/community`): opt-in profiles, organizations (BBYO, NCSY, ...) and who's interested in each program. The organization list, with sources, is in `orgs.js`. |
+| `public/js/community.js`, `public/js/orgs.js` | The Community page (`#/community`): opt-in profiles, organizations (BBYO, NCSY, ...) and who's interested in each program. The organization list, with sources, is in `orgs.js`. Students can also create their own groups (admin review first, hateful wording refused, reports). |
 | `tests/` | Browser and API tests (`npm test`); GitHub runs them on every push. |
 | `vercel.json` | Serves `public/`, gives clean URLs (`/login`), sets security headers |
 | `dev-server.js` | Local preview (`npm run dev`) |

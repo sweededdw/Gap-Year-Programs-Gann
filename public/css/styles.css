@@ -999,3 +999,9 @@ a.acct-item { color: var(--text); text-decoration: none; }
 .cr-bar span { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
 .comm-mine { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
 @media (max-width: 980px) { .detail.comm { grid-template-columns: minmax(0, 1fr); } }
+.org-card.student-group { border-style: dashed; }
+.org-card .chip.warn, .org-card .chip.bad, .school-head .chip.warn, .school-head .chip.bad { margin-top: 6px; white-space: normal; }
+.comm-rules { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: var(--surface-2); font-size: 13.5px; }
+.comm-rules ul { margin: 6px 0 4px; padding-left: 18px; color: var(--muted); }
+.group-form { margin-bottom: 12px; }
+.comm-report { color: var(--muted); }

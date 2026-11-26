@@ -32,7 +32,7 @@ function run(cmd, args, opts = {}) {
     let out = "";
     p.stdout.on("data", (d) => (out += d));
     p.stderr.on("data", (d) => (out += d));
-    const timer = setTimeout(() => { out += "\nFAIL timed out after 180s"; p.kill("SIGKILL"); }, 180000);
+    const timer = setTimeout(() => { out += "\nFAIL timed out after 360s"; p.kill("SIGKILL"); }, 360000);
     p.on("close", (code) => { clearTimeout(timer); resolve({ code, out }); });
   });
 }

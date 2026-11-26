@@ -66,14 +66,47 @@ window.supabase = { createClient: function () {
   };
 
   // Community tables, with the same visibility rules as supabase/migrations/0003_community.sql.
-  const COMMUNITY = { profiles: ['user_id'], org_members: ['user_id', 'org_id'], program_interest: ['user_id', 'program_id'], community_bans: ['user_id'] };
+  const COMMUNITY = { profiles: ['user_id'], org_members: ['user_id', 'org_id'], program_interest: ['user_id', 'program_id'], community_bans: ['user_id'],
+    student_groups: ['id'], community_reports: ['target_type', 'target_id', 'reporter'] };
+  // A few of the 0004 blocked terms, enough to test the "wording isn't allowed" path.
+  const dirty = (t) => /\b(nazi|kike|wetback)s?\b|hitler|white\s*power/i.test(String(t || '').replace(/0/g, 'o').replace(/1/g, 'i').replace(/4|@/g, 'a').replace(/3/g, 'e').replace(/\$|5/g, 's'));
+  const wording = { data: null, error: { code: '23514', message: "That wording isn't allowed here." } };
   const community = (name, q, hit) => {
     const key = 'mock:t:' + name, all = J(key, '[]'), uid = uidNow(), admin = !!LS.getItem('mock:admin');
     const bans = J('mock:t:community_bans', '[]'), profs = J('mock:t:profiles', '[]');
     const banned = (u) => bans.some((b) => b.user_id === u);
     const shown = (u) => profs.some((p) => p.user_id === u && p.visible) && !banned(u);
     const mineOk = (r) => (name === 'community_bans' ? admin : r.user_id === uid);
-    const sees = (r) => name === 'community_bans' ? admin : name === 'profiles' ? r.user_id === uid || shown(r.user_id) || (admin && banned(r.user_id)) : r.user_id === uid || shown(r.user_id);
+    const groups = J('mock:t:student_groups', '[]');
+    const sees = (r) => name === 'community_bans' || name === 'community_reports' ? admin
+      : name === 'student_groups' ? r.status === 'approved' || r.created_by === uid || admin
+      : name === 'profiles' ? r.user_id === uid || shown(r.user_id) || (admin && banned(r.user_id)) : r.user_id === uid || shown(r.user_id);
+    if (name === 'student_groups' || name === 'community_reports') {
+      if (q.op === 'insert') {
+        const row = Object.assign({}, q.payload);
+        if (name === 'student_groups') {
+          if (row.status || row.created_by) return denied;
+          if (dirty(row.name) || dirty(row.description)) return wording;
+          if (all.filter((g) => g.created_by === uid && g.status !== 'rejected').length >= 3) return { data: null, error: { code: '23514', message: 'You can create up to 3 groups.' } };
+          Object.assign(row, { id: 'gid' + (all.length + 1) + 'x' + Date.now().toString(36), created_by: uid, status: 'pending', created_at: stamp() });
+        } else {
+          row.reporter = uid; row.id = all.length + 1; row.resolved = false;
+          if (all.some((r) => r.target_type === row.target_type && r.target_id === row.target_id && r.reporter === uid)) return { data: null, error: { code: '23505', message: 'duplicate key' } };
+        }
+        all.push(row); W(key, all);
+        if (name === 'community_reports' && row.target_type === 'group' && new Set(all.filter((r) => r.target_type === 'group' && r.target_id === row.target_id && !r.resolved).map((r) => r.reporter)).size >= 3) {
+          const g = groups.find((x) => x.id === row.target_id); if (g && g.status === 'approved') { g.status = 'review'; W('mock:t:student_groups', groups); }
+        }
+        return { data: [row], error: null };
+      }
+      if (q.op === 'update') { if (!admin) return { data: [], error: null }; const out = all.filter(hit); out.forEach((r) => Object.assign(r, q.payload)); W(key, all); return { data: out, error: null }; }
+      if (q.op === 'delete') {
+        const out = all.filter((r) => hit(r) && (admin || (name === 'student_groups' && r.created_by === uid)));
+        W(key, all.filter((r) => out.indexOf(r) < 0));
+        if (name === 'student_groups') out.forEach((g) => W('mock:t:org_members', J('mock:t:org_members', '[]').filter((m) => m.org_id !== 'g-' + g.id)));
+        return { data: out, error: null };
+      }
+    }
     const denied = { data: null, error: { code: '42501', message: 'new row violates row-level security policy for table "' + name + '"' } };
     if (!uid) return denied;
     if (q.op === 'select') { let out = all.filter(sees).filter(hit); if (q.limit != null) out = out.slice(0, q.limit); return { data: out, error: null }; }
@@ -81,12 +114,15 @@ window.supabase = { createClient: function () {
       const row = Object.assign({}, q.payload);
       if (!mineOk(row)) return denied;
       if (name === 'profiles' && !(row.display_name || '').trim()) return { data: null, error: { code: '23514', message: 'violates check constraint' } };
+      if (name === 'profiles' && (dirty(row.display_name) || dirty(row.school))) return wording;
+      if (name === 'org_members' && /^g-/.test(row.org_id) && !groups.some((g) => 'g-' + g.id === row.org_id && (g.status === 'approved' || g.created_by === uid))) return { data: null, error: { code: '23514', message: "That group isn't open to join." } };
       if (all.some((r) => COMMUNITY[name].every((k) => r[k] === row[k]))) return { data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint' } };
       if ((name === 'org_members' || name === 'program_interest') && all.filter((r) => r.user_id === uid).length >= 30) return { data: null, error: { code: '23514', message: 'You can add up to 30 here.' } };
       all.push(Object.assign({ created_at: stamp() }, row)); W(key, all); return { data: [row], error: null };
     }
     if (q.op === 'update') {
       if (name !== 'profiles') return denied;
+      if (dirty(q.payload.display_name) || dirty(q.payload.school)) return wording;
       const out = all.filter((r) => hit(r) && r.user_id === uid);
       out.forEach((r) => Object.assign(r, q.payload, { updated_at: stamp() }));
       W(key, all); return { data: out, error: null };

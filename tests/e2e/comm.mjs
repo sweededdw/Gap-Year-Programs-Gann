@@ -140,6 +140,81 @@ await click('[data-act=comm-join][data-id=ncsy]'); await go('#/program/kivunim')
 await noConfirm(); await ev(`document.getElementById('acct-delete').click(); true`); await sleep(900);
 ok('"Delete my saved data" also clears your groups and interests', !(await T('org_members')).some(m=>m.user_id==='uid-me') && !(await T('program_interest')).some(m=>m.user_id==='uid-me'));
 
+// Student groups: create (review first), word filter, rules, approve, join, report, delete
+await ev(`localStorage.removeItem('mock:admin'); true`); await nav(B+'/#/community'); await sleep(300);
+ok('no profile yet -> must make a profile to create a group', /Make a profile above to create a group/.test(await text()));
+await ev(`document.getElementById('cp-name').value='Noa L.'; document.getElementById('cp-visible').checked=true; true`); await click('[data-act=comm-save]');
+await click('[data-act=comm-group-new]');
+ok('group form shows the community rules', /No racism, antisemitism, xenophobia/.test(await text()) && await ev(`!!document.getElementById('cg-rules')`));
+await ev(`document.getElementById('cg-name').value='Gann seniors to Israel'; true`); await click('[data-act=comm-group-save]');
+ok('must agree to the rules', /agree to the community rules/.test(await text()) && !(await T('student_groups')).length);
+ok('form keeps what you typed after an error', await ev(`document.getElementById('cg-name').value`)==='Gann seniors to Israel');
+await ev(`document.getElementById('cg-name').value='N4zi club'; document.getElementById('cg-rules').checked=true; true`); await click('[data-act=comm-group-save]');
+ok('hateful name refused with a clear message', /wording isn't allowed/.test(await text()) && !(await T('student_groups')).length);
+await ev(`document.getElementById('cg-name').value='Hiking crew'; document.getElementById('cg-desc').value='see www.example.com'; document.getElementById('cg-rules').checked=true; true`); await click('[data-act=comm-group-save]');
+ok('links refused', /Links aren't allowed/.test(await text()) && !(await T('student_groups')).length);
+await ev(`document.getElementById('cg-name').value='BBYO Boston seniors'; document.getElementById('cg-desc').value='Seniors from Boston-area chapters'; document.getElementById('cg-kind').value='chapter'; document.getElementById('cg-parent').value='bbyo'; document.getElementById('cg-rules').checked=true; true`);
+await click('[data-act=comm-group-save]');
+let groups = await T('student_groups');
+ok('group saved as pending, with type and parent', groups.length===1 && groups[0].status==='pending' && groups[0].kind==='chapter' && groups[0].parent_org==='bbyo' && groups[0].created_by==='uid-me');
+ok('creator sees it with "Waiting for admin review"', /sent for review/.test(await text()) && /Waiting for admin review/.test(await ev(`document.querySelector('.student-group').innerText`)));
+const gid = groups[0].id;
+await click(`[data-act=comm-join][data-id="g-${gid}"]`);
+ok('creator can join their pending group', (await T('org_members')).some(m=>m.user_id==='uid-me' && m.org_id==='g-'+gid));
+await shot('comm-group-pending');
+// another student can't see it yet
+await ev(`localStorage.setItem('mock:session', JSON.stringify({access_token:'tok-uid-b',user:{id:'uid-b',email:'b@x',user_metadata:{name:'Maya'}}})); true`); await nav(B+'/#/community'); await sleep(300);
+ok('other students can\'t see a pending group', !/BBYO Boston seniors/.test(await text()));
+// admin approves
+await ev(`localStorage.setItem('mock:session', JSON.stringify({access_token:'tok-uid-me',user:{id:'uid-me',email:'me@x',user_metadata:{name:'Noa Levi'}}})); localStorage.setItem('mock:admin','1'); true`); await nav(B+'/#/community'); await sleep(300);
+ok('admin sees it under Groups to review', /Groups to review/.test(await text()) && await ev(`!!document.querySelector('[data-act=comm-approve][data-id="${gid}"]')`));
+await click(`[data-act=comm-approve][data-id="${gid}"]`);
+ok('approve makes it approved', (await T('student_groups'))[0].status==='approved');
+await ev(`localStorage.removeItem('mock:admin'); localStorage.setItem('mock:session', JSON.stringify({access_token:'tok-uid-b',user:{id:'uid-b',email:'b@x',user_metadata:{name:'Maya'}}})); true`); await nav(B+'/#/community'); await sleep(300);
+ok('approved group is visible to others', /BBYO Boston seniors/.test(await text()));
+await go(`#/community/org/g-${gid}`); await sleep(200);
+t = await text();
+ok('group page: student group, part of BBYO, report button, no delete for others', /Student group/.test(t) && /part of BBYO/.test(t) && await ev(`!!document.querySelector('[data-act=comm-report]')`) && !(await ev(`!!document.querySelector('[data-act=comm-group-delete]')`)));
+await click(`[data-act=comm-join][data-id="g-${gid}"]`);
+ok('another student joins the approved group', (await T('org_members')).some(m=>m.user_id==='uid-b' && m.org_id==='g-'+gid));
+await shot('comm-group-page');
+await ev(`window.prompt=()=>'spam'; true`); await click('[data-act=comm-report]');
+ok('report saved, with a thank-you', (await T('community_reports')).some(r=>r.target_type==='group' && r.target_id===gid && r.reason==='spam') && /Thanks for reporting/.test(await ev(`document.getElementById('banner').textContent`)));
+await click('[data-act=comm-report]');
+ok('reporting twice says already reported', /already reported/.test(await ev(`document.getElementById('banner').textContent`)));
+// two more students report -> hidden for review
+for (const u of ['uid-c','uid-d']) await ev(`(()=>{const r=JSON.parse(localStorage.getItem('mock:t:community_reports')||'[]'); r.push({id:r.length+1,target_type:'group',target_id:${JSON.stringify(gid)},reporter:'${u}',reason:null,resolved:false}); localStorage.setItem('mock:t:community_reports',JSON.stringify(r)); return true})()`);
+await ev(`(()=>{const g=JSON.parse(localStorage.getItem('mock:t:student_groups')); g[0].status='review'; localStorage.setItem('mock:t:student_groups',JSON.stringify(g)); return true})()`); // what the 3-report trigger does (db tests cover the trigger)
+await nav(B+'/#/community'); await sleep(300);
+ok('a group under review is hidden from students', !/BBYO Boston seniors/.test(await text()));
+await ev(`localStorage.setItem('mock:session', JSON.stringify({access_token:'tok-uid-me',user:{id:'uid-me',email:'me@x',user_metadata:{name:'Noa Levi'}}})); localStorage.setItem('mock:admin','1'); true`); await nav(B+'/#/community'); await sleep(300);
+ok('admin sees the reports with reasons', /Reports \(admin\)/.test(await text()) && /spam/.test(await ev(`[...document.querySelectorAll('.side .card')].find(c=>/Reports/.test(c.innerText)).innerText`)));
+await shot('comm-admin');
+await click('[data-act=comm-report-dismiss]');
+ok('Dismiss resolves every report on that group', (await T('community_reports')).every(r=>r.resolved));
+await click(`[data-act=comm-approve][data-id="${gid}"]`);
+ok('admin can re-show it after review', (await T('student_groups'))[0].status==='approved');
+// profile report
+await ev(`localStorage.removeItem('mock:admin'); true`); await nav(B+'/#/program/aardvark'); await sleep(300);
+await ev(`window.prompt=()=>'rude name'; true`); await click('#comm-card [data-act=comm-report-profile]');
+ok('students can report a profile', (await T('community_reports')).some(r=>r.target_type==='profile' && r.reason==='rude name'));
+// hateful profile name
+await nav(B+'/#/community'); await sleep(200); await click('[data-act=comm-edit]');
+await ev(`document.getElementById('cp-name').value='Hitler fan'; true`); await click('[data-act=comm-save]');
+ok('hateful profile name refused', /wording isn't allowed/.test(await text()) && (await T('profiles')).find(p=>p.user_id==='uid-me').display_name==='Noa L.');
+await click('[data-act=comm-cancel]');
+// limit 3
+for (const n of ['Second group','Third group']) { await click('[data-act=comm-group-new]'); await ev(`document.getElementById('cg-name').value=${JSON.stringify(n)}; document.getElementById('cg-rules').checked=true; true`); await click('[data-act=comm-group-save]'); }
+await click('[data-act=comm-group-new]'); await ev(`document.getElementById('cg-name').value='Fourth group'; document.getElementById('cg-rules').checked=true; true`); await click('[data-act=comm-group-save]');
+ok('4th group refused (up to 3)', /up to 3 groups/.test(await text()) && (await T('student_groups')).length===3);
+await click('[data-act=comm-group-cancel]');
+// delete
+await go(`#/community/org/g-${gid}`); await sleep(200); await noConfirm(); await click('[data-act=comm-group-delete]'); await sleep(300);
+ok('creator deletes the group; memberships go too', !(await T('student_groups')).some(g=>g.id===gid) && !(await T('org_members')).some(m=>m.org_id==='g-'+gid) && await ev('location.hash')==='#/community');
+await shot('comm-groups-phone', 390, 844);
+ok('phone: no sideways scrolling with groups', await ev(`document.documentElement.scrollWidth <= 390`));
+await cmd('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
+
 // Database not updated yet
 await ev(`localStorage.setItem('mock:notable','1'); true`); await nav(B+'/#/community'); await sleep(300);
 ok('before the migration: friendly "almost ready" message', /Community is almost ready/.test(await text()));
