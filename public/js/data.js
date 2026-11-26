@@ -4064,6 +4064,87 @@
     "shapells": "https://images.squarespace-cdn.com/content/v1/6a26e3055159b035dec216ba/1780933382813-FZRYQK8QE0O17T9KGSBM/Jordan+and+Josh+chavrusa.jpeg",
     "mitzpe-yericho": "https://ymy.org.il/wp-content/uploads/2024/11/IMG_5109-0.2-1024x819.jpg",
   });
+  // More photos and official websites found 2026-11-26 (each photo checked by eye; each site's page title checked).
+  Object.assign(PHOTOS, {
+    "rakia": "https://rakia.org.il/wp-content/uploads/2022/09/rakia001.jpg",
+    "aish-gesher": "https://i0.wp.com/efgmen.aish.com/wp-content/uploads/2025/07/Sept-8-GSB-RY-vaad-18-scaled.jpg?fit=2560%2C1707&ssl=1",
+    "darkaynu-men": "https://darkaynu.org.il/wp-content/uploads/2019/12/chessed_pantry_packers_2-e1577383723158.jpg",
+    "zeev-hatorah": "https://zeevhatorah.org/img/A7403751-min.jpg",
+    "midreshet-lev": "https://midreshetlev.org/wp-content/uploads/2026/10/DSC05806-683x1024.jpg",
+    "torat-chessed": "https://toratchessed.com/wp-content/uploads/2020/12/tiyul_israel.jpg",
+    "drisha": "https://yeshivat.drisha.org/wp-content/uploads/2026/05/18.webp",
+    "baer-miriam": "https://static.wixstatic.com/media/65eb4d_9c00a3d0fd654280a0c49e07fef866af~mv2.jpg/v1/fill/w_953,h_544,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/65eb4d_9c00a3d0fd654280a0c49e07fef866af~mv2.jpg",
+    "meorot": "https://gomeorot.com/wp-content/uploads/2021/06/meorot-villa-1024x834.jpg",
+    "eretz-hatzvi": "https://eretzhatzvi.org/wp-content/uploads/2024/08/Serious-Torah.jpg",
+    "reishit": "https://static.wixstatic.com/media/dc6ab4_25dd92cbc21f4747925648f147aea8fd~mv2.jpg/v1/fill/w_1882,h_831,al_t,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/dc6ab4_25dd92cbc21f4747925648f147aea8fd~mv2.jpg",
+    "derech-institute": "https://derechyeshiva.org/wp-content/uploads/2024/04/Derech-Learning-Hero.webp",
+    "aardvark-atid": "https://aardvarkisrael-media.nyc3.digitaloceanspaces.com/atid-what-defines-israel-1st-week-1024x768.jpg",
+    "midreshet-amit": "https://static.wixstatic.com/media/10a9d7_3ff2f3b867594c2f9208a14846dc98ec~mv2.jpg/v1/fill/w_1905,h_802,al_b,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/10a9d7_3ff2f3b867594c2f9208a14846dc98ec~mv2.jpg",
+    "tiferet-center": "https://www.tiferetcenter.com/wp-content/uploads/2023/09/Learning-on-Homepage-5.jpg",
+    "galil": "https://gap-year-israel.org/wp-content/uploads/2025/06/what-is-galil.webp",
+    "galil-plus": "https://gap-year-israel.org/wp-content/uploads/2025/06/our-mechina.jpg",
+    "limmud": "https://static.wixstatic.com/media/387b52_252b92da0281422184ad88b5851b613b~mv2.jpg/v1/fill/w_1077,h_631,al_c,q_85,enc_avif,quality_auto/387b52_252b92da0281422184ad88b5851b613b~mv2.jpg",
+    "ohrsom": "https://ohrsomstudent.com/assets/gapyear-1600-Co3Zn_3H.webp",
+    "hannaton": "https://echannaton.org/wp-content/uploads/m4.jpg",
+    "ohr-yerushalayim": "https://static.wixstatic.com/media/3c3d01_582331d1159348d18bacb3934c61ba1c~mv2.jpeg/v1/crop/x_238,y_0,w_1571,h_1536/fill/w_489,h_478,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/PHOTO-2023-12-07-18-17-59.jpeg",
+    "lev-aryeh": "https://levaryeh.com/wp-content/uploads/2014/05/Lev-Aryeh-Collage.jpg",
+    "bircas-hatorah": "https://www.bircas.org/wp-content/uploads/2026/11/bochurim-card-640x427.jpg",
+    "ohr-david": "https://www.ohrdavid.org/wp-content/uploads/2026/11/d27a7b2d-f57b-4b57-9947-4ffb801e553e-1024x682.jpeg",
+  });
+  const OFFICIAL = {
+    "meitzar": "https://www.meitzar.org.il/home",
+    "telem-jaffa": "https://www.hamechina.org.il/",
+    "aderet": "https://www.mehinataderet.com/en",
+    "rakia": "https://rakia.org.il/en/",
+    "nachshon": "https://m-nachshon.org/en/",
+    "haviva-reik": "https://maharyear.wixsite.com/mechina",
+    "melach-haaretz": "https://melach.org.il/",
+    "darkaynu-men": "https://darkaynu.org.il/yeshivat-darkaynu/",
+    "zeev-hatorah": "https://zeevhatorah.org/",
+    "matisyahu": "https://yeshivasmatisyahu.org/",
+    "nesiv-hatorah": "https://www.nesivhatorah.com/",
+    "torah-ore": "https://torahore.org/",
+    "shoshanat-yerushalayim": "https://www.msy.org.il/",
+    "meorot": "https://gomeorot.com/",
+    "yeud": "https://new-midreshet-yeud.wixsite.com/yeud/",
+    "derech-institute": "https://derechyeshiva.org/",
+    "pninim": "https://pninimseminary.com/",
+    "ki-tov": "https://kitovseminary.com/",
+    "bnos-sarah": "https://nevey.org/bnossarah/",
+    "darkaynu-women": "https://darkaynu.org.il/midreshet-darkaynu/",
+    "aardvark-atid": "https://aardvarkisrael.com/atid/",
+    "aderes-hatorah": "https://www.adereshatorah.com/",
+    "imrei-binah": "https://www.imreibinah.com/",
+    "chosein-yehoshua": "https://www.ycyil.com/",
+    "toras-simcha": "https://torassimcha.org/",
+    "toras-chaim": "https://www.ytchaim.com/",
+    "shvilim": "https://www.shvilim-gap-year.com/",
+    "galil": "https://gap-year-israel.org/",
+    "galil-plus": "https://gap-year-israel.org/year/",
+    "limmud": "https://www.worldbneiakiva.org/limmud",
+    "ohrsom": "https://ohrsomstudent.com/gap-year",
+    "ruach-hanegev": "https://www.ruachhanegev.org/gap-year",
+    "amichai": "https://www.ami-chai.co.il/",
+    "keshet-yehuda": "https://www.keshetyehuda.org/",
+    "hannaton": "https://echannaton.org/en/programs/mechina-gap-year/",
+    "beeri": "https://mechinat-beeri.com/",
+    "lachish": "https://mlachish.org/",
+    "beit-yisrael-mechina": "https://reut.org.il/mehina/",
+    "ohr-yerushalayim": "https://www.ohryerushalayim.com/",
+    "lev-aryeh": "https://levaryeh.com/",
+    "bircas-hatorah": "https://www.bircas.org/",
+    "ohr-david": "https://www.ohrdavid.org/",
+    "heichal-yerushalayim": "https://heichalyerushalayim.com/",
+    "darchei-yonatan": "https://www.darcheiyonatan.org/",
+    "diaspora-yeshiva": "https://diasporayeshiva.com/",
+  };
+  programs.forEach(function (p) {
+    const w = OFFICIAL[p.id];
+    if (!w) return;
+    p.website = w;
+    delete p.websiteLabel;
+    if (p.sources.indexOf(w) < 0) p.sources.push(w);
+  });
   programs.forEach(function (p) {
     p.profile = PROFILES[p.id] || prof("- - - - - - - - - - - -", "light");
     p.learning = p.profile.learning;
