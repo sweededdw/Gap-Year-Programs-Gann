@@ -519,6 +519,7 @@
     mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
     sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+    flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>',
   };
   function I(name, filled) {
     return '<svg class="ic" viewBox="0 0 24 24" width="1em" height="1em" fill="' + (filled ? "currentColor" : "none") +
@@ -1159,7 +1160,8 @@
       (p.audienceTag ? '<p class="aud-tag">' + I("users") + " " + esc(p.audienceTag) + "</p>" : "") +
       '<p class="muted">' + esc(p.operator) + " · " + esc(p.base) + "</p>" +
       '<div class="chips"><span class="chip accent">' + esc(L.orientation[p.orientation]) + '</span><span class="chip">' + esc(L.gender[p.gender]) + '</span><span class="chip">' + esc(L.israeliPeers[p.israeliPeers]) + "</span>" +
-      (p.credit ? '<span class="chip">College credit</span>' : "") + (p.semesterOption ? '<span class="chip">Semester option</span>' : "") + "</div></div>" +
+      (p.credit ? '<span class="chip">College credit</span>' : "") + (p.semesterOption ? '<span class="chip">Semester option</span>' : "") + "</div>" +
+      (allSources.length ? '<a class="src-line" href="#sources" data-jump="sources">' + I("check") + " Facts from " + allSources.length + " source" + (allSources.length === 1 ? "" : "s") + ", checked " + fmtDate(checkedOn(p.id), { month: "short", day: "numeric" }) + "</a>" : "") + "</div>" +
       '<div class="actions"><button class="btn' + (saved ? "" : " primary") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '">' + (saved ? I("heart", true) + " On my list" : I("heart") + " Add to my list") + "</button>" +
       '<button class="btn" data-act="cmp-add" data-id="' + p.id + '">Compare</button>' +
       '<a class="btn" href="' + esc(p.website) + '" target="_blank" rel="noopener">' + (p.websiteLabel ? esc(p.websiteLabel) : "Official website") + " ↗</a></div></header>" +
@@ -1184,14 +1186,16 @@
       '<aside class="side">' +
       '<div class="card"><div class="ring">' + ring + '<div><div class="big">' + pr.pct + '%</div><div class="small muted">' + (pr.done % 1 ? pr.done.toFixed(1) : pr.done) + " of " + pr.total + " items done</div></div></div></div>" +
       COMM.programCard(p) +
-      '<div class="card"><h3>Checklist</h3><div class="toc">' + SECTIONS.map((x) => {
+      '<div class="card"><h3>Checklist</h3><div class="toc route">' + SECTIONS.map((x) => {
         const v = status[x[0]];
-        return '<a href="#sec-' + x[0] + '" data-jump="sec-' + x[0] + '"><span>' + x[1] + "</span>" + (v ? '<span class="dot ' + v + '" aria-label="' + v + '"></span>' : "") + "</a>";
+        const end = x[0] === "decision";
+        return '<a class="rt rt-' + (v || "info") + (end ? " rt-end" : "") + '" href="#sec-' + x[0] + '" data-jump="sec-' + x[0] + '"><span class="rt-stop" aria-hidden="true">' + (end ? I("flag", v === "done") : v === "done" ? I("check") : "") + "</span><span>" + x[1] + "</span>" +
+          (v === "done" || v === "some" ? '<span class="rt-state">' + (v === "done" ? "Done" : "Started") + "</span>" : "") + "</a>";
       }).join("") + "</div></div>" +
       '<div class="card"><h3>Key dates</h3>' + (tl.length ? '<div class="timeline">' + tl.map((t) =>
         '<div class="tl-item' + (daysUntil(t.date) < 0 ? " past" : "") + '"><div class="tl-date">' + fmtDate(t.date, { month: "short", day: "numeric" }) + '</div><div class="tl-what">' + esc(t.what) + "<br>" + countdown(t.date) + "</div></div>"
       ).join("") + "</div>" : '<p class="small muted">No dated deadlines yet. Add your interview, commit and college deferral dates and they will show up here.</p>') + "</div>" +
-      '<div class="card"><h3>Sources</h3><p class="small muted">Last checked ' + fmtDate(checkedOn(p.id)) + ". Confirm details with the program.</p><div class=\"sources\">" +
+      '<div class="card" id="sources"><h3>Sources</h3><p class="small muted">Last checked ' + fmtDate(checkedOn(p.id)) + ". Confirm details with the program.</p><div class=\"sources\">" +
       allSources.map((u) => '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(u.replace(/^https?:\/\/(www\.)?/, "")) + "</a>").join("") + "</div></div>" +
       "</aside></div>";
   }
@@ -1211,7 +1215,7 @@
             const pr = progress(p);
             return '<tr><td><a href="#/program/' + p.id + '" style="display:flex;gap:14px;align-items:center;color:var(--text)"><span class="logo sm o-' + p.orientation + '">' + esc(p.short) + "</span><span><strong>" + esc(p.name) + '</strong><br><span class="small muted">' + esc(L.type[p.type][1]) + " · " + esc(L.orientation[p.orientation]) + "</span></span></a></td>" +
               "<td>" + deadlineSummary(p) + "</td><td>" + esc(shortCost(p)) + "</td>" +
-              '<td style="min-width:120px"><div class="small">' + pr.pct + '%</div><div class="progress-bar"><span style="width:' + pr.pct + '%"></span></div></td>' +
+              '<td style="min-width:120px"><div class="small">' + pr.pct + '%</div><div class="route-bar' + (pr.pct >= 100 ? " done" : "") + '"><div class="progress-bar"><span style="width:' + pr.pct + '%"></span></div>' + I("flag", pr.pct >= 100) + "</div></td>" +
               "<td>" + esc(resultLabel(ps(p.id).result)) + "</td></tr>";
           }).join("") + "</tbody></table></div>"
         : '<div class="card empty">Nothing saved yet. Tap the heart on any program to add it here.</div>');
@@ -1517,7 +1521,7 @@
       '<div class="quiz-top"><button class="btn ghost sm" data-act="quiz-back">← Back</button>' +
       '<div class="quiz-dots" aria-label="Step ' + q.step + " of " + TOTAL_STEPS + '">' +
       Array.from({ length: TOTAL_STEPS }, (_, i) => '<span class="' + (i < q.step - 1 ? "done" : i === q.step - 1 ? "now" : "") + '"></span>').join("") +
-      '</div><span class="small muted">' + q.step + " / " + TOTAL_STEPS + "</span></div>" +
+      '</div><span class="route-end" title="Your top 3" aria-hidden="true">' + I("flag") + '</span><span class="small muted">' + q.step + " / " + TOTAL_STEPS + "</span></div>" +
       body +
       '<div class="quiz-foot"><span class="live-count"><strong>' + count + "</strong> program" + (count === 1 ? "" : "s") + " fit your basics</span>" +
       '<button class="btn primary" data-act="' + (last ? "quiz-finish" : "quiz-next") + '"' + (last && !count ? " disabled" : "") + ">" +
