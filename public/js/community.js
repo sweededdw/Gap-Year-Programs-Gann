@@ -203,7 +203,7 @@
         '<span class="cr-bar" aria-hidden="true"><span style="width:' + Math.round((x.n / top) * 100) + '%"></span></span></li>').join("") + "</ol>";
     }
     function notice() {
-      if (!ctx.sb()) return '<div class="card empty"><h2>Log in to use Community</h2><p class="muted">Profiles and groups need an account.</p></div>';
+      if (!ctx.sb()) return '<div class="card empty"><h2>Join the Community</h2><p class="muted">See which programs other students have on their lists and join your youth groups. Profiles and groups need a free account, so you\'re browsing as a guest.</p><div class="end-actions" style="margin-top:12px"><a class="btn primary" href="/login?mode=signup">Create a free account</a><a class="btn" href="/login">Log in</a></div></div>';
       if (S.off) return '<div class="card empty"><h2>Community is almost ready</h2><p class="muted">Profiles and groups switch on once the site\'s database is updated.' +
         (ctx.isAdmin() ? " Admin: run supabase/migrations/0003_community.sql in the Supabase SQL editor." : "") + "</p></div>";
       if (S.failed) return '<div class="card empty"><h2>Couldn\'t load Community</h2><p class="muted">Check your connection and try again.</p><button class="btn" data-act="comm-retry">Try again</button></div>';

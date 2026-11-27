@@ -28,7 +28,7 @@
 
     <form id="auth-form" class="card auth-card" novalidate>
       <h1 id="title">Log in</h1>
-      <p id="subtitle" class="muted">Welcome back. Log in to see all the programs.</p>
+      <p id="subtitle" class="muted">Welcome back. Log in to pick up your list and applications.</p>
 
       <div id="msg" class="callout" role="status" hidden></div>
 
@@ -49,6 +49,11 @@
       <p class="small muted auth-switch" data-show="signup">Already have an account? <a href="#" data-mode="login">Log in</a></p>
       <p class="small muted auth-switch" data-show="forgot reset"><a href="#" data-mode="login">Back to log in</a></p>
     </form>
+    <div class="auth-guest" data-show="login signup">
+      <div class="auth-or"><span>or</span></div>
+      <button class="btn auth-guest-btn" id="guest" type="button">Continue as a guest</button>
+      <p class="small muted">Browse every program without an account. Your list is saved only in this browser until you sign up.</p>
+    </div>
     <p class="small muted auth-legal"><a href="/privacy">Privacy</a> · <a href="mailto:israelgapyearfinder@gmail.com">Contact</a></p>
   </main>
 

@@ -1292,3 +1292,13 @@ details.acc > .sec-body { padding: 16px 20px 20px; }
   details.acc > summary .acc-sub { display: none; }
   details.acc > .sec-body { padding: 14px; }
 }
+
+/* ---------- Guest mode ---------- */
+.guest-tools { display: inline-flex; gap: 6px; align-items: center; }
+.guest-tools[hidden] { display: none; }
+@media (max-width: 860px) { .guest-tools .gt-signup { display: none; } }
+.auth-guest { width: 100%; display: grid; gap: 8px; text-align: center; }
+.auth-guest[hidden] { display: none; }
+.auth-or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; }
+.auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.auth-guest-btn { justify-content: center; padding: 11px 14px; font-size: 15px; }

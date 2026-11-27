@@ -16,7 +16,7 @@
   const RETURN_URL = location.origin + "/login";
 
   const MODES = {
-    login: { title: "Log in", sub: "Welcome back. Log in to see all the programs.", button: "Log in", pw: "Password", auto: "current-password" },
+    login: { title: "Log in", sub: "Welcome back. Log in to pick up your list and applications.", button: "Log in", pw: "Password", auto: "current-password" },
     signup: { title: "Create your account", sub: "Free. Browse every Israel gap year program and track your applications.", button: "Create account", pw: "Password (at least 8 characters)", auto: "new-password" },
     forgot: { title: "Reset your password", sub: "Enter your email and we'll send you a link to choose a new password.", button: "Send reset link", pw: "", auto: "" },
     reset: { title: "Choose a new password", sub: "Pick a new password for your account.", button: "Save new password", pw: "New password (at least 8 characters)", auto: "new-password" },
@@ -168,6 +168,12 @@
       busy(false);
       if (mode !== "reset") resetCaptcha();
     }
+  });
+
+  // Continue as a guest: the site works without an account; the list stays in this browser.
+  $("guest").addEventListener("click", () => {
+    try { localStorage.setItem("gyf:guest", "1"); } catch (e) { /* the ?guest=1 below still works for this visit */ }
+    location.replace("/?guest=1");
   });
 
   async function init() {

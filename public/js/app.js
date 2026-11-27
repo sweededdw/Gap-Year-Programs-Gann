@@ -167,6 +167,16 @@
   let conflict = false;    // true while another device's newer save is waiting for a decision
 
   const localKey = () => STORE_KEY + (userId ? ":" + userId : "");
+  // Guests browse without an account; their list stays in this browser (under the plain key) until they sign up.
+  const GUEST_KEY = "gyf:guest";
+  const isGuest = () => {
+    if (/[?&]guest=1\b/.test(location.search)) { try { localStorage.setItem(GUEST_KEY, "1"); } catch (e) { /* this visit only */ } return true; }
+    try { return localStorage.getItem(GUEST_KEY) === "1"; } catch (e) { return false; }
+  };
+  const endGuest = () => { try { localStorage.removeItem(GUEST_KEY); } catch (e) { /* ignore */ } };
+  function guestCopy() {
+    try { const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); return s && typeof s === "object" ? Object.assign(blankState(), s) : null; } catch (e) { return null; }
+  }
   function loadLocal() {
     try {
       const raw = localStorage.getItem(localKey());
@@ -2030,7 +2040,7 @@
 
   // ---------- Community (community.js) ----------
   const COMM = window.GYF_COMMUNITY({
-    sb: () => sb, userId: () => userId, isAdmin: () => isAdmin, isView: (v) => current.view === v,
+    sb: () => (userId ? sb : null), userId: () => userId, isAdmin: () => isAdmin, isView: (v) => current.view === v,
     esc, I, byId, D, banner, render, fmtDate,
     savedIds: () => Object.keys(state.saved).filter((k) => state.saved[k] && byId[k]),
   });
@@ -2078,7 +2088,17 @@
       return route();
     }
     const { data: sess } = await sb.auth.getSession();
-    if (!sess.session) return location.replace("/login");
+    if (!sess.session) {
+      if (!isGuest()) return location.replace("/login");
+      // Guest: the whole site works; saving stays in this browser, and Community asks you to sign up.
+      if (location.search) history.replaceState(null, "", "/" + location.hash);
+      state = loadLocal();
+      document.getElementById("guest-tools").hidden = false;
+      document.getElementById("storage-note").textContent = "You're browsing as a guest, so your list is saved only in this browser. Create a free account to keep it on every device.";
+      await loadEdits().catch(() => {});
+      return route();
+    }
+    endGuest();
     const user = sess.session.user;
     userId = user.id;
     document.getElementById("user-name").textContent = (user.user_metadata && user.user_metadata.name) || user.email;
@@ -2109,6 +2129,15 @@
       if (row) lastSeen = row.updated_at;
       if (row && row.state && typeof row.state === "object") state = Object.assign(blankState(), row.state);
       else if (Object.keys(local.saved).length || Object.keys(local.p).length) { state = local; save(); } // first sync
+      else { // a guest who just made an account: bring their list along
+        const g = guestCopy();
+        if (g && (Object.keys(g.saved).length || Object.keys(g.p).length || g.colleges.length)) {
+          state = g; saveLocal();
+          try { localStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ }
+          // Saving clears the banner, so say hello once the copy is safely in the account.
+          Promise.resolve(pushRemote()).then(() => banner("Welcome! Everything you saved as a guest is now in your account."));
+        }
+      }
       document.getElementById("storage-note").textContent = "Your tracking data is saved to your account.";
     }
     route();

@@ -1,0 +1,58 @@
+// Continue as a guest: the site works without an account, the list stays in this browser, and signing up keeps it.
+import { readFileSync, writeFileSync } from 'node:fs';
+const SP = process.argv[2], B = 'http://localhost:3124', MOCK = readFileSync(new URL('../mock-supabase.js', import.meta.url), 'utf8');
+let list; for (let i=0;i<40;i++){ try { list = await (await fetch('http://localhost:9342/json/list')).json(); break; } catch { await new Promise(r=>setTimeout(r,250)); } }
+const ws = new WebSocket(list.find(t=>t.type==='page').webSocketDebuggerUrl); await new Promise(r=>ws.onopen=r);
+let id=0; const pend=new Map(); const errs=[];
+const cmd=(method,params={})=>new Promise(r=>{const i=++id;pend.set(i,r);ws.send(JSON.stringify({id:i,method,params}));});
+ws.onmessage = async m => { const d=JSON.parse(m.data);
+  if (d.id && pend.has(d.id)) { pend.get(d.id)(d); pend.delete(d.id); }
+  if (d.method==='Fetch.requestPaused') cmd('Fetch.fulfillRequest',{requestId:d.params.requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'text/javascript'},{name:'Access-Control-Allow-Origin',value:'*'}],body:Buffer.from(MOCK).toString('base64')});
+  if (d.method==='Runtime.exceptionThrown') errs.push(d.params.exceptionDetails.exception?.description);
+};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const ev=async e=>(await cmd('Runtime.evaluate',{expression:e,awaitPromise:true,returnByValue:true})).result?.result?.value;
+const nav=async u=>{ await cmd('Page.navigate',{url:u}); await sleep(1100); };
+const shot=async(n,w=1280,h=820)=>{ await cmd('Emulation.setDeviceMetricsOverride',{width:w,height:h,deviceScaleFactor:1,mobile:w<500}); await sleep(150); const r=await cmd('Page.captureScreenshot',{format:'png'}); writeFileSync(`${SP}/${n}.png`,Buffer.from(r.result.data,'base64')); };
+const out=[]; const ok=(n,c)=>out.push((c?'PASS ':'FAIL ')+n);
+await cmd('Page.enable'); await cmd('Runtime.enable'); await cmd('Fetch.enable',{patterns:[{urlPattern:'*supabase-js*'}]});
+await cmd('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
+const path=()=>ev('location.pathname');
+const txt=(sel)=>ev(`document.querySelector(${JSON.stringify(sel)})?.textContent||""`);
+
+await nav(B+'/'); await ev('localStorage.clear(); true'); await nav(B+'/');
+ok('no account: / still goes to the login page first', await path()==='/login');
+ok('login page offers "Continue as a guest"', /Continue as a guest/.test(await txt('#guest')) && !(await ev('document.querySelector(".auth-guest").hidden')));
+await shot('guest-login');
+await ev('document.getElementById("guest").click(); true'); await sleep(1300);
+ok('guest lands on the site (homepage video)', await path()==='/' && !!(await ev('!!document.querySelector("video.promo-video")')));
+ok('address bar is tidied (no ?guest=1)', (await ev('location.search'))==='');
+ok('header shows Log in / Sign up, no account menu', !(await ev('document.getElementById("guest-tools").hidden')) && await ev('document.getElementById("account").hidden'));
+ok('footer says the list stays in this browser', /browsing as a guest/.test(await txt('#storage-note')));
+await nav(B+'/#/browse');
+await ev(`document.querySelector('.bcard .heart').click(); true`); await sleep(500);
+const savedId = await ev(`Object.keys(JSON.parse(localStorage.getItem('gyf:v1')).saved)[0]`);
+ok(`guest can save programs (in this browser): ${savedId}`, !!savedId && (await txt('#saved-count'))==='1');
+await nav(B+'/#/browse');
+ok('reload keeps you in as a guest with your list', await path()==='/' && (await txt('#saved-count'))==='1');
+await nav(B+'/#/program/'+savedId); await sleep(300);
+ok('program pages work for guests', !!(await ev('!!document.getElementById("key-features")')) && !(await ev('!!document.getElementById("comm-card")')));
+await nav(B+'/#/community');
+ok('Community invites guests to sign up', /Join the Community/.test(await txt('#app')) && !!(await ev('!!document.querySelector("#app a[href=\'/login?mode=signup\']")')));
+await shot('guest-community');
+await ev('document.querySelector(".gt-signup").click(); true'); await sleep(1200);
+ok('Sign up opens the sign-up form', await path()==='/login' && /Create your account/.test(await txt('#title')));
+await ev(`document.getElementById('name').value='Guest Student'; document.getElementById('email').value='guest@example.com'; document.getElementById('password').value='gapyear2027'; true`);
+await ev(`document.getElementById('auth-form').requestSubmit(); true`); await sleep(1500);
+ok('after signing up: in the app with an account', await path()==='/' && (await txt('#user-name'))==='Guest Student' && await ev('document.getElementById("guest-tools").hidden'));
+ok('the guest list carried over to the account', (await txt('#saved-count'))==='1' && /saved as a guest/.test(await txt('#banner')));
+const rows = await ev(`JSON.parse(localStorage.getItem('mock:rows')||'{}')`);
+const uid = Object.keys(rows)[0];
+ok('and was saved to the account', !!uid && !!rows[uid].state.saved[savedId]);
+ok('guest flag and guest copy cleared', (await ev('localStorage.getItem("gyf:guest")'))===null && (await ev('localStorage.getItem("gyf:v1")'))===null);
+await ev(`localStorage.clear(); localStorage.setItem('gyf:guest','1'); true`); await nav(B+'/');
+await cmd('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:2,mobile:true}); await sleep(200);
+ok('phone: Log in button fits in the top bar', await ev('(()=>{const b=document.querySelector("#guest-tools a").getBoundingClientRect(); return b.width>0 && b.right<=innerWidth;})()') && await ev('document.documentElement.scrollWidth<=innerWidth'));
+await shot('guest-phone', 390, 844);
+ok('no JS errors', errs.length===0); if(errs.length) console.log(errs);
+console.log(out.join('\n')); process.exit(0);
