@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" data-theme="sunset">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <script src="/js/theme.js"></script>
+  <title>Program Map · Israel Gap Year Finder</title>
+  <meta name="description" content="Map of Israel gap year programs: see which programs are based in each region, city and kibbutz." />
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png" />
+  <meta name="theme-color" content="#15110d" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="/static/fonts/Switzer-Variable.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&display=swap" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/vendor/markercluster/MarkerCluster.css" />
+  <link rel="stylesheet" href="/css/map.css" />
+</head>
+<body class="map-body">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/#/" aria-label="Israel Gap Year Finder, home">
+        <img class="logo-mark" src="/static/logo-mark.svg" alt="" width="40" height="40" />
+        <span class="wordmark wm-header"><span class="wm-title">Israel Gap Year</span><span class="wm-sub">Finder</span></span>
+      </a>
+      <nav class="topnav" id="topnav" aria-label="Main">
+        <a href="/#/" data-nav="home">Home</a>
+        <a href="/#/browse" data-nav="finder">Browse all</a>
+        <a href="/map" data-nav="map" class="active" aria-current="page">Map</a>
+        <a href="/#/compare" data-nav="compare">Compare</a>
+        <a href="/#/colleges" data-nav="colleges">Colleges</a>
+        <a href="/#/community" data-nav="community">Community</a>
+        <a href="/#/swipe" data-nav="discover">Discover</a>
+      </nav>
+      <div class="topbar-tools">
+        <details class="theme-menu">
+          <summary aria-label="Color theme" title="Color theme"><svg class="ic" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg><span class="theme-label">Theme</span></summary>
+          <div class="theme-pop" role="menu" aria-label="Color theme">
+            <button type="button" role="menuitemradio" data-theme-pick="sunset"><span class="sw sw-sunset" aria-hidden="true"></span>Sunset</button>
+            <button type="button" role="menuitemradio" data-theme-pick="daylight"><span class="sw sw-daylight" aria-hidden="true"></span>Daylight</button>
+            <button type="button" role="menuitemradio" data-theme-pick="sea"><span class="sw sw-sea" aria-hidden="true"></span>Sea</button>
+          </div>
+        </details>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="topnav" aria-label="Menu"><svg class="ic" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menu</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="map-page">
+    <section class="map-col" aria-label="Map">
+      <div class="map-presets" role="toolbar" aria-label="Zoom to a place" id="map-presets"></div>
+      <div id="map" class="map-canvas" role="application" aria-label="Map of Israel with gap year program locations"></div>
+    </section>
+
+    <aside class="map-panel" id="map-panel" aria-label="Map details">
+      <button class="sheet-handle" type="button" id="sheet-handle" aria-expanded="false" aria-controls="map-panel-body">
+        <span class="sheet-grip" aria-hidden="true"></span><span class="sheet-title" id="sheet-title">Programs on the map</span>
+      </button>
+      <div class="map-panel-body" id="map-panel-body">
+        <div class="map-filters" id="map-filters"></div>
+        <div class="map-panel-content" id="map-panel-content" aria-live="polite"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="/vendor/leaflet/leaflet.js"></script>
+  <script src="/vendor/markercluster/leaflet.markercluster.js"></script>
+  <script src="/js/data.js"></script>
+  <script src="/js/map-data.js"></script>
+  <script src="/js/map.js"></script>
+</body>
+</html>

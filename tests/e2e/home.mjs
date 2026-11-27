@@ -28,7 +28,7 @@ ok('before the quiz: Home first, then Discover', (await navOrder()).startsWith('
 ok('Home is highlighted on the homepage', await ev('document.querySelector("[data-nav=home]").classList.contains("active")'));
 await shot('home-new');
 await ev(`localStorage.setItem("gyf:v1", JSON.stringify({saved:{aardvark:1},quiz:{v:3,done:true,step:0,answers:{deal:{},prefs:{academics:{want:4,weight:2}},field:[],city:[]}}})); location.hash="#/"; location.reload(); true`); await sleep(900);
-ok('after the quiz: Discover moves to the end of the menu', (await navOrder())==='home,finder,compare,colleges,community,discover');
+ok('after the quiz: Discover moves to the end of the menu', (await navOrder())==='home,finder,map,compare,colleges,community,discover');
 ok('after the quiz the homepage button goes to the top 3', await ev('(()=>{const a=document.querySelector(".home-cta a"); return a.textContent==="See your top 3" && a.getAttribute("href")==="#/results"})()'));
 await shot('home-done');
 await ev('location.hash="#/browse"; true'); await sleep(400);
@@ -36,7 +36,7 @@ ok('logo goes home', await ev('document.querySelector(".brand").getAttribute("hr
 await ev('document.querySelector("[data-nav=home]").click(); true'); await sleep(300);
 ok('Home link opens the homepage', !!(await ev('!!document.querySelector("video.promo-video")')));
 await ev('location.hash="#/browse"; true'); await sleep(300);
-ok('menu order stays the same on other pages', (await navOrder())==='home,finder,compare,colleges,community,discover');
+ok('menu order stays the same on other pages', (await navOrder())==='home,finder,map,compare,colleges,community,discover');
 // Color themes
 const rgb=c=>c.match(/\d+/g).map(Number);
 const bgOf=()=>ev('getComputedStyle(document.documentElement).getPropertyValue("--bg").trim()');
