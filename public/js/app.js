@@ -570,6 +570,8 @@
     cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
     clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
     chev: '<path d="m6 9 6 6 6-6"/>',
+    chevL: '<path d="m15 18-6-6 6-6"/>',
+    chevR: '<path d="m9 18 6-6-6-6"/>',
     alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/>',
     home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1Z"/>',
     meals: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
@@ -1439,7 +1441,7 @@
       options: [["pluralistic", "", "Pluralistic"], ["conservative", "", "Conservative"], ["reform", "", "Reform"], ["mo-coed", "", "Modern Orthodox"], ["orthodox", "", "Yeshiva / seminary"], ["secular", "", "Secular"]] },
     gender: { q: "Setting", multi: false, options: [["coed", "", "Co-ed"], ["men", "", "Men's"], ["women", "", "Women's"]] },
     hebrew: { q: "Your Hebrew right now", multi: false, anyLabel: "Skip",
-      options: [["none", "", "None yet"], ["basic", "", "Basics"], ["conversational", "", "Conversational"], ["fluent", "", "Fluent"]] },
+      levels: true, options: [["none", "", "None yet"], ["basic", "", "Basics"], ["conversational", "", "Conversational"], ["fluent", "", "Fluent"]] },
     must: { q: "Must-haves", multi: true, options: [["semester", "", "Semester option"], ["credit", "", "College credit"]] },
   };
   const TOTAL_STEPS = 2;
@@ -1528,28 +1530,60 @@
     return s.length ? "Matched on " + listPhrase(s) + "." : "A partial match on your preferences.";
   }
 
+  // One quiz question. Multiple choice = chips that gain a check when picked; single choice = a segmented
+  // control whose highlight slides to the pick (motion.js animates it). "Any" is always an explicit choice.
   function choiceGroup(key, def, picked, act) {
     const anyOn = !picked.length && !!quiz().answers.any[key]; // nothing is pre-selected; "Any" lights up once you pick it
-    return '<div class="qgroup"><h3>' + esc(def.q) + "</h3>" + (def.sub ? '<p class="small muted">' + esc(def.sub) + "</p>" : "") +
-      '<div class="qchips">' +
-      '<button class="qchip any' + (anyOn ? " on" : "") + '" aria-pressed="' + anyOn + '" data-act="' + act + '" data-key="' + key + '" data-value="__any">' + (def.anyLabel || "Any") + "</button>" +
-      def.options.map((o) => {
-        const on = picked.indexOf(o[0]) >= 0;
-        return '<button class="qchip' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="' + act + '" data-key="' + key + '" data-value="' + o[0] + '">' + esc(o[2]) + "</button>";
-      }).join("") + "</div></div>";
+    const seg = def.multi === false;
+    const check = '<span class="qc-check" aria-hidden="true">' + I("check") + "</span>";
+    const chip = (value, label, on, extra) => '<button class="qchip' + (value === "__any" ? " any" : "") + (on ? " on" : "") + '" aria-pressed="' + on +
+      '" data-act="' + act + '" data-key="' + key + '" data-value="' + value + '">' + (seg ? "" : check) + (extra || "") + "<span>" + esc(label) + "</span></button>";
+    return '<div class="qgroup' + (picked.length || anyOn ? " answered" : "") + '"><h3>' + esc(def.q) + "</h3>" + (def.sub ? '<p class="small muted">' + esc(def.sub) + "</p>" : "") +
+      '<div class="' + (seg ? "qseg" : "qchips") + '" role="group" aria-label="' + esc(def.q) + '">' +
+      chip("__any", def.anyLabel || "Any", anyOn) +
+      def.options.map((o, i) => chip(o[0], o[2], picked.indexOf(o[0]) >= 0, def.levels ? levelBars(i + 1, def.options.length) : "")).join("") + "</div></div>";
   }
-  function prefRow(row) {
+  function levelBars(n, of) {
+    let b = "";
+    for (let i = 1; i <= of; i++) b += '<rect x="' + (i - 1) * 5 + '" y="' + (12 - i * 3) + '" width="3" height="' + i * 3 + '" rx="1"' + (i <= n ? "" : ' class="off"') + "/>";
+    return '<svg class="lvl" viewBox="0 0 ' + (of * 5 - 2) + ' 12" width="' + (of * 5 - 2) + '" height="12" aria-hidden="true">' + b + "</svg>";
+  }
+  function prefRow(row, i) {
     const k = row[0], c = CATS[k];
     const pref = quiz().answers.prefs[k] || {};
-    return '<div class="prow' + (pref.want || pref.dc ? " active" : "") + '"><span class="prow-label">' + esc(c.label) + "</span>" +
-      '<div class="prow-scale"><span class="pend">' + esc(row[1]) + '</span><div class="pnums" role="group" aria-label="' + esc(c.label) + ': 1 = ' + esc(row[1]) + ", 5 = " + esc(row[2]) + '">' +
+    return '<div class="prow' + (pref.want || pref.dc ? " active" : "") + '" data-k="' + k + '" role="group" aria-label="' + esc(c.label) + ", " + (i + 1) + " of " + PREF_ROWS.length + '">' +
+      '<div class="prow-top"><span class="prow-label">' + esc(c.label) + "</span>" +
+      '<button class="popt dc' + (!pref.want && pref.dc ? " on" : "") + '" aria-pressed="' + (!pref.want && !!pref.dc) + '" data-act="pref-pick" data-key="' + k + '" data-value="0">Don\'t care</button></div>' +
+      '<div class="pnums" role="group" aria-label="' + esc(c.label) + ': 1 = ' + esc(row[1]) + ", 5 = " + esc(row[2]) + '">' +
       [1, 2, 3, 4, 5].map((n) => {
         const on = pref.want === n;
-        return '<button class="pnum' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="pref-pick" data-key="' + k + '" data-value="' + n + '">' + n + "</button>";
+        return '<button class="pnum' + (on ? " on" : "") + (pref.want >= n ? " lit" : "") + '" style="--n:' + n + '" aria-pressed="' + on + '" data-act="pref-pick" data-key="' + k + '" data-value="' + n + '"><span>' + n + "</span></button>";
       }).join("") +
-      '</div><span class="pend">' + esc(row[2]) + "</span></div>" +
-      '<button class="popt dc' + (!pref.want && pref.dc ? " on" : "") + '" aria-pressed="' + (!pref.want && !!pref.dc) + '" data-act="pref-pick" data-key="' + k + '" data-value="0">Don\'t care</button>' +
-      "</div>";
+      '</div><div class="prow-ends"><span class="pend">' + esc(row[1]) + '</span><span class="pend">' + esc(row[2]) + "</span></div></div>";
+  }
+  function prefScroller() {
+    const prefs = quiz().answers.prefs;
+    const done = PREF_ROWS.filter((r) => prefs[r[0]] && (prefs[r[0]].want || prefs[r[0]].dc)).length;
+    return '<div class="pcar-wrap">' +
+      '<div class="pcar-head"><span class="pcar-count"><strong>' + done + "</strong> of " + PREF_ROWS.length + " answered</span>" +
+      '<span class="pcar-nav"><button class="pcar-btn" type="button" data-act="pcar" data-dir="-1" aria-label="Previous">' + I("chevL") + '</button>' +
+      '<button class="pcar-btn" type="button" data-act="pcar" data-dir="1" aria-label="Next">' + I("chevR") + "</button></span></div>" +
+      '<div class="prows pcar">' + PREF_ROWS.map(prefRow).join("") + "</div>" +
+      '<div class="pcar-pips">' + PREF_ROWS.map((r, i) => {
+        const p = prefs[r[0]] || {};
+        return '<button type="button" class="pip' + (p.want || p.dc ? " done" : "") + '" data-act="pcar-go" data-i="' + i + '" aria-label="' + esc(CATS[r[0]].label) + '"></button>';
+      }).join("") + "</div></div>";
+  }
+  // Tuition budget as a ruler: one tick per $1,000; the range input sits on top, so dragging, arrow keys
+  // and screen readers all work the native way.
+  function budgetRuler(val) {
+    const span = (BUDGET_TOP - BUDGET_MIN) / 1000, v = val || BUDGET_TOP, pos = (v - BUDGET_MIN) / (BUDGET_TOP - BUDGET_MIN);
+    let ticks = "";
+    for (let i = 0; i <= span; i++) ticks += '<i class="tick' + (i % 5 ? "" : " major") + '" style="--i:' + i + '"></i>';
+    return '<div class="budget-slider ruler"><div class="bs-val">' + budgetLabel(val) + "</div>" +
+      '<div class="ruler-track" style="--p:' + pos.toFixed(4) + ";--span:" + span + '"><div class="ruler-ticks" aria-hidden="true">' + ticks + '</div><span class="ruler-thumb" aria-hidden="true"></span>' +
+      '<input type="range" class="range ruler-input" min="' + BUDGET_MIN + '" max="' + BUDGET_TOP + '" step="1000" value="' + v + '" data-act="budget-range" aria-label="Maximum tuition" aria-valuetext="' + budgetLabel(val) + '"></div>' +
+      '<div class="bs-ends small muted" aria-hidden="true"><span>$10k</span><span>$20k</span><span>$30k</span><span>No limit</span></div></div>';
   }
 
   function renderQuiz() {
@@ -1570,28 +1604,34 @@
     let body;
     if (q.step === 1) {
       body = "<h1>The basics</h1>" +
-        '<p class="muted">These rule programs out. Pick "Any" or skip a group if it doesn\'t matter.</p>' +
+        '<p class="muted">These rule programs out.</p>' +
         Object.keys(DEAL).map((k) => choiceGroup(k, DEAL[k], a.deal[k] || [], "deal-pick") +
-          (k === "orientation" ? '<div class="qgroup"><h3>Tuition budget</h3>' + budgetSlider("budget-range", a.deal.max, "Maximum tuition") +
-            '<p class="small muted" style="margin-top:4px">Programs that haven\'t posted a US-dollar price stay in.</p></div>' : "")).join("");
+          (k === "orientation" ? '<div class="qgroup' + (a.deal.max ? " answered" : "") + '"><h3>Tuition budget</h3>' + budgetRuler(a.deal.max) +
+            '<p class="small muted" style="margin-top:6px">Programs that haven\'t posted a US-dollar price stay in.</p></div>' : "")).join("");
     } else {
       body = "<h1>What matters to you?</h1>" +
-        '<div class="prows">' + PREF_ROWS.map(prefRow).join("") + "</div>" +
+        prefScroller() +
         '<details class="extras"' + (a.field.length || a.city.length ? " open" : "") + "><summary>Optional: a field or city you have in mind</summary>" +
         choiceGroup("field", { q: "Field (up to 3)", anyLabel: "Don't care", options: Object.keys(L.field).map((k) => [k, L.field[k][0], L.field[k][1]]) }, a.field, "field-pick") +
         choiceGroup("city", { q: "Where", anyLabel: "Don't care", options: [["jerusalem", "", "Jerusalem"], ["tel-aviv", "", "Tel Aviv"], ["kibbutz", "", "Kibbutz"], ["north", "", "The North"], ["abroad", "", "Travel abroad"]] }, a.city, "city-pick") +
         "</details>";
     }
+    // How much of this screen is answered: drives the line along the top of the floating bar.
+    const groups = q.step === 1 ? Object.keys(DEAL).length + 1 : PREF_ROWS.length;
+    const answered = q.step === 1
+      ? Object.keys(DEAL).filter((k) => (a.deal[k] || []).length || a.any[k]).length + (a.deal.max ? 1 : 0)
+      : PREF_ROWS.filter((r) => a.prefs[r[0]] && (a.prefs[r[0]].want || a.prefs[r[0]].dc)).length;
+    const STEP_NAMES = ["The basics", "What matters"];
     $app.innerHTML =
       '<section class="quiz">' +
-      '<div class="quiz-top"><button class="btn ghost sm" data-act="quiz-back">← Back</button>' +
-      '<div class="quiz-dots" aria-label="Step ' + q.step + " of " + TOTAL_STEPS + '">' +
-      Array.from({ length: TOTAL_STEPS }, (_, i) => '<span class="' + (i < q.step - 1 ? "done" : i === q.step - 1 ? "now" : "") + '"></span>').join("") +
-      '</div><span class="route-end" title="Your top 3" aria-hidden="true">' + I("flag") + '</span><span class="small muted">' + q.step + " / " + TOTAL_STEPS + "</span></div>" +
+      '<div class="quiz-top"><button class="btn ghost sm" data-act="quiz-back">' + I("chevL") + " Back</button>" +
+      '<div class="quiz-dots qsteps" role="img" aria-label="Step ' + q.step + " of " + TOTAL_STEPS + ": " + STEP_NAMES[q.step - 1] + '">' +
+      Array.from({ length: TOTAL_STEPS }, (_, i) => '<span class="' + (i < q.step - 1 ? "done" : i === q.step - 1 ? "now" : "") + '"><i class="qs-bar"><i class="qs-fill" style="--f:' + (i < q.step - 1 ? 1 : i === q.step - 1 ? Math.max(0.06, answered / groups).toFixed(3) : 0) + '"></i></i><em>' + STEP_NAMES[i] + "</em></span>").join("") +
+      '</div><span class="route-end" title="Your top 3" aria-hidden="true">' + I("flag") + "</span></div>" +
       body +
-      '<div class="quiz-foot"><span class="live-count"><strong>' + count + "</strong> program" + (count === 1 ? "" : "s") + " fit your basics</span>" +
-      '<button class="btn primary" data-act="' + (last ? "quiz-finish" : "quiz-next") + '"' + (last && !count ? " disabled" : "") + ">" +
-      (last ? "See my top 3" : "Next") + "</button></div>" +
+      '<div class="quiz-foot" style="--f:' + (answered / groups).toFixed(3) + '"><span class="live-count"><strong>' + count + "</strong> program" + (count === 1 ? "" : "s") + " fit your basics</span>" +
+      '<button class="btn primary qnext" data-act="' + (last ? "quiz-finish" : "quiz-next") + '"' + (last && !count ? " disabled" : "") + ">" +
+      (last ? I("flag") + " See my top 3" : "Next") + "</button></div>" +
       (count === 0 ? '<div class="callout warn" style="margin-top:14px">No programs fit all of these. Try adding a community or raising the budget.</div>' : "") +
       "</section>";
   }
@@ -1834,9 +1874,18 @@
       return;
     }
     save();
-    const y = window.scrollY;
+    const y = window.scrollY, car = $app.querySelector(".pcar"), sl = car ? car.scrollLeft : 0;
     render();
     window.scrollTo(0, y); // keep your place while tapping options
+    const car2 = $app.querySelector(".pcar");
+    if (car2) {
+      car2.scrollLeft = sl;
+      if (act === "pref-pick") { // answered a card: bring the next unanswered one into view
+        const cards = [...car2.querySelectorAll(".prow")], i = cards.findIndex((c) => c.dataset.k === k);
+        const next = cards.slice(i + 1).find((c) => !c.classList.contains("active"));
+        if (next) car2.scrollTo({ left: next.offsetLeft - car2.offsetLeft - 4, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      }
+    }
   }
 
   // ---------- Events ----------
@@ -1870,6 +1919,14 @@
     if (/^(quiz-|deal-pick|pref-pick|city-pick|field-pick)/.test(act)) return quizAct(act, el);
     if (act.indexOf("comm-") === 0) return COMM.click(act, el);
     if (act === "share") return shareLink(el);
+    if (act === "pcar" || act === "pcar-go") {
+      const car = $app.querySelector(".pcar"); if (!car) return;
+      const cards = [...car.querySelectorAll(".prow")], w = cards[0] ? cards[0].offsetWidth + 12 : 300;
+      const smooth = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      if (act === "pcar") car.scrollBy({ left: +el.dataset.dir * w, behavior: smooth });
+      else if (cards[+el.dataset.i]) car.scrollTo({ left: cards[+el.dataset.i].offsetLeft - car.offsetLeft - 4, behavior: smooth });
+      return;
+    }
     if (act === "swipe-like") return decide("like");
     if (act === "swipe-pass") return decide("pass");
     if (act === "swipe-undo") return undoSwipe();
@@ -2028,6 +2085,8 @@
       const v = budgetValue(el);
       el.setAttribute("aria-valuetext", budgetLabel(v));
       el.closest(".budget-slider").querySelector(".bs-val").textContent = budgetLabel(v);
+      const track = el.closest(".ruler-track");
+      if (track) track.style.setProperty("--p", ((+el.value - BUDGET_MIN) / (BUDGET_TOP - BUDGET_MIN)).toFixed(4));
       if (el.dataset.act === "budget-range") {
         quiz().answers.deal.max = v;
         save();

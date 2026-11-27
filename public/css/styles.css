@@ -676,15 +676,6 @@ html, body { overscroll-behavior-x: none; }
 .pnum { height: 38px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-weight: 700; font-size: 15px; cursor: pointer; }
 .pnum:hover { border-color: var(--accent); }
 .pnum.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-@media (max-width: 700px) {
-  .prow { grid-template-columns: 1fr auto; }
-  .prow-scale { grid-column: 1 / -1; grid-row: 2; flex-wrap: wrap; }
-  .pnums { order: 1; flex-basis: 100%; }
-  .pend { order: 2; width: auto; flex: 1; }
-  .pend:first-child { text-align: left; }
-  .pend:last-child { text-align: right; }
-  .prow .popt.dc { grid-column: 2; grid-row: 1; }
-}
 @media (min-width: 701px) { .prow { grid-template-columns: 150px 1fr auto; } .pend { width: 78px; } .pnum { min-width: 40px; } }
 .hillel-line { color: var(--accent); font-weight: 600; }
 
@@ -1569,3 +1560,141 @@ a { text-underline-offset: .2em; }
 /* Home: one way forward under the video. */
 .home-cta { max-width: 1100px; margin: 0 auto 26px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .home-cta .btn.big { padding: 15px 34px; font-size: 17px; }
+
+/* ---------- Quiz, redesigned (Watermelon: quick-option-picker, discrete-tabs, scrub-slider, carousel, step-indicator) ----------
+   Motion follows the craft pass: 300ms or less, no overshoot, and nothing moves with reduced motion. */
+.quiz { --q-ease: cubic-bezier(.2, .8, .2, 1); padding-bottom: 8px; }
+.quiz h1 { font-size: 30px; }
+
+/* Step indicator: two labelled tracks; the current one fills as you answer. */
+.quiz-top { gap: 14px; }
+.qsteps { display: flex; gap: 10px; flex: 1; }
+.qsteps > span { flex: 1; display: flex; flex-direction: column; gap: 6px; height: auto; background: none; border-radius: 0; }
+.qsteps > span.done, .qsteps > span.now { background: none; opacity: 1; }
+.qs-bar { display: block; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.qs-fill { display: block; height: 100%; width: 100%; border-radius: 3px; background: var(--accent); transform-origin: left; transform: scaleX(var(--f, 0)); transition: transform .3s var(--q-ease); }
+.qsteps em { font-style: normal; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--muted); }
+.qsteps > .now em { color: var(--text); }
+.qsteps > .done .qs-fill { opacity: .55; }
+
+/* Question blocks: a card each, with a quiet tick once answered. */
+.quiz .qgroup { margin-top: 14px; padding: 16px 18px 18px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); transition: border-color .2s ease; }
+.quiz .qgroup h3 { display: flex; align-items: center; gap: 8px; font-size: 16px; }
+.quiz .qgroup.answered h3::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+.quiz .extras .qgroup { border: 0; padding: 10px 0 0; background: none; }
+
+/* Multiple-choice chips: picking one fills it and slides a check in. */
+.quiz .qchips { gap: 8px; margin-top: 12px; }
+.quiz .qchip { display: inline-flex; align-items: center; gap: 0; min-height: 44px; padding: 0 18px; font-weight: 600;
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease, gap .25s var(--q-ease), padding .25s var(--q-ease); }
+.qc-check { display: inline-grid; place-items: center; width: 0; height: 18px; overflow: hidden; border-radius: 50%; font-size: 12px;
+  background: var(--accent); color: var(--accent-ink); opacity: 0; transition: width .25s var(--q-ease), opacity .2s ease; }
+.quiz .qchip.on { gap: 8px; padding-left: 12px; }
+.quiz .qchip.on .qc-check { width: 18px; opacity: 1; }
+.quiz .qchip.any .qc-check { background: var(--muted); }
+.quiz .qchip.just-on .qc-check svg { animation: qc-in .25s var(--q-ease); }
+@keyframes qc-in { from { transform: scale(.4); opacity: 0; filter: blur(2px); } }
+
+/* Single choice: a segmented control; one highlight slides to the pick. */
+.qseg { position: relative; display: flex; flex-wrap: wrap; gap: 4px; margin-top: 12px; padding: 4px; border-radius: 16px; background: var(--surface-2); width: fit-content; max-width: 100%; }
+.qseg .qchip { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 16px;
+  border: 2px solid transparent; border-radius: 12px; background: transparent; color: var(--muted); font-weight: 600; transition: color .2s ease, border-color .2s ease, background-color .2s ease; }
+.qseg .qchip:hover { color: var(--text); border-color: transparent; }
+.qseg .qchip.on { color: var(--text); background: var(--surface); border-color: var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.qseg .qchip.any.on { background: var(--surface); border-color: var(--accent); }
+.qseg.has-pill .qchip.on { background: transparent; box-shadow: none; }
+.seg-pill { position: absolute; left: 0; top: 0; z-index: 0; border-radius: 12px; background: var(--surface); border: 2px solid var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,.12);
+  pointer-events: none; transition: transform .28s var(--q-ease), width .28s var(--q-ease), height .28s var(--q-ease); }
+.seg-pill.no-anim { transition: none; }
+.qseg.has-pill .qchip.on { border-color: transparent; }
+.lvl { flex: none; fill: currentColor; }
+.lvl rect.off { opacity: .28; }
+.qseg .qchip.on .lvl { fill: var(--accent); }
+
+/* Budget ruler: one tick per $1,000; ticks fill up to the thumb. The real range input sits on top. */
+.ruler { max-width: none; margin-top: 10px; }
+.ruler .bs-val { font-family: var(--serif); font-size: 30px; font-weight: 700; line-height: 1.1; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+.ruler-track { position: relative; height: 64px; border-radius: 14px; background: var(--surface-2); padding: 0 16px; }
+.ruler-ticks { position: absolute; inset: 0 16px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+.tick { position: relative; width: 2px; height: 16px; border-radius: 1px; background: color-mix(in srgb, var(--muted) 45%, transparent); }
+.tick.major { height: 30px; background: color-mix(in srgb, var(--muted) 75%, transparent); }
+.tick::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--accent); opacity: clamp(0, calc((var(--p) * var(--span) - var(--i) + .5) * 100), 1); transition: opacity .12s linear; }
+.ruler-thumb { position: absolute; top: 8px; bottom: 8px; left: calc(16px + (100% - 32px) * var(--p)); width: 4px; margin-left: -2px; border-radius: 2px; background: var(--text); pointer-events: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--text) 14%, transparent); }
+.ruler-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; touch-action: pan-y; }
+.ruler-track:has(.ruler-input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ruler + .bs-ends, .ruler .bs-ends { display: flex; justify-content: space-between; padding: 6px 12px 0; }
+
+/* What matters: a scroller of cards; each card is a level meter you tap. */
+.pcar-wrap { margin-top: 16px; }
+.pcar-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.pcar-count { color: var(--muted); font-size: 14px; }
+.pcar-count strong { color: var(--text); font-size: 17px; font-variant-numeric: tabular-nums; }
+.pcar-nav { display: flex; gap: 6px; }
+.pcar-btn { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 18px; cursor: pointer; transition: border-color .2s ease; }
+.pcar-btn:hover { border-color: var(--accent); }
+.prows.pcar { display: grid; grid-auto-flow: column; grid-auto-columns: min(300px, 82%); gap: 12px; margin: 0 -4px; padding: 4px 4px 10px; overflow-x: auto;
+  scroll-snap-type: x mandatory; scroll-padding-inline: 4px; overscroll-behavior-x: contain; scrollbar-width: none; flex-direction: row; }
+.prows.pcar::-webkit-scrollbar { display: none; }
+.pcar .prow { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 18px; scroll-snap-align: start; background: var(--surface); border: 1px solid var(--border);
+  grid-template-columns: none; transition: border-color .2s ease; }
+.pcar .prow.active { border-color: var(--accent); }
+.prow-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pcar .prow-label { font-size: 17px; }
+.pcar .popt.dc { padding: 6px 12px; min-height: 34px; border-radius: 999px; font-size: 13px; }
+.pcar .pnums { display: flex; align-items: flex-end; gap: 8px; height: 112px; flex: none; }
+.pcar .pnum { flex: 1; height: calc(36px + var(--n) * 15px); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums;
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease; }
+.pcar .pnum:hover { border-color: var(--accent); color: var(--text); }
+.pcar .pnum.lit { background: color-mix(in srgb, var(--accent) 30%, var(--surface-2)); border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); color: var(--text); }
+.pcar .pnum.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pcar .pnum.fill-in { animation: meter-fill .18s ease-out both; animation-delay: calc(var(--d, 0) * 30ms); }
+@keyframes meter-fill { from { background-color: var(--surface-2); border-color: var(--border); } }
+.prow-ends { display: flex; justify-content: space-between; gap: 10px; margin-top: -6px; }
+.pcar .pend { width: auto; font-size: 13px; }
+.pcar .pend:first-child { text-align: left; }
+.pcar .pend:last-child { text-align: right; }
+.pcar-pips { display: flex; justify-content: center; gap: 2px; margin-top: 4px; }
+.pip { width: 24px; height: 24px; display: grid; place-items: center; border: 0; background: none; cursor: pointer; padding: 0; }
+.pip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background-color .2s ease, width .25s var(--q-ease); }
+.pip.done::before { background: var(--accent); }
+.pip.here::before { width: 20px; border-radius: 4px; }
+
+/* Floating bar: count + Next, on frosted glass over the questions, with progress along its top edge. */
+.quiz .quiz-foot { position: sticky; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 5; margin-top: 22px; padding: 10px 10px 10px 18px; border-radius: 18px; overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 78%, transparent); -webkit-backdrop-filter: saturate(1.4) blur(16px); backdrop-filter: saturate(1.4) blur(16px);
+  border: 1px solid var(--border); box-shadow: var(--shadow-pop); }
+.quiz .quiz-foot::before { content: ""; position: absolute; left: 0; top: 0; height: 3px; width: 100%; background: var(--accent); transform-origin: left; transform: scaleX(var(--f, 0)); transition: transform .3s var(--q-ease); }
+.quiz .live-count { text-align: left; }
+.quiz .live-count strong { font-family: var(--serif); font-size: 22px; margin-right: 2px; display: inline-block; }
+.qnext { min-height: 46px; padding: 0 22px; border-radius: 14px; font-size: 15px; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .quiz .quiz-foot { background: var(--surface); } }
+@media (prefers-reduced-transparency: reduce) { .quiz .quiz-foot { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+@media (max-width: 600px) {
+  .quiz h1 { font-size: 24px; }
+  .quiz .qgroup { padding: 14px; border-radius: 16px; }
+  .qseg { width: 100%; }
+  .qseg .qchip { flex: 1 1 auto; padding: 0 10px; }
+  .prows.pcar { grid-auto-columns: 86%; }
+  .qsteps em { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qs-fill, .qc-check, .quiz .qchip, .seg-pill, .tick::after, .pip::before, .quiz .quiz-foot::before { transition: none; }
+  .quiz .qchip.just-on .qc-check svg, .pcar .pnum.fill-in { animation: none; }
+}
+.pcar .prow { align-items: stretch; text-align: left; }
+/* Override the old phone rules: the floating bar stays one row; the end labels stay under the meter. */
+.quiz .quiz-foot { flex-wrap: nowrap; }
+.quiz .live-count { order: 0; flex: 1 1 auto; flex-basis: auto; min-width: 0; }
+.pcar .pend { order: 0; flex: 0 1 auto; }
+.quiz .qgroup h3 { display: block; }
+.quiz .qgroup.answered h3::after { display: inline-block; vertical-align: middle; margin-left: 8px; }
+@media (max-width: 600px) {
+  .quiz .quiz-foot { padding: 8px 8px 8px 14px; }
+  .quiz .live-count { font-size: 13px; line-height: 1.25; }
+  .quiz .live-count strong { font-size: 19px; }
+  .qnext { min-height: 44px; padding: 0 16px; }
+}
+.pcar .pnums { order: 0; flex-basis: auto; }

@@ -256,7 +256,63 @@
       subWas = to;
     };
     window.addEventListener("resize", () => { subWas = null; const p = app.querySelector(".sub-pill"); if (p) p.remove(); subPill(); });
-    const onDraw = () => { liveCount(); subPill(); };
+    // ---------- Quiz pickers ----------
+    // The page redraws after every pick, so note what was tapped (and where things were) just before,
+    // then animate from there in the fresh page.
+    let picked = null;
+    document.addEventListener("click", (e) => {
+      const b = e.target.closest && e.target.closest('#app [data-act$="-pick"]');
+      if (!b) { picked = null; return; }
+      const seg = b.closest(".qseg"), was = seg && seg.querySelector(".qchip.on");
+      const row = b.closest(".prow");
+      picked = {
+        act: b.dataset.act, key: b.dataset.key, value: b.dataset.value,
+        seg: was ? { x: was.offsetLeft, y: was.offsetTop, w: was.offsetWidth, h: was.offsetHeight } : null,
+        lit: row ? row.querySelectorAll(".pnum.lit").length : 0,
+      };
+    }, true);
+    const segPills = () => {
+      app.querySelectorAll(".qseg").forEach((seg) => {
+        const on = seg.querySelector(".qchip.on");
+        if (!on) return;
+        const pill = document.createElement("span");
+        pill.className = "seg-pill"; pill.setAttribute("aria-hidden", "true");
+        seg.prepend(pill); seg.classList.add("has-pill");
+        const to = { x: on.offsetLeft, y: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight };
+        const place = (r) => { pill.style.width = r.w + "px"; pill.style.height = r.h + "px"; pill.style.transform = "translate(" + r.x + "px," + r.y + "px)"; };
+        const from = picked && picked.seg && on.dataset.key === picked.key ? picked.seg : null;
+        if (from && !reduce) { pill.classList.add("no-anim"); place(from); void pill.offsetWidth; pill.classList.remove("no-anim"); requestAnimationFrame(() => place(to)); }
+        else place(to);
+      });
+    };
+    const pickEffects = () => {
+      if (!picked || reduce) { picked = null; return; }
+      const sel = '[data-act="' + picked.act + '"][data-key="' + CSS.escape(picked.key) + '"]';
+      const chip = app.querySelector(sel + '[data-value="' + CSS.escape(picked.value) + '"]');
+      if (chip && chip.classList.contains("qchip") && chip.getAttribute("aria-pressed") === "true") chip.classList.add("just-on");
+      if (picked.act === "pref-pick") { // the meter fills from where it was up to the new level
+        const n = +picked.value;
+        app.querySelectorAll(sel + ".pnum").forEach((b) => {
+          const v = +b.dataset.value;
+          if (v > picked.lit && v <= n) { b.style.setProperty("--d", v - picked.lit - 1); b.classList.add("fill-in"); }
+        });
+      }
+      picked = null;
+    };
+    // The dots under the scroller follow the card in view.
+    const pipsFollow = () => {
+      const car = app.querySelector(".pcar"), pips = app.querySelectorAll(".pcar-pips .pip");
+      if (!car || !pips.length) return;
+      const cards = car.querySelectorAll(".prow");
+      const mark = () => {
+        let best = 0, bestD = Infinity;
+        cards.forEach((c, i) => { const d = Math.abs(c.offsetLeft - car.offsetLeft - car.scrollLeft); if (d < bestD) { bestD = d; best = i; } });
+        pips.forEach((p, i) => p.classList.toggle("here", i === best));
+      };
+      car.addEventListener("scroll", () => requestAnimationFrame(mark), { passive: true });
+      mark(); setTimeout(mark, 400);
+    };
+    const onDraw = () => { liveCount(); subPill(); segPills(); pickEffects(); pipsFollow(); };
     new MutationObserver(onDraw).observe(app, { childList: true });
     onDraw();
     // Typographer's quotes and apostrophes in everything the app draws (program text included). Only text nodes

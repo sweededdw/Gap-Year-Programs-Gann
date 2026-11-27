@@ -97,7 +97,7 @@ await ev(`location.hash="#/start"; true`); await sleep(500);
 ok('quiz headline is plain text, shown at once', await ev(`(()=>{const h=document.querySelector(".quiz-intro h1"); return h.textContent==="Find your year in Israel" && !h.children.length && getComputedStyle(h).textWrap.indexOf("balance")===0})()`));
 ok('Start button says what it does, with no arrow', await ev(`document.querySelector(".quiz-intro [data-act=quiz-next]").textContent`)==='Start the quiz');
 await ev(`document.querySelector(".quiz-intro [data-act=quiz-next]").click(); true`); await sleep(400);
-ok('quiz text uses curly quotes and apostrophes', await ev(`(()=>{const t=document.querySelector(".quiz").textContent; return /Pick \u201cAny\u201d/.test(t) && /doesn\u2019t matter/.test(t) && !/["']/.test(t)})()`));
+ok('quiz text uses curly quotes and apostrophes', await ev(`(()=>{const t=document.querySelector(".quiz").textContent; return /haven\u2019t posted/.test(t) && /Women\u2019s/.test(t) && !/["']/.test(t)})()`));
 await ev(`location.hash="#/results"; true`); await sleep(600);
 ok('results page has no notation legend', await ev(`!/In a breakdown/.test(document.querySelector("#app").textContent)`));
 ok('no forward arrows on the results buttons', await ev(`[...document.querySelectorAll(".results .btn")].every(b=>!/\u2192/.test(b.textContent))`));
@@ -124,6 +124,26 @@ await ev(`document.querySelector('.subtabs a[data-sub="list"]').click(); true`);
 const sv = await ev(`(()=>{const p=document.querySelector(".subtabs .sub-pill"), a=document.querySelector(".subtabs a.on"); return {hash:location.hash, on:a.dataset.sub, cur:a.getAttribute("aria-current"), dx:Math.abs(p.getBoundingClientRect().left-a.getBoundingClientRect().left), navActive:document.querySelector(".topnav a.active").dataset.nav, title:document.title}})()`);
 ok('Saved tab opens the saved list, and Discover stays lit up top '+JSON.stringify(sv), sp1>=0 && sp1<2 && sv.hash==='#/my-list' && sv.on==='list' && sv.cur==='page' && sv.dx<2 && sv.navActive==='discover' && sv.title==='Saved · Israel Gap Year Finder');
 await ev(`location.hash="#/browse"; true`); await sleep(500);
+
+// Quiz pickers: segmented single choices, check chips, the budget ruler, the card scroller, the floating bar.
+await ev(`(()=>{const s=JSON.parse(localStorage.getItem("gyf:v1")); s.quiz={v:3,step:1,done:false,answers:{deal:{},prefs:{},field:[],city:[]}}; localStorage.setItem("gyf:v1",JSON.stringify(s)); location.hash="#/start"; location.reload(); return true})()`); await sleep(1300);
+ok('Setting and Hebrew are segmented controls; communities are check chips', await ev(`!!document.querySelector('.qseg [data-key=gender]') && !!document.querySelector('.qseg [data-key=hebrew]') && document.querySelectorAll('.qchips [data-key=orientation] .qc-check').length===7`));
+await ev(`document.querySelector('[data-act=deal-pick][data-key=hebrew][data-value=basic]').click(); true`); await sleep(300);
+await ev(`document.querySelector('[data-act=deal-pick][data-key=hebrew][data-value=fluent]').click(); true`); await sleep(400);
+const sp = await ev(`(()=>{const s=document.querySelector('.qseg [data-key=hebrew]').closest('.qseg'), p=s.querySelector('.seg-pill'), o=s.querySelector('.qchip.on'); const a=p.getBoundingClientRect(), b=o.getBoundingClientRect(); return {val:o.dataset.value, d:Math.round(Math.abs(a.left-b.left)+Math.abs(a.width-b.width))}})()`);
+ok('the segment highlight slides to the new pick '+JSON.stringify(sp), sp.val==='fluent' && sp.d<=1);
+await ev(`document.querySelector('[data-act=deal-pick][data-key=orientation][data-value=reform]').click(); true`); await sleep(60);
+ok('a picked chip shows its check', await ev(`(()=>{const c=document.querySelector('.qchip.on[data-value=reform]'); return !!c && c.classList.contains('just-on') && getComputedStyle(c.querySelector('.qc-check')).width!=='0px'})()`));
+await ev(`(()=>{const r=document.querySelector("[data-act=budget-range]"); r.value=25000; r.dispatchEvent(new Event("input",{bubbles:true})); return true})()`); await sleep(150);
+ok('the budget ruler follows the slider', await ev(`Math.abs(+getComputedStyle(document.querySelector('.ruler-track')).getPropertyValue('--p') - 0.5) < 0.001 && /\\$25,000/.test(document.querySelector('.bs-val').textContent)`));
+ok('the floating bar shows progress for this screen', await ev(`+getComputedStyle(document.querySelector('.quiz-foot')).getPropertyValue('--f') > 0 && getComputedStyle(document.querySelector('.quiz-foot')).position==='sticky'`));
+await ev(`document.querySelector('[data-act=quiz-next]').click(); true`); await sleep(600);
+ok('What matters is a scroller of 7 cards with dots', await ev(`document.querySelectorAll('.pcar .prow').length===7 && document.querySelectorAll('.pcar-pips .pip').length===7 && getComputedStyle(document.querySelector('.pcar')).overflowX==='auto'`));
+await ev(`document.querySelector('[data-act=pref-pick][data-key=academics][data-value="3"]').click(); true`); await sleep(60);
+ok('the meter fills up to the pick', await ev(`document.querySelectorAll('.pnum.lit[data-key=academics]').length===3 && document.querySelectorAll('.pnum.fill-in[data-key=academics]').length===3`));
+await sleep(800);
+ok('answering moves on to the next card', await ev(`document.querySelector('.pcar').scrollLeft > 50 && /^1 of 7/.test(document.querySelector('.pcar-count').textContent)`));
+await ev(`(()=>{const s=JSON.parse(localStorage.getItem("gyf:v1")); s.quiz={v:3,step:0,done:true,answers:{}}; localStorage.setItem("gyf:v1",JSON.stringify(s)); location.hash="#/browse"; location.reload(); return true})()`); await sleep(1300);
 
 // Desktop screenshot, then phone: pill off (menu is a grid), search button fits, no sideways scroll.
 await ev(`document.activeElement && document.activeElement.blur(); true`);
