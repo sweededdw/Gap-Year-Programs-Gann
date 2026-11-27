@@ -480,6 +480,8 @@
       '<video class="promo-video" controls playsinline preload="metadata" poster="media/promo-poster.jpg" width="1920" height="1080" aria-label="Israel Gap Year Finder video">' +
       '<source src="media/israel-gap-year-finder-promo.mp4" type="video/mp4"></video>' +
       '</section>' +
+      '<p class="home-cta"><a class="btn primary big" href="' + (quiz().done ? "#/results" : "#/start") + '">' + (quiz().done ? "See your top 3" : "Find your year") + "</a>" +
+      (quiz().done ? "" : '<span class="small muted">Two quick screens, then your top 3 matches.</span>') + "</p>" +
       '<section class="video-credits" aria-label="Video credits"><h2>Video credits</h2>' +
       '<p><strong>Photos</strong> from Unsplash, used under the <a href="https://unsplash.com/license" target="_blank" rel="noopener">Unsplash License</a>: <a href="https://unsplash.com/photos/PiU7uW9ZX9c" target="_blank" rel="noopener">Thomas Vogel</a>, <a href="https://unsplash.com/photos/TgUs0JOtXZA" target="_blank" rel="noopener">Bruno Aguirre</a>, <a href="https://unsplash.com/photos/d_so1tRFKJk" target="_blank" rel="noopener">Sander Crombach</a>, <a href="https://unsplash.com/photos/mNkxc_7yX-o" target="_blank" rel="noopener">Maayan Nemanov</a>, <a href="https://unsplash.com/photos/qgyyK3QVy9g" target="_blank" rel="noopener">menachem weinreb</a>, <a href="https://unsplash.com/photos/iuynaSIE7Tg" target="_blank" rel="noopener">Jonny Gios</a>, <a href="https://unsplash.com/photos/VkZuNpXxdIg" target="_blank" rel="noopener">Robert Bye</a>, <a href="https://unsplash.com/photos/eTa53Uf0StE" target="_blank" rel="noopener">Sammy Leigh Scholl</a>, <a href="https://unsplash.com/photos/j-g3z4-7V3w" target="_blank" rel="noopener">goni nachmani</a>, <a href="https://unsplash.com/photos/X_aF9qf2lIk" target="_blank" rel="noopener">Sylvain Brison</a>, Roi Solomon (<a href="https://unsplash.com/photos/4zfLHZ-g5p4" target="_blank" rel="noopener">1</a>, <a href="https://unsplash.com/photos/7fPQWx4Jkic" target="_blank" rel="noopener">2</a>), <a href="https://unsplash.com/photos/ZQ-e8l9ULVA" target="_blank" rel="noopener">Vera Gorbunova</a>, <a href="https://unsplash.com/photos/6iQYuGo42Uo" target="_blank" rel="noopener">Viktor SOLOMONIK</a>, <a href="https://unsplash.com/photos/IB3ssMDyDSY" target="_blank" rel="noopener">Arno Smit</a>, Micah Camper (<a href="https://unsplash.com/photos/HeOkiMENrw4" target="_blank" rel="noopener">1</a>, <a href="https://unsplash.com/photos/_Ou7g0w3wUU" target="_blank" rel="noopener">2</a>, <a href="https://unsplash.com/photos/jK6Z2dupM3U" target="_blank" rel="noopener">3</a>), PIERRE LEMON (<a href="https://unsplash.com/photos/h_bPuESqmDY" target="_blank" rel="noopener">1</a>, <a href="https://unsplash.com/photos/JvSUjAMKA6s" target="_blank" rel="noopener">2</a>), <a href="https://unsplash.com/photos/aZ8kboPshm8" target="_blank" rel="noopener">Piotr Musioł</a>, <a href="https://unsplash.com/photos/7pkwUyKVNTM" target="_blank" rel="noopener">Noam Cohen</a>, <a href="https://unsplash.com/photos/U-0GzSly-i8" target="_blank" rel="noopener">Levi Meir Clancy</a>, <a href="https://unsplash.com/photos/3k3l2brxmwQ" target="_blank" rel="noopener">Joel Muniz</a>.</p>' +
       '<p><strong>Video footage:</strong> stock clips of Israel. <strong>Music:</strong> an original score made for this video.</p>' +
@@ -1216,7 +1218,8 @@
 
     $app.innerHTML =
       '<a class="back" href="' + ({ list: "#/my-list", finder: "#/browse", results: "#/results" }[lastListView] || "#/swipe") + '">← ' + ({ list: "Saved programs", finder: "All programs", results: "Your top 3" }[lastListView] || "Back to swiping") + "</a>" +
-      (p.photo ? photoBox(p, "detail-banner", "") : "") +
+      // The whole photo shows, never cropped; a blurred copy of it fills any space beside a tall photo.
+      (p.photo ? photoBox(p, "detail-banner", '<img class="ph-fill" src="' + esc(p.photo) + '" alt="" aria-hidden="true" referrerpolicy="no-referrer" data-fill="1">') : "") +
       '<header class="card school-head' + (p.photo ? " with-banner" : "") + '">' + (p.logo || !p.photo ? '<span class="logo o-' + p.orientation + (p.logo ? " has-logo-img" : "") + '">' + (p.logo ? '<img src="' + esc(p.logo) + '" alt="' + esc(p.name) + ' logo" referrerpolicy="no-referrer" data-fallback="1">' : esc(p.short)) + "</span>" : "") + '<div class="info"><h1>' + esc(p.name) + "</h1>" +
       (p.audienceTag ? '<p class="aud-tag">' + I("users") + " " + esc(p.audienceTag) + "</p>" : "") +
       '<p class="muted">' + (p.operator && p.name.toLowerCase().indexOf(p.operator.toLowerCase()) < 0 ? esc(p.operator) + ", " : "") + esc(p.base) + "</p>" +
@@ -2050,11 +2053,20 @@
   // A program photo that fails to load falls back to the illustrated card (no inline handlers: the CSP forbids them).
   document.addEventListener("error", (e) => {
     const t = e.target;
+    if (t && t.tagName === "IMG" && t.dataset.fill) { t.remove(); return; }
     if (t && t.tagName === "IMG" && t.dataset.fallback) {
       const box = t.parentNode;
+      const fill = box && box.querySelector(".ph-fill"); if (fill) fill.remove();
       if (box) { box.classList.remove("has-photo", "has-logo", "has-logo-img"); if (box.classList.contains("logo") && !box.textContent) box.textContent = (byId[current.id] || {}).short || ""; }
       t.remove();
     }
+  }, true);
+
+  // The program-page photo box takes the photo's own shape (up to a maximum height), so nothing is cut off.
+  document.addEventListener("load", (e) => {
+    const t = e.target;
+    if (t && t.tagName === "IMG" && t.dataset.fallback && t.naturalWidth && t.parentNode && t.parentNode.classList.contains("detail-banner"))
+      t.parentNode.style.setProperty("--ar", String(t.naturalWidth / t.naturalHeight));
   }, true);
 
   // Hover tooltip for chart marks ([data-tip]); values are also printed as text, so this is a convenience.

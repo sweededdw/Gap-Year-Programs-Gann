@@ -20,6 +20,7 @@ ok('live: supabase-js passed the integrity check and loaded', await ev('typeof w
 ok('live: login form is enabled (config reached Supabase)', !(await ev('document.getElementById("submit").disabled')));
 const bad = logs.filter(l=>/Content Security Policy|integrity|Refused/i.test(l));
 ok('live: no CSP / integrity errors in the console', bad.length===0); if(bad.length) console.log(bad.join('\n'));
+ok('live: Switzer text font loads from this site', await ev('document.fonts.ready.then(()=>[...document.fonts].some(f=>f.family.replace(/"/g,"")==="Switzer" && f.status==="loaded"))'));
 ok('live: logo + Fraunces font load', await ev('document.querySelector(".logo-mark").complete && document.querySelector(".logo-mark").naturalWidth>0') && await ev('document.fonts.ready.then(()=>document.fonts.check("700 20px Fraunces"))'));
 ok('no JS errors', errs.length===0); if(errs.length) console.log(errs);
 console.log(out.join('\n')); process.exit(0);
