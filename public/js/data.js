@@ -4145,7 +4145,9 @@
     delete p.websiteLabel;
     if (p.sources.indexOf(w) < 0) p.sources.push(w);
   });
-  // Logos from each program's own website, shown when there's no photo (checked by eye on the card background).
+  // Logos from each program's own website (checked by eye on the card background). A logo is shown in place
+  // of the photo; the photo is kept as sitePhoto. The second batch (68, added 2026-11-27) came from each
+  // site's own logo image; programs listed only on Israel Central Station or Masa have none here.
   const LOGOS = {
     "migdal-oz": "https://skamigdaloz.org/wp-content/uploads/2020/12/\u05dc\u05d5\u05d2\u05d5-\u05d2\u05e8\u05e4\u05d9\u05e7\u05d4-\u05e6\u05d1\u05e2\u05d5\u05e0\u05d9.png",
     "netiv-aryeh": "https://yna.edu/Assets/img/logo.png?version=3",
@@ -4181,14 +4183,83 @@
     "melach-haaretz": "https://melach.org.il/wp-content/uploads/2019/12/Melach-logo-trans-300x125.png",
     "mevaseret-zion": "https://static.wixstatic.com/media/b877de_01b1495a71144169a1d0b9186edea99a%7Emv2.jpeg/v1/fit/w_2500,h_1330,al_c,q_90/b877de_01b1495a71144169a1d0b9186edea99a%7Emv2.jpeg",
     "midreshet-ora": "https://static.wixstatic.com/media/10a9d7_5ffdfa028fc74c889041a1487e0e3f22%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/10a9d7_5ffdfa028fc74c889041a1487e0e3f22%7Emv2.jpg",
+    "year-course": "https://cdn.prod.website-files.com/5f6a6806cad13d77e6ac1bb3/660545902721fece98fa0351_logo%20big.png",
+    "aardvark": "https://aardvarkisrael.com/wp-content/uploads/2015/09/aardvark-bxl-logo.png",
+    "kivunim": "https://images.squarespace-cdn.com/content/v1/664b714f81d4b81c4c14f51f/01b5a702-d2f1-4d4d-8783-9985952764c3/KIVUNIM+Logo.png?format=1500w",
+    "hevruta": "https://www.hartman.org.il/wp-content/uploads/terms-images/program/final-logo-ENG_square.jpg",
+    "kol-ami": "https://static.wixstatic.com/media/71579b_3c2faba2b6914a2d9b0342aa47469f53%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/71579b_3c2faba2b6914a2d9b0342aa47469f53%7Emv2.png",
+    "habonim-workshop": "https://static.wixstatic.com/media/c88b76_bcfe28e9a81040c9b6827acc1e1acdb0.png/v1/fill/w_39,h_38,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/semel%20(no%20hebrew%20-%20best%20version%20-%20no%20bac.png",
+    "tau-eli": "https://international.tau.ac.il/sites/english.register.tau.ac.il/files/209X110Lowy-logo-for-website.png",
+    "huji-first-year": "https://overseas.huji.ac.il/wp-content/uploads/2017/03/RISlongLogo-e1490280907695.jpg",
+    "bar-ilan-xp": "https://israelxp.com/wp-content/uploads/2022/09/logo-2022.png",
+    "torah-tech": "https://torahtech.co/apple-touch-icon.png",
+    "arevim": "https://i0.wp.com/www.hholamit.org.il/wp-content/uploads/2022/08/logo-Arevim.webp?resize=150%2C150&ssl=1",
+    "har-etzion": "https://www.haretzion.org/templates/yeshivatharetzionenglishtemplate/images/logo.jpg",
+    "hakotel": "https://www.hakotel.org.il/wp-content/uploads/2020/02/\u05dc\u05d5\u05d2\u05d5_60-removebg-preview.png",
+    "orayta": "https://www.orayta.org/images/template/Orayta_Logo_Transparent.png",
+    "migdal-hatorah": "https://static.wixstatic.com/media/190ac2_338cd373c4f84ce7bbf6c663d98373ee~mv2.png/v1/crop/x_0,y_76,w_2000,h_2076/fill/w_128,h_133,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Artboard%202.png",
+    "kby": "https://www.kby.org/images/logo-eng.png",
+    "ashreinu": "https://ashreinu.org.il/wp-content/uploads/2024/12/ya-logo-vertical.png",
+    "nishmat": "https://nishmat.co.il/wp-content/uploads/2026/05/\u05dc\u05d5\u05d2\u05d5-en-\u05e9\u05e7\u05d5\u05e3-e1780311232841-1024x720.png",
+    "ein-hanetziv": "https://www.midrasha.co.il/wp-content/uploads/2024/01/Group-1183.png",
+    "michlalah": "https://static.wixstatic.com/media/0e1622_bcbb2ff3fa8342aaba073c26b416daf2%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/0e1622_bcbb2ff3fa8342aaba073c26b416daf2%7Emv2.png",
+    "lindenbaum": "https://www.midreshet-lindenbaum.org.il/wp-content/themes/lind/assets/images/logo.png",
+    "ytva": "https://ytvaisrael.org/images/logos/ytva-logo.svg",
+    "mtva": "https://mtvaisrael.org/images/logo.png",
+    "tzofim-sherut": "https://static.wixstatic.com/media/274f62_41d511a120c84d349f98a54d213235c7~mv2.png/v1/fill/w_227,h_89,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/TNALogo_edited_edited_edited.png",
+    "garin-tzabar": "https://garintzabar.org/wp-content/uploads/2024/03/logo_garin_tzabar.svg",
+    "shnat-betar": "https://betar.org.il/wp-content/uploads/2023/08/logo-100-anos-PNG-1.png",
+    "hanoar-hatzioni": "https://i0.wp.com/www.hholamit.org.il/wp-content/uploads/2022/08/Nuevo-logo-Shnat--e1659603565827.webp?fit=1024%2C1024&ssl=1",
+    "hdoz-shnat": "https://static.wixstatic.com/media/9cf1a3_d996cdc140234f15bf7ba5a08da14d98~mv2.png/v1/fill/w_66,h_66,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Semel%20circle.png",
+    "eretz-hatzvi": "https://eretzhatzvi.org/wp-content/uploads/2024/08/Eretz-Logo.svg",
+    "torat-shraga": "https://toratshraga.com/wp-content/uploads/2025/12/cropped-Favicon-180x180.png",
+    "tiferet-tj": "https://www.yeshivatiferet.com/uploads/1/1/9/2/119243265/published/new-logo.jpg?1574320794",
+    "mayanot": "https://mayanot.edu/wp-content/uploads/2021/02/Mayanot_new_logo_gold-05.png",
+    "machon-meir": "https://machonmeir.net/wp-content/uploads/2023/02/cropped-91821054_1464854707018960_8465128438720626688_n-768x768-1.png",
+    "mercaz-hatorah": "https://mercazhatorah.org/wp-content/uploads/2021/10/mercaz-logo.png",
+    "mitzpe-yericho": "https://ymy.org.il/wp-content/uploads/2023/09/\u05dc\u05d5\u05d2\u05d5-\u05ea\u05d5\u05db\u05e0\u05d9\u05ea-\u05d0\u05de\u05e8\u05d9\u05e7\u05d0\u05d9\u05dd-yeshivat-mitzpe-yericho-2.png",
+    "ohr-yerushalayim": "https://static.wixstatic.com/media/3c3d01_96e6a5359f984e6187af477a7e256c89%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/3c3d01_96e6a5359f984e6187af477a7e256c89%7Emv2.png",
+    "bircas-hatorah": "https://www.bircas.org/wp-content/uploads/2020/03/blue-logo.jpg",
+    "ohr-david": "https://www.ohrdavid.org/wp-content/uploads/2025/11/Logo_Long_Color_edited_edited_edited-1.avif",
+    "darkaynu-men": "https://darkaynu.org.il/wp-content/uploads/2019/10/logo-1.png",
+    "zeev-hatorah": "https://zeevhatorah.org/img/logo.jpg",
+    "nesiv-hatorah": "https://user-images.strikinglycdn.com/res/hrscywv4p/image/upload/c_limit,fl_lossy,h_64,w_64,f_auto,q_auto/351405/torah_crown_ptgg76.png",
+    "torah-ore": "https://torahore.org/wp-content/uploads/2021/11/cropped-Logo-New-hd-264x60.png",
+    "mmy": "https://mevaseret.org/wp-content/uploads/2020/02/cropped-site-icon-180x180.jpeg",
+    "harova": "https://www.harova.org/media/m0yi20vf/logo-rova.png?height=64",
+    "machon-maayan": "https://machonmaayan.org/wp-content/uploads/2020/09/cropped-logo-500x500-1-180x180.png",
+    "midreshet-amit": "https://static.wixstatic.com/media/10a9d7_6865d81b51ea46fbbb533a83ead8dc7b~mv2.webp/v1/fill/w_93,h_80,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/logo.webp",
+    "tiferet-center": "https://www.tiferetcenter.com/wp-content/uploads/2023/09/cropped-TiferetLogo-favicon-180x180.png",
+    "midreshet-lev": "https://midreshetlev.org/wp-content/uploads/2025/10/Group-2222.png",
+    "torat-chessed": "https://toratchessed.com/wp-content/uploads/2020/12/MTC-logo-350x100-1.png",
+    "amudim": "https://images.squarespace-cdn.com/content/v1/576c2a7de4fcb5bcdb38afbd/65240e5d-36bd-4f13-957e-af58276fd8d1/Logo+Hi+Res.png?format=1500w",
+    "bnot-torah": "https://bnottorah.com/wp-content/uploads/2017/09/cropped-Favicon-180x180.jpg",
+    "eshel": "https://sephardicseminary.org/wp-content/uploads/2026/06/MidreshetEshel-Logo-2026.png",
+    "drisha": "https://yeshivat.drisha.org/wp-content/uploads/2018/12/\u05dc\u05d5\u05d2\u05d5-\u05db\u05d7\u05d5\u05dc-\u05d7\u05d3\u05e9-\u05e9\u05d5\u05e8\u05d4-\u05d0\u05d7\u05ea.svg",
+    "baer-miriam": "https://static.wixstatic.com/media/65eb4d_d938ff3eac9340278fd136ed84f669d6~mv2.png/v1/fill/w_79,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/NEW%20COLOR%20circle%20logo.png",
+    "meorot": "https://gomeorot.com/wp-content/uploads/2020/12/meorot-logo-2x.jpg",
+    "yeud": "https://static.wixstatic.com/media/cea767_9e9f915f33154d05adfb296ddb367db3.png/v1/fill/w_203,h_202,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/cea767_9e9f915f33154d05adfb296ddb367db3.png",
+    "aardvark-atid": "https://aardvarkisrael.com/wp-content/uploads/2015/09/aardvark-bxl-logo.png",
+    "galil": "https://gap-year-israel.org/wp-content/uploads/2025/05/Maga_LogoDescriptor_Green.svg",
+    "galil-plus": "https://gap-year-israel.org/wp-content/uploads/2025/05/Maga_LogoDescriptor_Green.svg",
+    "ohrsom": "https://ohrsomstudent.com/logo.png",
+    "ruach-hanegev": "https://static.wixstatic.com/media/08ca06_d9415fa82c6846dc924b67e79e133afe~mv2.png/v1/fill/w_211,h_68,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/%D7%A8%D7%95%D7%97%20%D7%94%D7%A0%D7%92%D7%91%20(1).png",
+    "hannaton": "https://echannaton.org/wp-content/uploads/logo_m.png",
+    "lachish": "https://mlachish.org/wp-content/uploads/2020/02/\u05dc\u05d5\u05d2\u05d5-\u05d9\u05e9\u05df.png",
+    "meitzar": "https://meitzar.org.il/wp-content/uploads/2025/08/Copy-of-\u05d4\u05de\u05d3\u05e8\u05e9\u05d4-\u05dc\u05de\u05e0\u05d4\u05d9\u05d2\u05d5\u05ea-\u05d5\u05d0\u05d7\u05e8\u05d9\u05d5\u05ea-\u05d7\u05d1\u05e8\u05ea\u05d9\u05ea-\u05de\u05d9\u05e6\u05e8-\u05dc\u05d5\u05d2\u05d5-e1764679863931.jpg",
+    "haviva-reik": "https://static.wixstatic.com/media/d1020f_b88480c4c2b847bba66f44e558855bb6~mv2.png/v1/fill/w_175,h_173,al_c,q_85,enc_avif,quality_auto/d1020f_b88480c4c2b847bba66f44e558855bb6~mv2.png",
+    "aish-gesher-women": "https://aishgesherwomen.com/wp-content/uploads/2023/08/efg-at-aish-logo.png",
+    "moreshet-yerushalayim": "https://www.moreshetyerushalayim.com/media/rd/logo.webp",
+    "aish-gesher": "https://aishgesherwomen.com/wp-content/uploads/2023/08/efg-at-aish-logo.png",
   };
   programs.forEach(function (p) {
     p.profile = PROFILES[p.id] || prof("- - - - - - - - - - - -", "light");
     p.learning = p.profile.learning;
     p.type = TYPES[p.id] || "gap";
     p.fields = FIELDS[p.id] || (p.type === "yeshiva" || p.type === "seminary" ? { jewish: TEXT.jewish } : {});
-    if (PHOTOS[p.id]) p.photo = PHOTOS[p.id];
+    if (PHOTOS[p.id]) p.sitePhoto = PHOTOS[p.id];
     if (LOGOS[p.id]) p.logo = LOGOS[p.id];
+    else if (PHOTOS[p.id]) p.photo = PHOTOS[p.id]; // the logo wins; the photo shows only when there's no logo
   });
 
   // ---- Swipe-card highlights: three quick bullets per program, taken from the facts above and in details.js ----

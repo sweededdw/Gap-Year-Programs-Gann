@@ -90,4 +90,16 @@ const r = await cmd('Page.captureScreenshot',{format:'png'}); writeFileSync(`${S
 ok('back link says "Your top 3"', /Your top 3/.test(await ev('document.querySelector(".back").textContent')) || true);
 await vp(390,900); await cmd('Page.navigate',{url:B+'#/results'}); await sleep(700); await shot('m-results-mobile');
 ok('no JS errors', errs.length===0); if(errs.length) console.log(errs);
+// A place you pick narrows the list (it is a filter, not just a score).
+await ev('localStorage.clear(); localStorage.setItem("gyf:v1", JSON.stringify({quiz:{v:3,step:2,done:false,answers:{}}})); location.hash="#/start"; location.reload(); true'); await sleep(900);
+const cAll = await count();
+ok('every place the programs use can be picked (8)', await ev('document.querySelectorAll("[data-act=city-pick]:not(.any)").length')===8);
+await click('[data-act=city-pick][data-value=tel-aviv]');
+const nTA = await ev('GYF_DATA.programs.filter(p=>(p.cities||[]).includes("tel-aviv")).length');
+ok(`picking Tel Aviv leaves only its ${nTA} programs (was ${cAll})`, nTA>0 && nTA<cAll && await count()===nTA);
+await click('[data-act=city-pick][data-value=north]');
+const nTN = await ev('GYF_DATA.programs.filter(p=>(p.cities||[]).some(c=>c==="tel-aviv"||c==="north")).length');
+ok(`two places keep programs in either (${nTN})`, await count()===nTN);
+await click('.qchip.any[data-key=city]');
+ok('"Don\'t care" brings every program back', await count()===cAll);
 console.log(out.join('\n')); process.exit(0);

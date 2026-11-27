@@ -539,7 +539,7 @@
     list.sort((a, b) =>
       sort === "cost" ? (a.costUSD == null ? 1e9 : a.costUSD) - (b.costUSD == null ? 1e9 : b.costUSD)
         : sort === "name" ? a.name.localeCompare(b.name)
-        : sort === "featured" ? (b.photo ? 2 : b.logo ? 1 : 0) - (a.photo ? 2 : a.logo ? 1 : 0) || D.programs.indexOf(a) - D.programs.indexOf(b)
+        : sort === "featured" ? (b.logo ? 2 : b.photo ? 1 : 0) - (a.logo ? 2 : a.photo ? 1 : 0) || D.programs.indexOf(a) - D.programs.indexOf(b)
         : dkey(a) < dkey(b) ? -1 : dkey(a) > dkey(b) ? 1 : a.name.localeCompare(b.name)
     );
     return list;
@@ -1443,6 +1443,7 @@
     ["adventure", "Chill", "Lots"],
   ];
   // Screen 1: dealbreakers. Anything left blank doesn't filter.
+  const CITY_PICKS = ["jerusalem", "tel-aviv", "central", "beit-shemesh", "gush-etzion", "north", "kibbutz", "abroad"];
   const DEAL = {
     orientation: { q: "Which communities do you feel comfortable with?", multi: true,
       options: [["pluralistic", "", "Pluralistic"], ["conservative", "", "Conservative"], ["reform", "", "Reform"], ["mo-coed", "", "Modern Orthodox"], ["orthodox", "", "Yeshiva / seminary"], ["secular", "", "Secular"]] },
@@ -1496,6 +1497,8 @@
       if (d.must && d.must.indexOf("credit") >= 0 && p.credit !== true) return;
       const heb = d.hebrew && d.hebrew[0], hr = p.profile.hebrew;
       if (heb === "none" && hr && hr.v >= 5) return;
+      // A place you picked narrows the list: only programs based there (any of your picks) stay in.
+      if (a.city.length && !a.city.some((c) => (p.cities || []).indexOf(c) >= 0)) return;
       // --- weighted fit ---
       let totW = 0, tot = 0;
       const parts = [];
@@ -1513,7 +1516,7 @@
         const fit = p.learning === a.learning ? 1 : p.learning === "both" || a.learning === "both" ? 0.6 : 0;
         add("learning", 2, fit);
       }
-      if (a.city.length) add("city", 2, a.city.some((c) => p.cities.indexOf(c) >= 0) ? 1 : 0);
+      if (a.city.length) add("city", 2, 1); // everything left is in a place you picked
       a.field.forEach((f) => add("field:" + f, 2, p.fields[f] ? 1 : 0));
       const score = totW ? tot / totW : 0;
       const strong = parts.filter((x) => x.fit >= 0.75).sort((x, y) => y.w * y.fit - x.w * x.fit);
@@ -1620,7 +1623,7 @@
         prefScroller() +
         '<details class="extras"' + (a.field.length || a.city.length ? " open" : "") + "><summary>Optional: a field or city you have in mind</summary>" +
         choiceGroup("field", { q: "Field (up to 3)", anyLabel: "Don't care", options: Object.keys(L.field).map((k) => [k, L.field[k][0], L.field[k][1]]) }, a.field, "field-pick") +
-        choiceGroup("city", { q: "Where", anyLabel: "Don't care", options: [["jerusalem", "", "Jerusalem"], ["tel-aviv", "", "Tel Aviv"], ["kibbutz", "", "Kibbutz"], ["north", "", "The North"], ["abroad", "", "Travel abroad"]] }, a.city, "city-pick") +
+        choiceGroup("city", { q: "Where", anyLabel: "Don't care", options: CITY_PICKS.map((k) => [k, "", L.city[k]]) }, a.city, "city-pick") +
         "</details>";
     }
     // How much of this screen is answered: drives the line along the top of the floating bar.

@@ -19,7 +19,7 @@ const all=[];
 for (const h of views) { await cmd('Page.navigate',{url:'about:blank'}); await sleep(100); await cmd('Page.navigate',{url:B+h}); await sleep(1500); const v=await ev('window.__cspv||["no watcher"]'); all.push(...v.map(x=>h+": "+x)); }
 ok('every view renders under the production CSP with zero violations', all.length===0); if(all.length) console.log(all.slice(0,10).join("\n"));
 await cmd('Page.navigate',{url:B+'#/browse'}); await sleep(2500);
-ok('program photos still load (img-src https:)', await ev('document.querySelectorAll(".bcard-photo.has-photo").length')>=30);
+ok('program logos and photos still load (img-src https:)', await ev('document.querySelectorAll(".bcard-photo.has-photo, .bcard-photo.has-logo").length')>=30);
 ok('Google Fonts load (Fraunces in header)', await ev('document.fonts.check("700 20px Fraunces")'));
 ok('broken photo falls back without an inline handler', await ev('!document.querySelector(\'.bcard[data-href="#/program/yachad-mechinot"] .has-photo\')'));
 await cmd('Page.navigate',{url:'http://localhost:4010/login'}); await sleep(2000);

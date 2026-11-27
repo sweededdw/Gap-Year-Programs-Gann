@@ -1709,9 +1709,14 @@ a { text-underline-offset: .2em; }
 .topbar { padding-top: 10px; background: color-mix(in srgb, var(--bg) 62%, transparent); border-bottom: 0; }
 .topbar::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; pointer-events: none;
   background: linear-gradient(to right, transparent 0%, color-mix(in srgb, var(--text) 16%, transparent) 50%, transparent 100%); }
-.topbar-inner { max-width: 1320px; padding: 12px 24px 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
-.topbar-inner .brand { justify-self: start; }
-.topbar-tools { justify-self: end; }
+/* Logo | a gap of up to 40px | the pill | all the spare room | the tools. The pill sits left of center, so a
+   long name in the account button eats into the room on its right, not into the links; when space is tight
+   the 40px gap gives way first. */
+.topbar-inner { max-width: 1320px; padding: 12px 24px 14px; display: grid; grid-template-columns: max-content minmax(0, 40px) max-content minmax(0, 1fr) max-content; column-gap: 0; align-items: center; }
+.topbar-inner .brand { grid-column: 1; justify-self: start; }
+.topbar-inner > .topnav { grid-column: 3; justify-self: start; margin-left: 16px; flex-wrap: nowrap; }
+.topbar-tools { grid-column: 5; justify-self: end; margin-left: 24px; }
+.topbar .acct-menu > summary { max-width: 160px; }
 .topbar.tb-enter { animation: tb-in .3s cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes tb-in { from { transform: translateY(-24px); opacity: 0; } }
 
@@ -1742,12 +1747,27 @@ a { text-underline-offset: .2em; }
 .topnav.from-group > a { animation: nav-swap .22s cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes nav-swap { from { opacity: 0; transform: translateY(-8px); } }
 
+/* Signed in, the tools on the right get wider: drop their words before the pill runs out of room. */
+@media (min-width: 861px) and (max-width: 1380px) { .topbar .theme-label, .topbar .qs-open-label { display: none; } }
 /* Between phone and wide desktop: tighter links so everything fits on one row. */
 @media (min-width: 861px) and (max-width: 1180px) {
   .topbar-inner { padding-left: 16px; padding-right: 16px; gap: 10px; }
   .topnav > a, .nav-sub > a, .nav-back { padding: 9px 12px; font-size: 14px; }
   .topbar .wm-header .wm-title { font-size: 18px; }
   .topbar .theme-label, .topbar .qs-open-label { display: none; }
+  .topbar .qs-open-kbd { display: none; }
+  .topbar .qs-open { padding: 7px 9px; }
+  .topbar .acct-menu > summary { max-width: 130px; }
+}
+/* Just above phone width the links need the room: the logo stays, its words go (the link keeps its label). */
+@media (min-width: 861px) and (max-width: 1000px) {
+  .topbar .wm-header { display: none; }
+  .topnav > a, .nav-sub > a, .nav-back { padding: 9px 10px; }
+}
+/* Narrow laptops: the name gives way to "Account", like on phones. */
+@media (min-width: 861px) and (max-width: 1060px) {
+  .topbar .acct-menu .user-name { display: none; }
+  .topbar .acct-menu > summary::after { content: "Account"; }
 }
 
 /* Phones: one slim row; Menu opens the bar full screen, and Home expands in place. */
@@ -1756,6 +1776,7 @@ a { text-underline-offset: .2em; }
   .topbar { padding-top: 4px; }
   .topbar-inner { display: flex; flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
   .topnav { display: none; order: 3; flex-basis: 100%; border: 0; border-radius: 0; background: none; padding: 0; overflow: visible; }
+  .topbar-inner > .topnav, .topbar-tools { margin-left: 0; }
   .topbar.nav-open { height: 100vh; height: 100dvh; overflow-y: auto; background: var(--bg); }
   .topbar.nav-open .topnav { display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 14px 4px 24px; animation: nav-swap .22s cubic-bezier(.2, .8, .2, 1) both; }
   .topbar.nav-open .topnav > a { padding: 15px 16px; font-size: 18px; font-weight: 600; border-radius: 16px; color: var(--text); background: none; justify-content: flex-start; }

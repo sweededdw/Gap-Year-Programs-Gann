@@ -15,8 +15,9 @@ await cmd('Page.navigate',{url:B+'#/browse'}); await sleep(500); await ev('local
 ok('a photo card for every program', await ev('document.querySelectorAll(".bcard").length')===await ev('window.GYF_DATA.programs.length') && await ev('window.GYF_DATA.programs.length')>=150);
 ok('filter panel hidden by default', !(await ev('!!document.querySelector(".filters-panel")')));
 const loaded = await ev('[...document.querySelectorAll(".bcard-photo img")].filter(i=>i.complete&&i.naturalWidth>0).length');
-const withPhoto = await ev('document.querySelectorAll(".bcard-photo.has-photo").length');
-ok(`photos load (${loaded} loaded, ${withPhoto} shown; broken ones fall back to illustration)`, withPhoto >= 40 && loaded >= 20);
+const withPhoto = await ev('document.querySelectorAll(".bcard-photo.has-photo, .bcard-photo.has-logo").length');
+ok(`logos and photos load (${loaded} loaded, ${withPhoto} shown; broken ones fall back to illustration)`, withPhoto >= 100 && loaded >= 20);
+ok('a program with both a logo and a photo shows its logo', await ev('!!document.querySelector(\'.bcard[data-href="#/program/year-course"] .bcard-photo.has-logo\') && !document.querySelector(\'.bcard[data-href="#/program/year-course"] .has-photo\') && !!GYF_DATA.programs.find(p=>p.id==="year-course").sitePhoto'));
 ok('every card has a website link + details link', await ev('[...document.querySelectorAll(".bcard")].every(c=>c.querySelector("a[target=_blank]") && c.querySelector("a[href^=\\"#/program/\\"]"))'));
 ok('yeshiva label shown up front', /Yeshiva · Men only/.test(await ev('document.querySelector(".bcard[data-href=\\"#/program/hakotel\\"] .type-badge").textContent')));
 ok('seminary label shown up front', /Seminary · Women only/.test(await ev('document.querySelector(".bcard[data-href=\\"#/program/nishmat\\"] .type-badge").textContent')));
@@ -59,6 +60,8 @@ await ev('document.querySelector(".bcard .bcard-facts").click(); true'); await s
 ok('clicking card body opens details', await ev('location.hash')===hid);
 await cmd('Page.navigate',{url:B+'#/program/hevruta'}); await sleep(1500);
 ok('program page lists fields with how (Year Course: coding bootcamp)', /Fields you can explore/.test(await ev('document.querySelector("#sec-overview").textContent')));
+ok('detail page with a logo: the logo in the header, no photo banner', await ev('!document.querySelector(".detail-banner") && !!document.querySelector(".school-head .logo.has-logo-img img")'));
+await cmd('Page.navigate',{url:B+'#/program/nativ'}); await sleep(1500); // no logo found for Nativ: its photo still shows
 ok('detail page: photo banner + type label', !!(await ev('!!document.querySelector(".detail-banner")')) && /Gap year program/.test(await ev('document.querySelector(".school-head .type-badge").textContent')));
 await sleep(1500);
 const ban = await ev(`(()=>{const b=document.querySelector(".detail-banner"); const i=b.querySelector("img[data-fallback]"); const r=b.getBoundingClientRect(); return {fit:getComputedStyle(i).objectFit, fill:!!b.querySelector("img.ph-fill"), loaded:i.complete && i.naturalWidth>0, ar:i.naturalWidth/i.naturalHeight, boxAr:r.width/r.height, h:r.height, maxH:parseFloat(getComputedStyle(b).maxHeight), shade:getComputedStyle(b,"::after").display}})()`);
