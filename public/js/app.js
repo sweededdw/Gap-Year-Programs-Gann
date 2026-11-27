@@ -195,6 +195,50 @@
     b.textContent = text;
     b.hidden = !text;
   }
+  // Undo instead of "Are you sure?": the change happens right away and a small bar offers to take it back.
+  // The bar leaves when its countdown ends (it pauses while the pointer or keyboard focus is on it), or on Dismiss.
+  let undoBar = null;
+  function undoToast(text, undo) {
+    if (undoBar) undoBar.remove();
+    const t = (undoBar = document.createElement("div"));
+    t.className = "undo-toast";
+    t.setAttribute("role", "status");
+    t.innerHTML = '<span class="ut-text"></span><button type="button" class="ut-undo">Undo</button>' +
+      '<button type="button" class="ut-x" aria-label="Dismiss">' + I("x") + '</button><span class="ut-timer" aria-hidden="true"></span>';
+    t.querySelector(".ut-text").textContent = text;
+    const close = () => { if (undoBar === t) undoBar = null; t.remove(); };
+    t.querySelector(".ut-undo").addEventListener("click", () => { close(); undo(); });
+    t.querySelector(".ut-x").addEventListener("click", close);
+    t.querySelector(".ut-timer").addEventListener("animationend", close);
+    document.body.appendChild(t);
+  }
+  // Share a page: the system share sheet on phones, otherwise copy the link and say so on the button.
+  function shareLink(btn) {
+    const url = location.href.split("#")[0] + btn.dataset.hash;
+    const live = btn.querySelector(".cp-live");
+    const done = () => {
+      btn.classList.add("copied");
+      if (live) live.textContent = "Link copied";
+      clearTimeout(btn._t);
+      btn._t = setTimeout(() => { btn.classList.remove("copied"); if (live) live.textContent = ""; }, 1800);
+    };
+    const touch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    if (touch && navigator.share) { navigator.share({ title: btn.dataset.title || document.title, url }).catch(() => {}); return; }
+    const fallback = () => {
+      const ta = document.createElement("textarea");
+      ta.value = url; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+      ta.remove(); btn.focus();
+      if (ok) done(); else window.prompt("Copy this link:", url);
+    };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(url).then(done, fallback); else fallback();
+  }
+  function shareBtn(hash, title, label, cls) {
+    return '<button class="btn copy-btn' + (cls ? " " + cls : "") + '" type="button" data-act="share" data-hash="' + esc(hash) + '" data-title="' + esc(title) + '">' +
+      '<span class="cp-a">' + I("link") + " " + label + '</span><span class="cp-b" aria-hidden="true">' + I("check") + " Link copied</span>" +
+      '<span class="cp-live" role="status"></span></button>';
+  }
   // Save to the account copy only if nobody else changed it since we last read it
   // (another device or tab). Otherwise stop and let the student choose which version to keep.
   async function pushRemote(force) {
@@ -406,7 +450,10 @@
     else renderFinder();
     navState();
   }
+  const TITLES = { quiz: "Find your year", swipe: "Discover", results: "Your top 3", finder: "All programs", list: "My list", colleges: "Colleges", compare: "Compare", community: "Community", admin: "Edit site data" };
   function navState() {
+    const pageName = current.view === "detail" && byId[current.id] ? byId[current.id].name : TITLES[current.view];
+    document.title = (pageName ? pageName + " · " : "") + "Israel Gap Year Finder";
     document.querySelectorAll("[data-nav]").forEach((a) => {
       a.classList.toggle("active", a.dataset.nav === NAV_FOR[current.view]);
     });
@@ -520,6 +567,7 @@
     check: '<path d="M20 6 9 17l-5-5"/>',
     sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
     flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
   };
   function I(name, filled) {
     return '<svg class="ic" viewBox="0 0 24 24" width="1em" height="1em" fill="' + (filled ? "currentColor" : "none") +
@@ -860,7 +908,7 @@
         '<div class="card table-wrap cmp-wrap"><table class="cmp"><tbody>' + more + "</tbody></table></div></details>" : "") +
       (n && hidden ? '<p class="small muted" style="margin-top:8px">' + hidden + " row" + (hidden === 1 ? " is" : "s are") + " hidden because the programs match.</p>" : "") +
       (n ? "" : '<div class="card empty" style="margin-top:12px">Choose programs above, or tap "Compare" on any program page. <a href="#/results">Compare your Top 3</a>.</div>') +
-      (n ? '<p class="small muted" style="margin-top:8px">Share this comparison: <a href="#/compare/' + ids.join(",") + '">link</a></p>' : "");
+      (n ? '<p class="cmp-share">' + shareBtn("#/compare/" + ids.join(","), "Program comparison", "Copy link to this comparison", "sm") + "</p>" : "");
     pinCompareNames();
   }
   // Phones: once the program header scrolls away, a slim bar of the three names stays pinned under the top bar.
@@ -1164,6 +1212,7 @@
       (allSources.length ? '<a class="src-line" href="#sources" data-jump="sources">' + I("check") + " Facts from " + allSources.length + " source" + (allSources.length === 1 ? "" : "s") + ", checked " + fmtDate(checkedOn(p.id), { month: "short", day: "numeric" }) + "</a>" : "") + "</div>" +
       '<div class="actions"><button class="btn' + (saved ? "" : " primary") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '">' + (saved ? I("heart", true) + " On my list" : I("heart") + " Add to my list") + "</button>" +
       '<button class="btn" data-act="cmp-add" data-id="' + p.id + '">Compare</button>' +
+      shareBtn("#/program/" + p.id, p.name, "Share") +
       '<a class="btn" href="' + esc(p.website) + '" target="_blank" rel="noopener">' + (p.websiteLabel ? esc(p.websiteLabel) : "Official website") + " ↗</a></div></header>" +
       keyFeatures(p, nd) +
       '<nav class="tabs acc-nav" aria-label="Page sections"><a href="#key-features" data-jump="key-features">Key features</a><a href="#grp-about" data-jump="grp-about">About</a>' +
@@ -1218,7 +1267,7 @@
               '<td style="min-width:120px"><div class="small">' + pr.pct + '%</div><div class="route-bar' + (pr.pct >= 100 ? " done" : "") + '"><div class="progress-bar"><span style="width:' + pr.pct + '%"></span></div>' + I("flag", pr.pct >= 100) + "</div></td>" +
               "<td>" + esc(resultLabel(ps(p.id).result)) + "</td></tr>";
           }).join("") + "</tbody></table></div>"
-        : '<div class="card empty">Nothing saved yet. Tap the heart on any program to add it here.</div>');
+        : '<div class="card empty">Nothing saved yet. Save a program with its heart and it shows up here. <a href="#/browse">Browse all programs</a></div>');
   }
 
   // ---------- College gap year policies ----------
@@ -1368,7 +1417,7 @@
   ];
   // Screen 1: dealbreakers. Anything left blank doesn't filter.
   const DEAL = {
-    orientation: { q: "Which communities feel right?", multi: true,
+    orientation: { q: "Which communities do you feel comfortable with?", multi: true,
       options: [["pluralistic", "", "Pluralistic"], ["conservative", "", "Conservative"], ["reform", "", "Reform"], ["mo-coed", "", "Modern Orthodox"], ["orthodox", "", "Yeshiva / seminary"], ["secular", "", "Secular"]] },
     gender: { q: "Setting", multi: false, options: [["coed", "", "Co-ed"], ["men", "", "Men's"], ["women", "", "Women's"]] },
     hebrew: { q: "Your Hebrew right now", multi: false, anyLabel: "Skip",
@@ -1509,7 +1558,6 @@
             '<p class="small muted" style="margin-top:4px">Programs that haven\'t posted a US-dollar price stay in.</p></div>' : "")).join("");
     } else {
       body = "<h1>What matters to you?</h1>" +
-        '<p class="muted">Rate each from 1 to 5, or "Don\'t care".</p>' +
         '<div class="prows">' + PREF_ROWS.map(prefRow).join("") + "</div>" +
         '<details class="extras"' + (a.field.length || a.city.length ? " open" : "") + "><summary>Optional: a field or city you have in mind</summary>" +
         choiceGroup("field", { q: "Field (up to 3)", anyLabel: "Don't care", options: Object.keys(L.field).map((k) => [k, L.field[k][0], L.field[k][1]]) }, a.field, "field-pick") +
@@ -1537,7 +1585,7 @@
       const cls = x.fit >= 0.75 ? "good" : x.fit >= 0.5 ? "ok" : "bad";
       const mark = x.fit >= 0.75 ? "✓" : x.fit >= 0.5 ? "~" : "✕";
       return '<li class="' + cls + '"><span class="bm">' + mark + "</span>" + esc(catLabel(x.k)) +
-        (c && !x.unknown ? '<span class="bv">you ' + x.want + " · " + (x.est ? "≈" : "") + x.have + "</span>" : "") +
+        (c && !x.unknown ? '<span class="bv">you ' + x.want + " · program " + (x.est ? '<abbr title="our estimate">≈</abbr>' : "") + x.have + "</span>" : "") +
         (x.k === "hebrewLevel" ? '<span class="bv">you: ' + HEB_NAME[x.level] + " · program " + (x.est ? "≈" : "") + x.have + "/5</span>" : "") + "</li>";
     }).join("");
   }
@@ -1564,7 +1612,7 @@
           "</div></article>";
       }).join("") + "</div>" +
       '<div class="results-foot"><a class="btn primary big" href="#/swipe">Swipe through all ' + all.length + " matches →</a>" +
-      '<p class="small muted">In a breakdown, "you 5 · ≈4" = you wanted 5, the program rates about 4 (≈ = our estimate).</p></div>' +
+      "</div>" +
       "</section>";
   }
 
@@ -1803,18 +1851,26 @@
     e.stopPropagation();
     if (/^(quiz-|deal-pick|pref-pick|city-pick|field-pick)/.test(act)) return quizAct(act, el);
     if (act.indexOf("comm-") === 0) return COMM.click(act, el);
+    if (act === "share") return shareLink(el);
     if (act === "swipe-like") return decide("like");
     if (act === "swipe-pass") return decide("pass");
     if (act === "swipe-undo") return undoSwipe();
     if (act === "swipe-info") { const c = $app.querySelector(".scard.top"); if (c) location.hash = "#/program/" + c.dataset.id; return; }
     if (act === "swipe-reset") { state.passed = {}; save(); return render(); }
     if (act === "restart") {
-      if (!confirm("Start the quiz over? Your answers will be cleared. Saved programs stay saved.")) return;
+      const before = JSON.stringify({ quiz: state.quiz, passed: state.passed, swipeHistory: state.swipeHistory });
       state.quiz = { v: 3, step: 1, done: false, answers: {} };
       state.passed = {}; state.swipeHistory = [];
       save();
       if (location.hash === "#/start") render(); else location.hash = "#/start";
       window.scrollTo(0, 0);
+      undoToast("Quiz answers cleared. Saved programs stay saved.", () => {
+        const b = JSON.parse(before);
+        state.quiz = b.quiz; state.passed = b.passed || {}; state.swipeHistory = b.swipeHistory || [];
+        save();
+        const to = quiz().done ? "#/results" : "#/start";
+        if (location.hash === to) render(); else location.hash = to;
+      });
       return;
     }
     if (act === "retake") {
@@ -1876,8 +1932,8 @@
       state.colleges.push({ name: ci ? ci.name : nf ? nf.name : name, policy: ci ? collegeSummary(ci) : "", deadline: ci && ci.deadlineDate ? ci.deadlineDate : "", status: "", app: "", plan: "", appDeadline: "", notes: "" });
       state.colOpen[state.colleges[state.colleges.length - 1].name] = true; // a just-added college opens so you can fill it in
     } else if (act === "del-college") {
-      if (!confirm("Remove this college from every program page?")) return;
-      state.colleges.splice(+el.dataset.i, 1);
+      const at = +el.dataset.i, gone = state.colleges.splice(at, 1)[0];
+      if (gone) undoToast("Removed " + (gone.name || "the college") + " from every program page.", () => { state.colleges.splice(Math.min(at, state.colleges.length), 0, gone); save(); render(); });
     } else if (act === "add-essay") {
       const pr = document.getElementById("ce-prompt"), li = document.getElementById("ce-limit");
       if (!pr.value.trim()) { pr.focus(); return; }
@@ -1930,7 +1986,14 @@
     save();
     const box = el.closest(".costcalc");
     if (!box || !p) return;
-    if (!redraw) { const out = box.querySelector(".cc-out"); if (out) out.innerHTML = COST.summary(p, DETAILS[id] || {}, c, { esc, I }); return; }
+    if (!redraw) {
+      const out = box.querySelector(".cc-out"); if (!out) return;
+      const num = (x) => (x ? +x.textContent.replace(/[^0-9.]/g, "") : NaN), was = num(out.querySelector(".cc-net"));
+      out.innerHTML = COST.summary(p, DETAILS[id] || {}, c, { esc, I });
+      const net = out.querySelector(".cc-net"), now = num(net);
+      if (net && was === was && now === now && was !== now) net.classList.add(now > was ? "net-up" : "net-down");
+      return;
+    }
     const ways = box.querySelector(".cc-ways"), open = ways && ways.open, y = window.scrollY;
     box.outerHTML = COST.render(p, DETAILS[id] || {}, c, { esc, I });
     const nb = $app.querySelector('.costcalc[data-cost-for="' + id + '"]');

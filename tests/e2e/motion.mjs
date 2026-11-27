@@ -66,10 +66,45 @@ const rt = await ev(`(()=>{const a=[...document.querySelectorAll(".toc.route a.r
 ok('checklist is a route of 11 stops ending in a flag '+JSON.stringify(rt), rt.n===11 && rt.endFlag);
 ok('header says where the facts come from', /Facts from \d+ sources?, checked /.test(rt.src) && rt.srcTarget);
 await ev(`(()=>{const s=JSON.parse(localStorage.getItem("gyf:v1")); s.quiz={v:3,step:1,done:false,answers:{}}; localStorage.setItem("gyf:v1",JSON.stringify(s)); location.hash="#/start"; location.reload(); return true})()`); await sleep(1300);
+ok('quiz asks which communities you feel comfortable with', await ev(`[...document.querySelectorAll("#app h3")].some(h=>h.textContent.trim()==="Which communities do you feel comfortable with?")`));
 ok('quiz steps run to a finish flag', await ev(`document.querySelectorAll(".quiz-dots span").length===2 && !!document.querySelector(".quiz-top .route-end svg")`));
 const cr = await ev(`(()=>{document.documentElement.setAttribute("data-theme","daylight"); const cs=getComputedStyle(document.documentElement); const L=h=>{h=h.trim(); const c=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)); return .2126*c[0]+.7152*c[1]+.0722*c[2]}; const R=(a,b)=>{const x=L(cs.getPropertyValue(a)),y=L(cs.getPropertyValue(b)); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}; const r={accent:R("--accent","--accent-soft"), ok:R("--ok","--ok-soft")}; document.documentElement.setAttribute("data-theme","sunset"); return r})()`);
 ok('Daylight accent and ok text reach 4.5:1 on their soft backgrounds '+JSON.stringify(cr), cr.accent>=4.5 && cr.ok>=4.5);
 await ev(`(()=>{const s=JSON.parse(localStorage.getItem("gyf:v1")); s.quiz={v:3,step:0,done:true,answers:{}}; localStorage.setItem("gyf:v1",JSON.stringify(s)); location.hash="#/browse"; location.reload(); return true})()`); await sleep(1300);
+
+// Undo instead of "Are you sure?", copy-link buttons, page titles, the empty Saved list.
+await ev(`(()=>{const s=JSON.parse(localStorage.getItem("gyf:v1")); s.colleges=[{name:"Brandeis University",policy:"",deadline:"",status:"",app:"",plan:"",appDeadline:"",notes:""}]; s.saved={}; localStorage.setItem("gyf:v1",JSON.stringify(s)); location.hash="#/results"; location.reload(); return true})()`); await sleep(1300);
+ok('page title names the page', await ev(`document.title`)==='Your top 3 · Israel Gap Year Finder');
+await ev(`document.querySelector(".results [data-act=restart]").click(); true`); await sleep(500);
+ok('restarting the quiz asks nothing and offers Undo', await ev(`location.hash==="#/start" && !!document.querySelector(".undo-toast .ut-undo") && JSON.parse(localStorage.getItem("gyf:v1")).quiz.done===false`));
+await ev(`document.querySelector(".undo-toast .ut-undo").click(); true`); await sleep(500);
+ok('Undo brings the answers and the top 3 back', await ev(`location.hash==="#/results" && JSON.parse(localStorage.getItem("gyf:v1")).quiz.done===true && !document.querySelector(".undo-toast")`));
+await ev(`location.hash="#/colleges"; true`); await sleep(600);
+await ev(`(()=>{document.querySelectorAll("#app details").forEach(d=>d.open=true); const b=document.querySelector('[data-act="del-college"]'); if(b) b.click(); return !!b})()`); await sleep(300);
+ok('removing a college happens at once, with Undo', await ev(`JSON.parse(localStorage.getItem("gyf:v1")).colleges.length===0 && /Removed Brandeis University/.test((document.querySelector(".undo-toast .ut-text")||{}).textContent||"")`));
+await ev(`document.querySelector(".undo-toast .ut-undo").click(); true`); await sleep(300);
+ok('Undo puts the college back', await ev(`JSON.parse(localStorage.getItem("gyf:v1")).colleges[0].name==="Brandeis University"`));
+await ev(`location.hash="#/program/aardvark"; true`); await sleep(600);
+ok('program page title is the program name', /^Aardvark Israel · /.test(await ev(`document.title`)));
+await ev(`document.execCommand = () => true; document.querySelector('.actions .copy-btn[data-act="share"]').click(); true`); await sleep(250);
+ok('Share copies the link and says so on the button', await ev(`(()=>{const b=document.querySelector(".actions .copy-btn"); return b.classList.contains("copied") && b.dataset.hash==="#/program/aardvark" && b.querySelector(".cp-live").textContent==="Link copied"})()`));
+await ev(`location.hash="#/my-list"; true`); await sleep(500);
+ok('empty Saved list points to Browse', await ev(`!!document.querySelector('.card.empty a[href="#/browse"]')`));
+await ev(`location.hash="#/browse"; true`); await sleep(600);
+
+// Responds as you scroll and point: typed headline, blocks that rise into view, no leftover legend text.
+await ev(`location.hash="#/start"; true`); await sleep(500);
+ok('quiz headline types itself with its text intact', await ev(`(()=>{const h=document.querySelector(".quiz-intro h1"); return h.textContent==="Find your year in Israel" && !!h.querySelector(".tw.tw-go")})()`));
+await ev(`location.hash="#/results"; true`); await sleep(600);
+ok('results page has no notation legend', await ev(`!/In a breakdown/.test(document.querySelector("#app").textContent)`));
+await ev(`location.hash="#/browse"; true`); await sleep(700);
+const rv = await ev(`(()=>{const c=[...document.querySelectorAll(".bcard")]; return {first:c[0].classList.contains("rv"), last:c[c.length-1].classList.contains("rv"), lastOpacity:getComputedStyle(c[c.length-1]).opacity}})()`);
+ok('cards on screen are left alone, cards below the fold wait '+JSON.stringify(rv), rv.first===false && rv.last===true && rv.lastOpacity==="0");
+await ev(`window.scrollTo(0, document.documentElement.scrollHeight); true`); await sleep(500);
+ok('they rise into view when scrolled to', await ev(`(()=>{const c=[...document.querySelectorAll(".bcard")].pop(); return c.classList.contains("rv-in")})()`));
+await sleep(1100);
+ok('and end up plain cards again', await ev(`(()=>{const c=[...document.querySelectorAll(".bcard")].pop(); return !c.classList.contains("rv") && getComputedStyle(c).opacity==="1"})()`));
+await ev(`window.scrollTo(0,0); true`); await sleep(200);
 
 // Desktop screenshot, then phone: pill off (menu is a grid), search button fits, no sideways scroll.
 await ev(`document.activeElement && document.activeElement.blur(); true`);
@@ -77,6 +112,7 @@ await shot('motion-desktop');
 await vp(390,850); await sleep(400);
 ok('pill hidden on phones', await ev(`(()=>{const p=document.querySelector(".nav-pill"); return !p || getComputedStyle(p).opacity==="0"})()`));
 ok('phone top bar has no sideways scroll', await ev(`document.documentElement.scrollWidth<=390`));
+ok('phone buttons answer to a 44px tap area', await ev(`["qs-open","nav-toggle"].every(c=>getComputedStyle(document.querySelector("."+c),"::before").minHeight==="44px") && getComputedStyle(document.querySelector(".bcard .btn, .btn"),"::before").minHeight==="44px"`));
 ok('search button is icon-only on phones', await ev(`getComputedStyle(document.querySelector(".qs-open-label")).display==="none"`));
 await ev(`document.querySelector(".nav-toggle").click(); true`); await sleep(200);
 ok('phone menu active tile keeps its own highlight', await ev(`!/rgba\\(0, 0, 0, 0\\)/.test(getComputedStyle(document.querySelector(".topnav a.active")).backgroundColor)`));

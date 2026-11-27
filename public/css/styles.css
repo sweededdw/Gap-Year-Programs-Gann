@@ -1366,17 +1366,17 @@ svg.pop { animation: heart-pop .45s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes qs-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (max-width: 600px) { .qs { padding-top: 8px; } .qs-panel { max-height: 80vh; } .qs-foot { display: none; } }
 
-/* 5. Shimmer: a light sweep across primary buttons on hover (shimmer-button). */
-.btn.primary { position: relative; overflow: hidden; isolation: isolate; }
-.btn.primary::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, .35) 50%, transparent 70%); transform: translateX(-120%); }
-.btn.primary:hover::after { transform: translateX(120%); transition: transform .7s ease; }
+/* 5. Shimmer: a light sweep across primary buttons on hover (shimmer-button). Painted as a background layer,
+   so the button needs no clipping. */
+.btn.primary, .btn.primary:hover { background-image: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, .32) 50%, transparent 62%); background-repeat: no-repeat; background-size: 250% 100%; }
+.btn.primary { background-position: 120% 0; }
+.btn.primary:hover { background-position: -20% 0; transition: background-position .7s ease; }
 
 @media (prefers-reduced-motion: reduce) {
   .nav-pill, .qs-panel, .qs-back, .heart { transition: none; }
   svg.pop, .roll-up, .roll-down, .count-pill.bump, .qs-row, .heart-burst i { animation: none; }
   .qs-panel { filter: none; transform: none; }
-  .btn.primary:hover::after { transition: none; transform: translateX(-120%); }
+  .btn.primary:hover { transition: none; background-position: 120% 0; }
 }
 
 /* ---------- The route: one line through every place a student fills things in, ending at a flag ---------- */
@@ -1403,3 +1403,81 @@ svg.pop { animation: heart-pop .45s cubic-bezier(.3, 1.6, .5, 1); }
 .route-bar { display: flex; align-items: center; gap: 6px; margin-top: 6px; color: var(--muted); font-size: 14px; }
 .route-bar .progress-bar { flex: 1; margin-top: 0; }
 .route-bar.done { color: var(--ok); }
+
+/* ---------- More Watermelon pieces, each checked against Apple's guidance first ---------- */
+/* Undo bar (time-undo-action): the change happens at once and this offers to take it back. The countdown
+   pauses under the pointer or keyboard focus; with reduced motion there is no countdown and it stays until dismissed. */
+.undo-toast { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 65; display: flex; align-items: center; gap: 6px;
+  width: max-content; max-width: min(560px, calc(100vw - 24px)); padding: 8px 8px 8px 16px; border-radius: 14px; overflow: hidden;
+  background: var(--tip-bg); color: var(--tip-text); border: 1px solid var(--border); box-shadow: var(--shadow-pop); font-size: 14px; animation: ut-in .28s cubic-bezier(.3, 1.3, .5, 1); }
+.ut-text { flex: 1; min-width: 0; }
+.ut-undo { flex: none; min-height: 40px; padding: 0 14px; border-radius: 9px; border: 0; background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 700; cursor: pointer; }
+.ut-x { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 9px; background: transparent; color: inherit; font-size: 16px; cursor: pointer; }
+.ut-x:hover { background: color-mix(in srgb, var(--tip-text) 14%, transparent); }
+.ut-timer { position: absolute; left: 0; bottom: 0; width: 100%; height: 3px; background: var(--accent); transform-origin: left; animation: ut-count 10s linear forwards; }
+.undo-toast:hover .ut-timer, .undo-toast:focus-within .ut-timer { animation-play-state: paused; }
+@keyframes ut-count { to { transform: scaleX(0); } }
+@keyframes ut-in { from { opacity: 0; transform: translate(-50%, 12px) scale(.96); } }
+
+/* Copy link (copy-confirm): the label swaps to a check and "Link copied", then swaps back. */
+.copy-btn { position: relative; display: inline-grid; }
+.copy-btn > .cp-a, .copy-btn > .cp-b { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: opacity .18s ease, transform .28s cubic-bezier(.3, 1.4, .5, 1), filter .18s ease; }
+.copy-btn > .cp-b { opacity: 0; transform: translateY(60%) scale(.9); filter: blur(2px); color: var(--ok); }
+.copy-btn.copied > .cp-a { opacity: 0; transform: translateY(-60%) scale(.9); filter: blur(2px); }
+.copy-btn.copied > .cp-b { opacity: 1; transform: none; filter: none; }
+.cp-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.cmp-share { margin-top: 10px; }
+
+/* Sections open and close smoothly (expand-details). Browsers without interpolate-size just snap, as before. */
+@supports (interpolate-size: allow-keywords) {
+  @media (prefers-reduced-motion: no-preference) {
+    details.acc { interpolate-size: allow-keywords; }
+    details.acc::details-content { block-size: 0; overflow: clip; opacity: 0; transition: block-size .26s ease, opacity .2s ease, content-visibility .26s allow-discrete; }
+    details.acc[open]::details-content { block-size: auto; opacity: 1; }
+  }
+}
+
+/* Cost calculator: the total nudges up or down when it changes (stepper). */
+.cc-net.net-up { animation: net-up .3s ease-out; }
+.cc-net.net-down { animation: net-down .3s ease-out; }
+@keyframes net-up { from { transform: translateY(28%); opacity: .3; } }
+@keyframes net-down { from { transform: translateY(-28%); opacity: .3; } }
+
+/* Phones: every button answers to at least a 44 by 44 tap, without changing how big it looks. */
+@media (max-width: 860px) {
+  .btn, .qs-open, .nav-toggle, .theme-menu > summary, .back { position: relative; }
+  .btn::before, .qs-open::before, .nav-toggle::before, .theme-menu > summary::before, .back::before, .heart::before {
+    content: ""; position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; min-width: 44px; min-height: 44px; transform: translate(-50%, -50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .undo-toast, .cc-net.net-up, .cc-net.net-down { animation: none; }
+  .ut-timer { animation: none; display: none; }
+  .copy-btn > .cp-a, .copy-btn > .cp-b { transition: none; transform: none; filter: none; }
+}
+
+/* ---------- Responds as you scroll and point ---------- */
+/* Reveal on scroll: motion.js adds .rv to blocks below the fold and .rv-in when they come into view. */
+.rv { opacity: 0; transform: translateY(18px); }
+.rv.rv-in { opacity: 1; transform: none; transition: opacity .45s ease, transform .55s cubic-bezier(.2, .7, .2, 1); }
+@media print { .rv { opacity: 1; transform: none; } }
+/* Pointer glow on cards (devices with a real pointer only). */
+@media (hover: hover) {
+  .bcard, .org-tile { position: relative; }
+  .bcard::after, .org-tile::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .25s ease;
+    background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%); }
+  .bcard:hover::after, .org-tile:hover::after { opacity: 1; }
+}
+/* Typed headline: the text is revealed letter by letter behind a caret, then the caret blinks out. */
+.tw { display: inline-block; position: relative; }
+.tw.tw-go { animation: tw-clip 1.1s steps(var(--n, 24)) both; }
+.tw.tw-go::after { content: ""; position: absolute; top: 10%; bottom: 10%; left: 100%; width: 3px; border-radius: 2px; background: var(--accent); animation: tw-pos 1.1s steps(var(--n, 24)) both, tw-blink .7s step-end 1.1s 4 forwards; }
+@keyframes tw-clip { from { clip-path: inset(0 calc(100% - 5px) 0 0); } to { clip-path: inset(0 -5px 0 0); } }
+@keyframes tw-pos { from { left: 0; } }
+@keyframes tw-blink { 50%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .rv { opacity: 1; transform: none; }
+  .tw.tw-go, .tw.tw-go::after { animation: none; }
+  .tw.tw-go::after { display: none; }
+  .bcard::after, .org-tile::after { display: none; }
+}

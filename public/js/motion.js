@@ -6,6 +6,7 @@
  *   3. Rolling counter         (stepper)          — the Saved count rolls up or down when it changes
  *   4. Quick search            (command-search)   — Ctrl/Cmd+K or "/" opens a palette of programs and pages
  *   5. Shimmer                 (shimmer-button)   — pure CSS, in styles.css
+ *   6. Scroll reveals, pointer glow on cards, a typed quiz headline and a rolling live count
  * Everything is cosmetic: if this file fails to load, the site works the same, just without motion.
  */
 (function () {
@@ -222,6 +223,66 @@
     else if (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); open(); }
     else if (e.key === "Escape" && pal && !pal.hidden) { e.preventDefault(); e.stopPropagation(); close(); }
   }, true);
+
+  // ---------- 6. Things that respond as you scroll and point (IntersectionObserver reveals, pointer glow, typed headline) ----------
+  const app = document.getElementById("app");
+  if (app) {
+    // Blocks below the fold fade and rise into place as they scroll into view. Anything already on screen
+    // when the page draws is left alone, so nothing flashes on a redraw.
+    const REVEAL = ".bcard, details.acc, .side > .card, .org-tile, .card.sec, .cmp-wrap, .group-h";
+    const io = "IntersectionObserver" in window && !reduce ? new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        const el = en.target;
+        io.unobserve(el);
+        el.style.transitionDelay = Math.round((el.getBoundingClientRect().left / window.innerWidth) * 140) + "ms"; // left-to-right ripple along a row
+        el.classList.add("rv-in");
+        setTimeout(() => { el.classList.remove("rv", "rv-in"); el.style.transitionDelay = ""; }, 900);
+      });
+    }, { rootMargin: "0px 0px -6% 0px" }) : null;
+    const arm = () => {
+      if (!io) return;
+      const vh = window.innerHeight;
+      app.querySelectorAll(REVEAL).forEach((el) => {
+        if (el.classList.contains("rv") || el.getBoundingClientRect().top < vh) return;
+        el.classList.add("rv");
+        io.observe(el);
+      });
+    };
+    // The quiz headline types itself once (the text is all there from the start; only the reveal is animated).
+    const typeHeadline = () => {
+      const h = app.querySelector(".quiz-intro h1");
+      if (!h || reduce || h.querySelector(".tw")) return;
+      const text = h.textContent, span = document.createElement("span");
+      span.className = "tw"; span.textContent = text;
+      h.textContent = ""; h.appendChild(span);
+      if (span.getClientRects().length !== 1) return; // wraps onto two lines (phones): leave it plain
+      span.style.setProperty("--n", text.length);
+      span.classList.add("tw-go");
+    };
+    // The "N programs fit" count rolls up or down as answers narrow it.
+    let lastLive = null;
+    const liveCount = () => {
+      const el = app.querySelector(".live-count strong");
+      if (!el) { lastLive = null; return; }
+      const n = parseInt(el.textContent, 10);
+      if (lastLive != null && n !== lastLive && !reduce) el.classList.add("roll", n > lastLive ? "roll-up" : "roll-down");
+      lastLive = n;
+    };
+    const onDraw = () => { arm(); typeHeadline(); liveCount(); };
+    new MutationObserver(onDraw).observe(app, { childList: true });
+    onDraw();
+    // A soft light follows the pointer across cards.
+    if (window.matchMedia && window.matchMedia("(hover: hover)").matches) {
+      app.addEventListener("pointermove", (e) => {
+        const c = e.target.closest && e.target.closest(".bcard, .org-tile");
+        if (!c) return;
+        const r = c.getBoundingClientRect();
+        c.style.setProperty("--mx", (e.clientX - r.left) + "px");
+        c.style.setProperty("--my", (e.clientY - r.top) + "px");
+      }, { passive: true });
+    }
+  }
 
   // A search button in the top bar, so the palette is findable without the shortcut.
   const tools = document.querySelector(".topbar-tools");
