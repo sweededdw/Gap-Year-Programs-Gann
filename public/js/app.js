@@ -426,14 +426,15 @@
     if (current.view !== "detail") lastListView = current.view;
     render();
   }
-  const NAV_FOR = { home: "home", quiz: "discover", swipe: "discover", results: "discover", finder: "finder", list: "my-list", colleges: "colleges", compare: "compare", community: "community" };
+  const NAV_FOR = { home: "home", quiz: "discover", swipe: "discover", results: "discover", finder: "finder", list: "discover", colleges: "colleges", compare: "compare", community: "community" };
   // Once the quiz is done, Discover moves to the end of the menu (the other pages come first).
   function orderNav() {
     const nav = document.querySelector(".topnav"), disc = nav && nav.querySelector('[data-nav="discover"]');
     if (!disc) return;
-    // Home always stays first; Discover sits right after Home until the quiz is done, then after Saved.
-    const after = nav.querySelector(quiz().done ? '[data-nav="my-list"]' : '[data-nav="home"]');
-    if (after && disc.previousElementSibling !== after) after.after(disc);
+    // Home always stays first; Discover sits right after Home until the quiz is done, then at the end.
+    if (quiz().done) { if (disc.nextElementSibling) nav.appendChild(disc); return; }
+    const home = nav.querySelector('[data-nav="home"]');
+    if (home && disc.previousElementSibling !== home) home.after(disc);
   }
   function render() {
     orderNav();
@@ -448,16 +449,28 @@
     else if (current.view === "admin") renderAdmin();
     else if (current.view === "community") COMM.renderPage($app, current.id);
     else renderFinder();
+    if (NAV_FOR[current.view] === "discover") $app.insertAdjacentHTML("afterbegin", discoverTabs());
     navState();
   }
-  const TITLES = { quiz: "Find your year", swipe: "Discover", results: "Your top 3", finder: "All programs", list: "My list", colleges: "Colleges", compare: "Compare", community: "Community", admin: "Edit site data" };
+  // Discover's sub-tabs. Saved lives here (it used to be its own top-level tab).
+  function savedCount() { return Object.keys(state.saved).filter((k) => state.saved[k] && byId[k]).length; }
+  function discoverTabs() {
+    const n = savedCount();
+    const tabs = quiz().done
+      ? [["swipe", "#/swipe", "Swipe"], ["results", "#/results", "Top 3"], ["list", "#/my-list", "Saved"]]
+      : [["quiz", "#/start", "Quiz"], ["list", "#/my-list", "Saved"]];
+    return '<nav class="subtabs" aria-label="Discover">' + tabs.map((t) =>
+      '<a href="' + t[1] + '" data-sub="' + t[0] + '"' + (current.view === t[0] ? ' class="on" aria-current="page"' : "") + ">" + t[2] +
+      (t[0] === "list" ? ' <span class="sub-count">' + n + "</span>" : "") + "</a>").join("") + "</nav>";
+  }
+  const TITLES = { quiz: "Find your year", swipe: "Discover", results: "Your top 3", finder: "All programs", list: "Saved", colleges: "Colleges", compare: "Compare", community: "Community", admin: "Edit site data" };
   function navState() {
     const pageName = current.view === "detail" && byId[current.id] ? byId[current.id].name : TITLES[current.view];
     document.title = (pageName ? pageName + " · " : "") + "Israel Gap Year Finder";
     document.querySelectorAll("[data-nav]").forEach((a) => {
       a.classList.toggle("active", a.dataset.nav === NAV_FOR[current.view]);
     });
-    document.getElementById("saved-count").textContent = Object.keys(state.saved).filter((k) => state.saved[k] && byId[k]).length;
+    document.getElementById("saved-count").textContent = savedCount();
   }
 
   // ---------- Home: the promo video, with its credits underneath (no shortcuts; the menu does the navigating) ----------
@@ -1254,7 +1267,7 @@
     const list = D.programs.filter((p) => state.saved[p.id]);
     const resultLabel = (v) => (RESULT_STATUS.find((r) => r[0] === (v || "")) || RESULT_STATUS[0])[1];
     $app.innerHTML =
-      '<div class="hero-intro"><div><h1>My list</h1><p>The programs you saved, sorted by next deadline. Open one to work on its application.</p></div></div>' +
+      '<div class="hero-intro"><div><h1>Saved programs</h1><p>Sorted by next deadline. Open one to work on its application.</p></div></div>' +
       (list.length
         ? '<div class="card table-wrap"><table class="tbl list-table"><thead><tr><th>Program</th><th>Next deadline</th><th>Tuition</th><th>Progress</th><th>Result</th></tr></thead><tbody>' +
           list.sort((a, b) => {
@@ -1667,7 +1680,7 @@
     $app.innerHTML =
       '<section class="swipe">' +
       '<div class="swipe-head"><div><h1>Your matches</h1><p class="small muted">' + (seen + 1) + " of " + all.length + " · " + savedHere + ' saved</p></div>' +
-      '<div class="swipe-head-actions"><a class="btn ghost sm" href="#/results">Top 3</a><button class="btn ghost sm" data-act="retake">Change answers</button></div></div>' +
+      '<div class="swipe-head-actions"><button class="btn ghost sm" data-act="retake">Change answers</button></div></div>' +
       '<div class="swipe-stage">' + d.slice(0, 3).map(swipeCard).reverse().join("") + "</div>" +
       '<div class="swipe-actions">' +
       '<button class="sbtn small" data-act="swipe-undo"' + (hist ? "" : " disabled") + ' aria-label="Undo last swipe" title="Undo">' + I("undo") + '</button>' +

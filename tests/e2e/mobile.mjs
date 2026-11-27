@@ -26,7 +26,7 @@ for (const [w,h,name] of [[375,548,'se'],[390,664,'14'],[430,740,'max']]) {
   ok(`swipe ${name}: no sideways scroll`, m.sw <= m.iw);
   ok(`swipe ${name}: card shows its links (nothing cut off at the bottom)`, await ev(`(()=>{const c=document.querySelector('.scard.top').getBoundingClientRect(); const l=document.querySelector('.scard.top .scard-links').getBoundingClientRect(); return l.bottom <= c.bottom + 1 && l.height > 20;})()`));
   const nav = await ev(`(()=>{const b=document.querySelector(".nav-toggle"); const vis=[...document.querySelectorAll(".topnav a")].filter(a=>a.offsetParent).length; b.click(); const open=[...document.querySelectorAll(".topnav a")].filter(a=>a.offsetParent).length; const exp=b.getAttribute("aria-expanded"); b.click(); return {vis, open, exp, barH: document.querySelector(".topbar").getBoundingClientRect().height};})()`);
-  ok(`phone ${name}: top bar is one slim row with links behind Menu (${JSON.stringify(nav)})`, nav.vis===0 && nav.open===7 && nav.exp==='true' && nav.barH <= 60);
+  ok(`phone ${name}: top bar is one slim row with links behind Menu (${JSON.stringify(nav)})`, nav.vis===0 && nav.open===6 && nav.exp==='true' && nav.barH <= 60);
   await ev('scrollTo(0,0); true'); await sleep(100);
   await shot('m-swipe-'+name);
 

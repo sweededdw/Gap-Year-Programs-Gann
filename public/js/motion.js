@@ -109,7 +109,7 @@
     { t: "Compare", s: "Side by side", h: "#/compare" },
     { t: "Colleges", s: "Gap year and credit policies", h: "#/colleges" },
     { t: "Community", s: "Youth groups and student groups", h: "#/community" },
-    { t: "Saved", s: "Your list", h: "#/my-list" },
+    { t: "Saved programs", s: "Discover › Saved", h: "#/my-list" },
     { t: "Home", s: "", h: "#/" },
   ];
   const TYPE = { gap: "Gap year", mechina: "Mechina", university: "University", movement: "Youth movement", service: "Service", aliyah: "Aliyah & IDF", yeshiva: "Yeshiva", seminary: "Seminary" };
@@ -236,8 +236,29 @@
       if (lastLive != null && n !== lastLive && !reduce) el.classList.add("roll", n > lastLive ? "roll-up" : "roll-down");
       lastLive = n;
     };
-    new MutationObserver(liveCount).observe(app, { childList: true });
-    liveCount();
+    // Discover's sub-tabs: one pill glides from the tab you were on to the one you picked (continuous-tabs).
+    let subWas = null;
+    const subPill = () => {
+      const bar = app.querySelector(".subtabs");
+      if (!bar) { subWas = null; return; }
+      const on = bar.querySelector("a.on");
+      if (!on) return;
+      const pill = document.createElement("span");
+      pill.className = "sub-pill"; pill.setAttribute("aria-hidden", "true");
+      bar.prepend(pill);
+      const to = { x: on.offsetLeft, w: on.offsetWidth, h: on.offsetHeight, y: on.offsetTop };
+      const place = (r) => { pill.style.width = r.w + "px"; pill.style.height = r.h + "px"; pill.style.transform = "translate(" + r.x + "px," + r.y + "px)"; };
+      bar.classList.add("has-pill");
+      if (subWas && !reduce && (subWas.x !== to.x || subWas.w !== to.w)) {
+        pill.classList.add("no-anim"); place(subWas); void pill.offsetWidth; pill.classList.remove("no-anim");
+        requestAnimationFrame(() => place(to));
+      } else place(to);
+      subWas = to;
+    };
+    window.addEventListener("resize", () => { subWas = null; const p = app.querySelector(".sub-pill"); if (p) p.remove(); subPill(); });
+    const onDraw = () => { liveCount(); subPill(); };
+    new MutationObserver(onDraw).observe(app, { childList: true });
+    onDraw();
     // Typographer's quotes and apostrophes in everything the app draws (program text included). Only text nodes
     // change, never markup, attributes or anything the student is typing.
     const curl = (t) => t

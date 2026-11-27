@@ -1527,3 +1527,26 @@ a { text-underline-offset: .2em; }
   }
 }
 @media (prefers-reduced-motion: reduce) { .college-more > summary .ic { transition: none; } }
+
+/* ---------- Discover sub-tabs (Swipe · Top 3 · Saved): a segmented control with a sliding pill ---------- */
+.subtabs { position: relative; display: flex; width: max-content; max-width: 100%; margin: 0 auto 18px; padding: 4px; gap: 2px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); }
+.subtabs a { position: relative; z-index: 1; flex: 1 1 0; min-width: 92px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 38px; padding: 0 18px; border-radius: 999px; color: var(--muted); font-weight: 600; font-size: 14px; white-space: nowrap; transition: color .2s ease, background-color .2s ease; }
+.subtabs a:hover { color: var(--text); text-decoration: none; }
+.subtabs a.on { color: var(--accent-ink); background: var(--accent); }
+.subtabs.has-pill a.on { background: transparent; }
+.sub-pill { position: absolute; left: 0; top: 0; z-index: 0; border-radius: 999px; background: var(--accent); pointer-events: none;
+  transition: transform .28s cubic-bezier(.2, .8, .2, 1), width .28s cubic-bezier(.2, .8, .2, 1); }
+.sub-pill.no-anim { transition: none; }
+.sub-count { min-width: 20px; padding: 0 6px; border-radius: 10px; font-size: 12px; line-height: 18px; text-align: center; background: var(--accent-soft); color: var(--accent); }
+.subtabs a.on .sub-count { background: color-mix(in srgb, var(--accent-ink) 22%, transparent); color: var(--accent-ink); }
+.quiz-intro { padding-top: 24px; }
+@media (max-width: 700px) {
+  .subtabs { width: 100%; margin-bottom: 10px; }
+  .subtabs a { min-width: 0; min-height: 36px; padding: 0 10px; }
+  /* On the swipe screen the tab already says where you are, so the heading steps aside to keep the card on screen. */
+  .subtabs + .swipe-head h1, .subtabs ~ * .swipe-head h1 { display: none; }
+  .swipe-stage { height: clamp(300px, calc(100svh - var(--bar-h) - 184px), 600px); }
+}
+@media (prefers-reduced-motion: reduce) { .sub-pill { transition: none; } }

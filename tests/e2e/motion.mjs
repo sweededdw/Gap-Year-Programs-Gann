@@ -114,6 +114,17 @@ const cc = await ev(`(()=>{const c=document.querySelector(".card.college"); cons
 ok('college card shows the answer first; the full policy opens on a click '+JSON.stringify(cc), cc.shut.open===false && cc.shut.factsShown===false && cc.shut.chips>=2 && /^Ask by /.test(cc.shut.by) && cc.open===true && cc.source);
 await ev(`(()=>{const s=JSON.parse(localStorage.getItem("gyf:v1")); s.collegeQuery=""; localStorage.setItem("gyf:v1",JSON.stringify(s)); location.hash="#/browse"; location.reload(); return true})()`); await sleep(1300);
 
+// Saved is a sub-tab of Discover.
+ok('no Saved tab in the top menu; the count rides on Discover', await ev(`!document.querySelector('.topnav [data-nav="my-list"]') && !!document.querySelector('.topnav [data-nav="discover"] #saved-count')`));
+await ev(`location.hash="#/swipe"; true`); await sleep(600);
+const tabsTxt = await ev(`[...document.querySelectorAll(".subtabs a")].map(a=>a.firstChild.textContent.trim()).join(",")`);
+ok('Discover pages show Swipe · Top 3 · Saved ('+tabsTxt+')', tabsTxt==='Swipe,Top 3,Saved');
+const sp1 = await ev(`(()=>{const p=document.querySelector(".subtabs .sub-pill"), a=document.querySelector(".subtabs a.on"); return p&&a ? Math.abs(p.getBoundingClientRect().left-a.getBoundingClientRect().left) : -1})()`);
+await ev(`document.querySelector('.subtabs a[data-sub="list"]').click(); true`); await sleep(700);
+const sv = await ev(`(()=>{const p=document.querySelector(".subtabs .sub-pill"), a=document.querySelector(".subtabs a.on"); return {hash:location.hash, on:a.dataset.sub, cur:a.getAttribute("aria-current"), dx:Math.abs(p.getBoundingClientRect().left-a.getBoundingClientRect().left), navActive:document.querySelector(".topnav a.active").dataset.nav, title:document.title}})()`);
+ok('Saved tab opens the saved list, and Discover stays lit up top '+JSON.stringify(sv), sp1>=0 && sp1<2 && sv.hash==='#/my-list' && sv.on==='list' && sv.cur==='page' && sv.dx<2 && sv.navActive==='discover' && sv.title==='Saved · Israel Gap Year Finder');
+await ev(`location.hash="#/browse"; true`); await sleep(500);
+
 // Desktop screenshot, then phone: pill off (menu is a grid), search button fits, no sideways scroll.
 await ev(`document.activeElement && document.activeElement.blur(); true`);
 await shot('motion-desktop');
