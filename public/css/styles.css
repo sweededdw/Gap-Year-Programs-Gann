@@ -1797,3 +1797,98 @@ a { text-underline-offset: .2em; }
 }
 @media (prefers-reduced-transparency: reduce) { .topbar { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; } }
 @media (prefers-reduced-transparency: reduce) and (min-width: 861px) { .topnav { background: var(--surface); } }
+
+/* ---------- Login page v2: scenery + a choice sheet (public/login.html, js/scene.js) ----------
+   Phones: the photo fills the top, the sheet rises over its lower edge with rounded corners.
+   Wide screens: the photo is a tall rounded panel on the left, the sheet sits on the right. */
+.auth-body.auth-v2 { display: block; place-items: normal; padding: 0; background: var(--bg); }
+.auth-split { width: 100%; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+.scene { position: relative; overflow: hidden; isolation: isolate; height: 54vh; height: 54svh; min-height: 340px; color: #fff; background: #1d2a30; }
+.scene-stack, .scene-slide { position: absolute; inset: 0; margin: 0; }
+.scene-slide { opacity: 0; transition: opacity 1.2s ease; }
+.scene-slide.on { opacity: 1; }
+.scene-slide img { width: 100%; height: 100%; object-fit: cover; display: block; transform-origin: 60% 40%; }
+/* The slow drift: ambient, so it runs longer than UI motion. Same animation on the way out, so no jump. */
+.scene-slide.on img, .scene-slide.out img { animation: scene-drift calc(var(--scene-hold, 6500ms) + 1.4s) linear both; }
+@keyframes scene-drift { from { transform: scale(1.12) translate3d(1.5%, 1%, 0); } to { transform: scale(1.02) translate3d(0, 0, 0); } }
+/* Shade so white type reads on any photo: darker at the top (brand) and bottom (headline). */
+.scene::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(8, 12, 16, .5) 0%, rgba(8, 12, 16, 0) 26%, rgba(8, 12, 16, 0) 42%, rgba(8, 12, 16, .62) 100%); }
+.scene-brand, .scene-copy { position: absolute; z-index: 2; left: 20px; right: 20px; }
+.scene-brand { top: 16px; display: inline-flex; align-items: center; gap: 10px; right: auto; text-decoration: none; }
+.scene-brand:hover { text-decoration: none; }
+.scene-brand .scene-mark { display: block; flex: none; width: 38px; height: 38px; } /* always the light-on-dark mark: it sits on the photo */
+.scene-brand .wm-title { color: #fff; font-size: 18px; }
+.scene-brand .wm-sub { color: #f2c477; font-size: 6.5px; }
+.scene-copy { bottom: 40px; display: grid; gap: 12px; }
+.scene-title { margin: 0; font: 700 clamp(34px, 9vw, 64px)/1.02 "Fraunces", Georgia, serif; letter-spacing: -0.02em; text-wrap: balance; text-shadow: 0 2px 24px rgba(0, 0, 0, .25); }
+.scene-place { margin: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; font-weight: 600; }
+.scene-place .ic { font-size: 15px; }
+.scene-credit { margin-left: auto; font-size: 11.5px; font-weight: 500; color: rgba(255, 255, 255, .72); text-decoration: none; }
+.scene-credit:hover { color: #fff; text-decoration: underline; }
+/* Progress dots: the current one fills over the time its scene is shown. */
+.scene-dots { display: flex; gap: 6px; }
+.scene-dot { position: relative; flex: 1; max-width: 56px; height: 18px; padding: 0; border: 0; background: none; cursor: pointer; }
+.scene-dot span { position: absolute; left: 0; right: 0; top: 7px; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .32); overflow: hidden; }
+.scene-dot span::after { content: ""; position: absolute; inset: 0; background: #fff; transform: scaleX(0); transform-origin: left; }
+.scene-dot.on span::after { animation: scene-fill var(--scene-hold, 6500ms) linear both; }
+@keyframes scene-fill { to { transform: scaleX(1); } }
+.scene-dot:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 4px; }
+
+.auth-sheet { position: relative; z-index: 3; flex: 1; margin-top: -26px; border-radius: 26px 26px 0 0; background: var(--bg); box-shadow: 0 -10px 30px rgba(0, 0, 0, .18); }
+.sheet-inner { width: 100%; max-width: 420px; margin: 0 auto; padding: 26px 20px 28px; display: flex; flex-direction: column; gap: 14px; }
+.sheet-inner h1 { margin: 0; font: 700 26px/1.15 "Fraunces", Georgia, serif; letter-spacing: -0.01em; }
+.sheet-inner #subtitle { margin: -6px 0 2px; }
+.auth-back { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; margin: -6px 0 -4px -6px; padding: 6px 8px; border: 0; border-radius: 8px; background: none; color: var(--muted); font: 600 14px var(--font); cursor: pointer; }
+.auth-back:hover { color: var(--text); background: var(--surface-2); }
+.auth-back[hidden] { display: none; }
+.auth-choices, .auth-providers, .auth-form { display: flex; flex-direction: column; gap: 10px; }
+.auth-choices[hidden], .auth-providers[hidden], .auth-form[hidden] { display: none; }
+.auth-choices .auth-guest { display: flex; flex-direction: column; gap: 10px; }
+.auth-choice { position: relative; justify-content: center; gap: 10px; min-height: 50px; padding: 12px 16px; border-radius: 14px; font-size: 15.5px; }
+.auth-choice .ic, .auth-choice svg { font-size: 18px; flex: none; }
+.auth-choice.primary { box-shadow: 0 6px 18px color-mix(in srgb, var(--cta) 28%, transparent); }
+.auth-provider.p-apple { background: var(--text); color: var(--bg); border-color: var(--text); }
+.auth-provider.p-apple:hover { background: var(--text); filter: brightness(1.12); }
+.auth-v2 .auth-switch { margin: 2px 0 0; text-align: center; font-size: 14px; color: var(--muted); }
+.auth-v2 .auth-switch a { font-weight: 600; }
+/* Inputs: roomy, and they lift onto the surface with a soft ring when focused. */
+.auth-form .field { gap: 6px; }
+.auth-form .input { min-height: 48px; padding: 12px 14px; font-size: 16px; border-radius: 12px; background: transparent; transition: background-color .15s ease-out, border-color .15s ease-out, box-shadow .15s ease-out; }
+.auth-form .input:hover { border-color: color-mix(in srgb, var(--text) 22%, var(--border)); }
+.auth-form .input:focus { outline: none; background: var(--surface); border-color: var(--cta); box-shadow: 0 0 0 4px color-mix(in srgb, var(--cta) 22%, transparent); }
+.pw-wrap { position: relative; display: block; }
+.pw-wrap .input { padding-right: 48px; }
+.pw-eye { position: absolute; right: 4px; top: 50%; translate: 0 -50%; width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 10px; background: none; color: var(--muted); cursor: pointer; }
+.pw-eye:hover { color: var(--text); background: var(--surface-2); }
+.pw-eye[aria-pressed="true"] { color: var(--cta); }
+.pw-eye .ic { font-size: 18px; }
+.auth-v2 .auth-submit { min-height: 50px; border-radius: 14px; font-size: 15.5px; margin-top: 4px; }
+.auth-v2 .auth-legal { margin: 6px 0 0; text-align: center; }
+/* Each screen's pieces come in one after another (riseIn in auth.js). */
+.rise { animation: auth-rise .26s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 35ms); }
+@keyframes auth-rise { from { opacity: 0; transform: translateY(8px); } }
+/* The theme button floats over the photo on phones: glassy so it reads there. */
+.auth-v2 .theme-corner .theme-menu > summary { background: rgba(10, 14, 18, .35); color: #fff; border-color: rgba(255, 255, 255, .28); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+
+/* Phones: once a form is open, the photo steps back so the fields sit higher. */
+@media (max-width: 899px) {
+  .scene { transition: height .3s cubic-bezier(.2, .8, .2, 1), min-height .3s cubic-bezier(.2, .8, .2, 1); }
+  .auth-v2:not([data-mode="start"]) .scene { height: 30vh; height: 30svh; min-height: 210px; }
+  .auth-v2:not([data-mode="start"]) .scene-title { font-size: 30px; }
+}
+@media (min-width: 900px) {
+  .auth-split { flex-direction: row; align-items: stretch; padding: 14px; gap: 14px; }
+  .scene { flex: 1.15; height: auto; min-height: 0; border-radius: 28px; position: sticky; top: 14px; max-height: calc(100vh - 28px); max-height: calc(100dvh - 28px); }
+  .scene-brand { top: 24px; left: 28px; }
+  .scene-copy { left: 32px; right: 32px; bottom: 32px; }
+  .auth-sheet { flex: 1; margin: 0; border-radius: 0; box-shadow: none; display: flex; align-items: center; background: transparent; }
+  .sheet-inner { padding: 40px 32px; }
+  .sheet-inner h1 { font-size: 32px; }
+  .auth-v2 .theme-corner { top: 26px; right: 26px; }
+  .auth-v2 .theme-corner .theme-menu > summary { background: var(--surface); color: var(--text); border-color: var(--border); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene-slide, .scene-slide.on img, .scene-slide.out img, .scene-dot.on span::after, .rise { animation: none; transition: none; }
+  .scene-dot.on span::after { transform: scaleX(1); }
+}

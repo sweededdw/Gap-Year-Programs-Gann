@@ -16,12 +16,18 @@
   const RETURN_URL = location.origin + "/login";
 
   const MODES = {
+    start: { title: "Find your gap year", sub: "Every Israel gap year program in one place, free.", button: "", pw: "", auto: "", doc: "Log in or sign up" },
     login: { title: "Log in", sub: "Welcome back. Log in to pick up your list and applications.", button: "Log in", pw: "Password", auto: "current-password" },
     signup: { title: "Create your account", sub: "Free. Browse every Israel gap year program and track your applications.", button: "Create account", pw: "Password (at least 8 characters)", auto: "new-password" },
     forgot: { title: "Reset your password", sub: "Enter your email and we'll send you a link to choose a new password.", button: "Send reset link", pw: "", auto: "" },
     reset: { title: "Choose a new password", sub: "Pick a new password for your account.", button: "Save new password", pw: "New password (at least 8 characters)", auto: "new-password" },
   };
-  let mode = query.get("mode") === "signup" ? "signup" : "login";
+  // First visit: a short choice (email, guest, log in). Someone who has logged in on this device before goes
+  // straight to Log in. ?mode=signup and ?mode=login open that form.
+  const KNOWN = "gyf:has-account";
+  const known = () => { try { return localStorage.getItem(KNOWN) === "1"; } catch (e) { return false; } };
+  if (query.get("deleted") === "1") { try { localStorage.removeItem(KNOWN); } catch (e) { /* ignore */ } }
+  let mode = query.get("mode") === "signup" ? "signup" : query.get("mode") === "login" || known() ? "login" : "start";
   let sb = null;
 
   // ---------- Bot protection (Cloudflare Turnstile) ----------
@@ -67,8 +73,22 @@
     document.querySelectorAll("[data-show]").forEach((el) => {
       el.hidden = el.dataset.show.split(" ").indexOf(m) < 0;
     });
-    document.title = c.title + " · Israel Gap Year Finder";
+    document.title = (c.doc || c.title) + " · Israel Gap Year Finder";
+    document.body.dataset.mode = m; // the photo shrinks on phones once a form is open
     if (!keepMessage) hideMsg();
+    riseIn();
+  }
+  // Each screen's pieces come in one after another, a few hundredths of a second apart (CSS does the motion).
+  function riseIn() {
+    const items = [];
+    Array.prototype.forEach.call(document.querySelector(".sheet-inner").children, (el) => {
+      if (el.hidden) return;
+      if (el.matches(".auth-form, .auth-choices")) Array.prototype.forEach.call(el.children, (c) => { if (!c.hidden) items.push(c); });
+      else items.push(el);
+    });
+    items.forEach((el, i) => { el.classList.remove("rise"); el.style.setProperty("--i", i); });
+    void document.body.offsetWidth; // restart the animation
+    items.forEach((el) => el.classList.add("rise"));
   }
   function show(kind, text, action) {
     msg.className = "callout " + kind;
@@ -89,7 +109,10 @@
     submit.disabled = on;
     submit.textContent = on ? "One moment…" : MODES[mode].button;
   }
-  const goToApp = () => location.replace("/");
+  const goToApp = () => {
+    try { localStorage.setItem(KNOWN, "1"); } catch (e) { /* ignore */ }
+    location.replace("/");
+  };
 
   function friendly(error) {
     const m = (error && error.message) || "Something went wrong. Please try again.";
@@ -114,8 +137,49 @@
   }
 
   document.querySelectorAll("[data-mode]").forEach((a) =>
-    a.addEventListener("click", (e) => { e.preventDefault(); setMode(a.dataset.mode); })
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      setMode(a.dataset.mode);
+      const first = { signup: "name", login: "email", forgot: "email" }[a.dataset.mode];
+      if (first && matchMedia("(hover: hover)").matches) $(first).focus({ preventScroll: true }); // no keyboard pop-up on phones
+    })
   );
+
+  // Show / hide the password.
+  $("pw-eye").addEventListener("click", () => {
+    const pw = $("password"), show = pw.type === "password";
+    pw.type = show ? "text" : "password";
+    $("pw-eye").setAttribute("aria-pressed", String(show));
+    $("pw-eye").setAttribute("aria-label", show ? "Hide password" : "Show password");
+  });
+
+  // Google / Apple buttons, only for the providers switched on in Supabase (Authentication → Sign In / Providers).
+  const PROVIDERS = {
+    google: { label: "Continue with Google", icon: '<svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.99.66-2.25 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z" fill="#34A853"/><path d="M5.84 14.11a6.6 6.6 0 0 1 0-4.22V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.2 1.64l3.15-3.15A10.97 10.97 0 0 0 12 1 11 11 0 0 0 2.18 7.05l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z" fill="#EA4335"/></svg>' },
+    apple: { label: "Continue with Apple", icon: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M16.37 12.62c-.02-2.33 1.9-3.45 1.99-3.5a4.3 4.3 0 0 0-3.37-1.82c-1.43-.15-2.8.84-3.53.84-.73 0-1.85-.82-3.04-.8a4.5 4.5 0 0 0-3.8 2.31c-1.63 2.82-.42 6.98 1.16 9.27.78 1.12 1.7 2.37 2.9 2.33 1.17-.05 1.6-.75 3.01-.75 1.4 0 1.8.75 3.03.73 1.25-.02 2.04-1.14 2.8-2.27a9.9 9.9 0 0 0 1.27-2.61 4.06 4.06 0 0 1-2.42-3.73zM14.06 5.77A4.1 4.1 0 0 0 15 2.8a4.2 4.2 0 0 0-2.73 1.41 3.9 3.9 0 0 0-.97 2.84 3.46 3.46 0 0 0 2.76-1.28z"/></svg>' },
+  };
+  async function setupProviders(cfg) {
+    if (!cfg || !cfg.url || !cfg.key) return;
+    let on = {};
+    try {
+      const r = await fetch(cfg.url.replace(/\/$/, "") + "/auth/v1/settings", { headers: { apikey: cfg.key } });
+      if (r.ok) on = (await r.json()).external || {};
+    } catch (e) { return; } // can't tell: show email only
+    const box = $("providers");
+    Object.keys(PROVIDERS).filter((k) => on[k]).forEach((k) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn auth-choice auth-provider p-" + k;
+      b.innerHTML = PROVIDERS[k].icon + "<span>" + PROVIDERS[k].label + "</span>";
+      b.addEventListener("click", async () => {
+        b.disabled = true;
+        const { error } = await sb.auth.signInWithOAuth({ provider: k, options: { redirectTo: RETURN_URL } });
+        if (error) { b.disabled = false; show("bad", friendly(error)); }
+      });
+      box.appendChild(b);
+    });
+    if (box.children.length) { box.hidden = false; if (mode === "start") riseIn(); }
+  }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -192,6 +256,7 @@
       return;
     }
     setupCaptcha(window.GYF_CONFIG && window.GYF_CONFIG.turnstileSiteKey);
+    setupProviders(window.GYF_CONFIG);
     if (query.get("deleted") === "1") show("ok", "Your account and everything saved in it were deleted.");
     sb.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setMode("reset", true);
