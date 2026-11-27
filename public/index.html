@@ -23,10 +23,14 @@
         <span class="wordmark wm-header"><span class="wm-title">Israel Gap Year</span><span class="wm-sub">Finder</span></span>
       </a>
       <nav class="topnav" id="topnav" aria-label="Main">
-        <a href="#/" data-nav="home">Home</a>
+        <a href="#/" data-nav="home" data-group="home" aria-expanded="false" aria-controls="nav-sub-home">Home</a>
+        <div class="nav-sub" id="nav-sub-home" data-for="home" role="group" aria-label="Home">
+          <button type="button" class="nav-back"><svg class="ic" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back</button>
+          <a href="#/" data-sub="overview">Overview</a>
+          <a href="/map" data-sub="map">Map</a>
+        </div>
         <a href="#/swipe" data-nav="discover">Discover <span id="saved-count" class="count-pill" title="Saved programs">0</span></a>
         <a href="#/browse" data-nav="finder">Browse all</a>
-        <a href="/map" data-nav="map">Map</a>
         <a href="#/compare" data-nav="compare">Compare</a>
         <a href="#/colleges" data-nav="colleges">Colleges</a>
         <a href="#/community" data-nav="community">Community</a>
@@ -76,6 +80,7 @@
   <script src="js/community.js"></script>
   <script src="js/app.js"></script>
   <script src="js/motion.js"></script>
+  <script src="js/topbar.js"></script>
   <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

@@ -434,11 +434,14 @@
     // Home always stays first; Discover sits right after Home until the quiz is done, then at the end.
     if (quiz().done) { if (disc.nextElementSibling) nav.appendChild(disc); return; }
     const home = nav.querySelector('[data-nav="home"]');
-    if (home && disc.previousElementSibling !== home) home.after(disc);
+    if (!home) return;
+    // Home's sub-pages (Overview, Map) sit right after it; Discover goes after those.
+    const anchor = home.nextElementSibling && home.nextElementSibling.classList.contains("nav-sub") ? home.nextElementSibling : home;
+    if (disc.previousElementSibling !== anchor) anchor.after(disc);
   }
   function render() {
     orderNav();
-    if (current.view === "home") return renderHome(), navState();
+    if (current.view === "home") { renderHome(); $app.insertAdjacentHTML("afterbegin", homeTabs()); return navState(); }
     if (current.view === "detail") renderDetail(byId[current.id]);
     else if (current.view === "list") renderList();
     else if (current.view === "quiz") renderQuiz();
@@ -451,6 +454,10 @@
     else renderFinder();
     if (NAV_FOR[current.view] === "discover") $app.insertAdjacentHTML("afterbegin", discoverTabs());
     navState();
+  }
+  // Home's sub-tabs: the homepage and the 3D map (map.html, its own page).
+  function homeTabs() {
+    return '<nav class="subtabs" aria-label="Home"><a href="#/" data-sub="overview" class="on" aria-current="page">Overview</a><a href="/map" data-sub="map">Map</a></nav>';
   }
   // Discover's sub-tabs. Saved lives here (it used to be its own top-level tab).
   function savedCount() { return Object.keys(state.saved).filter((k) => state.saved[k] && byId[k]).length; }
@@ -2143,13 +2150,8 @@
     tip.style.top = e.clientY + 14 + "px";
   });
 
-  // Phone menu: the page links fold behind a "Menu" button so the top bar stays one slim row.
-  const topbar = document.querySelector(".topbar"), navBtn = document.querySelector(".nav-toggle");
-  const setNav = (open) => { if (!topbar || !navBtn) return; topbar.classList.toggle("nav-open", open); navBtn.setAttribute("aria-expanded", String(open)); };
-  if (navBtn) navBtn.addEventListener("click", () => setNav(!topbar.classList.contains("nav-open")));
-  document.addEventListener("click", (e) => { if (!e.target.closest(".topbar") || e.target.closest(".topnav a")) setNav(false); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setNav(false); });
-  window.addEventListener("hashchange", () => { setNav(false); route(); window.scrollTo(0, 0); });
+  // The phone menu and the nav highlight live in topbar.js (shared with the map page).
+  window.addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); });
   // Remember which program-page drawers are open, so a redraw (after any edit) keeps them open.
   document.addEventListener("toggle", (e) => {
     const d = e.target;

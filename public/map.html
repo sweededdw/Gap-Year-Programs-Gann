@@ -25,9 +25,13 @@
         <span class="wordmark wm-header"><span class="wm-title">Israel Gap Year</span><span class="wm-sub">Finder</span></span>
       </a>
       <nav class="topnav" id="topnav" aria-label="Main">
-        <a href="/#/" data-nav="home">Home</a>
+        <a href="/#/" data-nav="home" data-group="home" aria-expanded="false" aria-controls="nav-sub-home" class="active">Home</a>
+        <div class="nav-sub" id="nav-sub-home" data-for="home" role="group" aria-label="Home">
+          <button type="button" class="nav-back"><svg class="ic" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back</button>
+          <a href="/#/" data-sub="overview">Overview</a>
+          <a href="/map" data-sub="map">Map</a>
+        </div>
         <a href="/#/browse" data-nav="finder">Browse all</a>
-        <a href="/map" data-nav="map" class="active" aria-current="page">Map</a>
         <a href="/#/compare" data-nav="compare">Compare</a>
         <a href="/#/colleges" data-nav="colleges">Colleges</a>
         <a href="/#/community" data-nav="community">Community</a>
@@ -49,6 +53,7 @@
 
   <main class="map-page">
     <section class="map-col" aria-label="Map">
+      <nav class="subtabs map-subtabs" aria-label="Home"><a href="/#/" data-sub="overview">Overview</a><a href="/map" data-sub="map" class="on" aria-current="page">Map</a></nav>
       <div class="map-presets" role="toolbar" aria-label="Zoom to a place" id="map-presets"></div>
       <div class="map-stage">
         <div id="map" class="map-canvas" role="region" aria-label="Map of Israel with gap year program locations. Drag to move, scroll to zoom, right-click and drag to tilt."></div>
@@ -67,6 +72,7 @@
     </aside>
   </main>
 
+  <script src="/js/topbar.js"></script>
   <script src="/js/data.js"></script>
   <script src="/js/map-data.js"></script>
   <script type="module" src="/js/map.js"></script>

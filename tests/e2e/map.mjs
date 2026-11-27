@@ -33,6 +33,8 @@ await cmd('Page.enable'); await cmd('Runtime.enable'); await cmd('Log.enable'); 
 await cmd('Page.navigate', { url: B + '/map' });
 const ready = await waitFor('document.body && document.body.getAttribute("data-map-ready") === "1"', 20000);
 ok('map page loads: style, regions, Armistice Line and pins', ready);
+const whole = await ev(`(() => { const b = window.GYF_MAP_VIEW.map.getBounds(); return { n: b.getNorth(), s: b.getSouth(), w: b.getWest(), e: b.getEast() }; })()`);
+ok(`it opens on the whole country, Metula to Eilat (${whole.s.toFixed(2)} to ${whole.n.toFixed(2)})`, whole.n >= 33.3 && whole.s <= 29.5 && whole.w <= 34.25 && whole.e >= 35.9);
 await idle();
 
 // ---- Expected data, worked out here independently of the page ----
@@ -71,8 +73,8 @@ for (const f of geo.features) {
 }
 // A real click on the map itself (the southern Golan, away from any pins).
 await ev(`document.querySelector('.mp-back').click(); true`);
-const golan = await ev(`(() => { const p = window.GYF_MAP_VIEW.map.project([35.78, 32.86]); const r = document.querySelector('#map canvas').getBoundingClientRect(); return { x: r.left + p.x, y: r.top + p.y }; })()`);
-const hitCanvas = await ev(`document.elementFromPoint(${golan.x}, ${golan.y}).tagName`);
+const golan = await ev(`(() => { const m = window.GYF_MAP_VIEW.map, p = m.project([35.78, 32.86]); const r = document.querySelector('#map canvas').getBoundingClientRect(); const b = m.getBounds(); return { x: r.left + p.x, y: r.top + p.y, top: r.top, h: r.height, n: b.getNorth(), s: b.getSouth(), z: m.getZoom(), pitch: m.getPitch() }; })()`);
+const hitCanvas = await ev(`(() => { const e = document.elementFromPoint(${golan.x}, ${golan.y}); return e.tagName + '.' + e.className + ' in ' + (e.parentElement && e.parentElement.className); })()`);
 for (const type of ['mousePressed', 'mouseReleased']) await cmd('Input.dispatchMouseEvent', { type, x: golan.x, y: golan.y, button: 'left', clickCount: 1 });
 await sleep(300);
 ok(`clicking a region on the map opens it in the panel (clicked ${hitCanvas})`, (await ev(`document.querySelector('#map-panel-content .mp-h').textContent`)) === 'Golan Heights');
@@ -199,6 +201,7 @@ await vp(1440, 900);
 
 // ---- Nav and errors ----
 ok('Map is marked as the current page in the nav', (await ev(`document.querySelector('.topnav a[aria-current="page"]').textContent`)) === 'Map');
+ok('the base map\'s country and state names are hidden', await ev(`(() => { const m = window.GYF_MAP_VIEW.map; const ls = m.getStyle().layers.filter(l => l.type === 'symbol' && /country|state/.test(l.id)); return ls.length > 0 && ls.every(l => m.getLayoutProperty(l.id, 'visibility') === 'none'); })()`));
 ok('region and place labels are geographic names only', [...geo.features.map(f => f.properties.name + ' ' + f.properties.description), ...M.places.map(p => p.name)].every(t => !/occupied|disputed|territor|settlement|liberated/i.test(t)));
 await sleep(300);
 const mapErrs = await ev(`window.GYF_MAP_VIEW.errors.filter(e => !/fetch|network|Failed to load|AJAXError/i.test(e))`);

@@ -1701,3 +1701,78 @@ a { text-underline-offset: .2em; }
 
 /* A redraw lands instantly; motion.js turns this on for one frame while it places highlights. */
 #app.settling *, #app.settling *::before, #app.settling *::after { transition: none !important; }
+
+/* ---------- Top bar, modeled on thenextgeninnovators.org (public/js/topbar.js) ----------
+   A taller glass bar that sits a little lower, links grouped in one pill in the middle, a highlight that
+   rests on the current page and glows under the pointer, and Home's sub-pages swapping in with Back. */
+:root { --bar-h: 88px; }
+.topbar { padding-top: 10px; background: color-mix(in srgb, var(--bg) 62%, transparent); border-bottom: 0; }
+.topbar::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; pointer-events: none;
+  background: linear-gradient(to right, transparent 0%, color-mix(in srgb, var(--text) 16%, transparent) 50%, transparent 100%); }
+.topbar-inner { max-width: 1320px; padding: 12px 24px 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
+.topbar-inner .brand { justify-self: start; }
+.topbar-tools { justify-self: end; }
+.topbar.tb-enter { animation: tb-in .3s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes tb-in { from { transform: translateY(-24px); opacity: 0; } }
+
+.topnav { margin: 0; justify-self: center; display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px; overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); background: color-mix(in srgb, var(--surface) 45%, transparent); }
+.topnav > a, .nav-sub > a, .nav-back { position: relative; z-index: 1; flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 999px;
+  color: var(--muted); font: 500 14.5px/1.2 var(--font); white-space: nowrap; background: none; border: 0; cursor: pointer; text-decoration: none;
+  transition: color .15s ease, transform .15s ease, background-color .2s ease; }
+.topnav > a:hover, .nav-sub > a:hover, .nav-back:hover { color: var(--text); background: none; text-decoration: none; }
+.topnav > a:active, .nav-sub > a:active, .nav-back:active { transform: scale(.94); }
+.topnav > a.active, .nav-sub > a[aria-current="page"] { color: var(--accent); }
+.topnav [data-hover], .topnav [data-hover]:hover { color: var(--cta-ink); }
+.topnav > a:focus-visible, .nav-sub > a:focus-visible, .nav-back:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* Home has sub-pages: a small chevron says so. */
+.topnav > a[data-group]::after { content: ""; width: 6px; height: 6px; margin-left: 2px; border-right: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor; transform: translateY(-2px) rotate(45deg); opacity: .7; transition: transform .2s ease; }
+.nav-back .ic { font-size: 16px; margin-left: -4px; }
+
+/* The highlight: soft at rest on the current page, the sea blue with a glow under the pointer. */
+.nav-pill { border-radius: 999px; background: var(--accent-soft); box-shadow: none;
+  transition: transform .25s cubic-bezier(.2, .8, .2, 1), width .25s cubic-bezier(.2, .8, .2, 1), height .2s ease-out, opacity .2s ease-out, background-color .2s ease, box-shadow .2s ease; }
+.nav-pill.glow { background: color-mix(in srgb, var(--cta) 85%, transparent); box-shadow: 0 0 18px 4px color-mix(in srgb, var(--cta) 32%, transparent); }
+.topnav.has-pill > a.active { background: transparent; }
+
+/* Home's sub-pages swap in for the main links. */
+.nav-sub { display: none; align-items: center; gap: 2px; }
+.topnav.in-group > a { display: none; }
+.topnav.in-group .nav-sub.open { display: flex; animation: nav-swap .22s cubic-bezier(.2, .8, .2, 1) both; }
+.topnav.from-group > a { animation: nav-swap .22s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes nav-swap { from { opacity: 0; transform: translateY(-8px); } }
+
+/* Between phone and wide desktop: tighter links so everything fits on one row. */
+@media (min-width: 861px) and (max-width: 1180px) {
+  .topbar-inner { padding-left: 16px; padding-right: 16px; gap: 10px; }
+  .topnav > a, .nav-sub > a, .nav-back { padding: 9px 12px; font-size: 14px; }
+  .topbar .wm-header .wm-title { font-size: 18px; }
+  .topbar .theme-label, .topbar .qs-open-label { display: none; }
+}
+
+/* Phones: one slim row; Menu opens the bar full screen, and Home expands in place. */
+@media (max-width: 860px) {
+  :root { --bar-h: 58px; }
+  .topbar { padding-top: 4px; }
+  .topbar-inner { display: flex; flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
+  .topnav { display: none; order: 3; flex-basis: 100%; border: 0; border-radius: 0; background: none; padding: 0; overflow: visible; }
+  .topbar.nav-open { height: 100vh; height: 100dvh; overflow-y: auto; background: var(--bg); }
+  .topbar.nav-open .topnav { display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 14px 4px 24px; animation: nav-swap .22s cubic-bezier(.2, .8, .2, 1) both; }
+  .topbar.nav-open .topnav > a { padding: 15px 16px; font-size: 18px; font-weight: 600; border-radius: 16px; color: var(--text); background: none; justify-content: flex-start; }
+  .topbar.nav-open .topnav > a:hover { background: var(--surface-2); }
+  .topbar.nav-open .topnav > a.active { background: var(--accent-soft); color: var(--accent); }
+  .topbar.nav-open .topnav > a[data-group]::after { margin-left: auto; width: 8px; height: 8px; }
+  .topbar.nav-open .topnav > a[data-group][aria-expanded="true"]::after { transform: translateY(2px) rotate(-135deg); }
+  .topbar.nav-open .nav-sub.open { display: flex; flex-direction: column; align-items: stretch; gap: 2px; margin: 0 0 6px 14px; padding-left: 10px; border-left: 2px solid var(--border); animation: nav-swap .2s cubic-bezier(.2, .8, .2, 1) both; }
+  .topbar.nav-open .nav-sub .nav-back { display: none; }
+  .topbar.nav-open .nav-sub > a { padding: 12px 14px; font-size: 16px; border-radius: 12px; color: var(--text); }
+  .topbar.nav-open .nav-sub > a[aria-current="page"] { color: var(--accent); background: var(--accent-soft); }
+  .nav-pill { display: none; }
+  html.menu-lock, html.menu-lock body { overflow: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .topbar.tb-enter, .topnav.in-group .nav-sub.open, .topnav.from-group > a, .topbar.nav-open .topnav, .topbar.nav-open .nav-sub.open { animation: none; }
+  .nav-pill, .topnav > a, .nav-sub > a, .nav-back { transition: none; }
+}
+@media (prefers-reduced-transparency: reduce) { .topbar { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+@media (prefers-reduced-transparency: reduce) and (min-width: 861px) { .topnav { background: var(--surface); } }

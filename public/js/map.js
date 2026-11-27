@@ -100,7 +100,8 @@ const map = !GL ? NOOP : new maplibregl.Map({
   style: styleUrl(),
   bounds: ISRAEL,
   fitBoundsOptions: { padding: 16 },
-  maxBounds: [[32.6, 28.6], [37.6, 34.4]],
+  // Wide enough that a wide screen can still zoom out to the whole country (MapLibre keeps the view inside these).
+  maxBounds: [[28.5, 26.5], [41.5, 36.5]],
   minZoom: 6.5, maxZoom: 19, maxPitch: 70,
   attributionControl: { compact: false },
   dragRotate: true, touchPitch: true,
@@ -191,6 +192,7 @@ function clusterMarker(id, n, coords) {
     const src = map.getSource("pins");
     let z = map.getZoom() + 2;
     try { z = await src.getClusterExpansionZoom(id); } catch (err) { /* keep the default step */ }
+    untouched = false;
     map.easeTo({ center: coords, zoom: Math.min(z + 0.3, 17), duration: reduce ? 0 : 600 });
   });
   return new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat(coords);
@@ -330,6 +332,8 @@ function applyBase() {
   style.layers.forEach((l) => {
     if (["sat", "topo", "biome-fill", "biome-line", "greenline", "greenline-label", "place-labels", "pins-hit", "gyf-buildings"].includes(l.id)) return;
     if (l.id === "gyf-green" || l.id === "gyf-wood") { map.setLayoutProperty(l.id, "visibility", base === "plain" ? "visible" : "none"); return; }
+    // Country and state names from the base map are hidden: the map's own labels stay neutral and geographic.
+    if (l.type === "symbol" && /country|state/.test(l.id)) { map.setLayoutProperty(l.id, "visibility", "none"); return; }
     // Over satellite or terrain, keep only the vector map's labels.
     const keep = !raster || l.type === "symbol";
     map.setLayoutProperty(l.id, "visibility", keep ? "visible" : "none");
@@ -417,8 +421,10 @@ function startOrbit() {
   orbitFrame = requestAnimationFrame(step);
 }
 ["mousedown", "touchstart", "wheel"].forEach((ev) => map.getCanvasContainer().addEventListener(ev, stopOrbit, { passive: true }));
+let untouched = true; // still showing the whole country, as first opened
 function flyIn(lng, lat, opts) {
   stopOrbit();
+  untouched = false;
   const o = Object.assign({ zoom: 16.2, pitch: 60, bearing: map.getBearing() - 30 }, opts || {});
   map.flyTo({ center: [lng, lat], zoom: o.zoom, pitch: o.pitch, bearing: o.bearing, duration: reduce ? 0 : 2400, curve: 1.6, essential: false });
 }
@@ -441,7 +447,7 @@ $("map-tools").addEventListener("click", (e) => {
   const b = e.target.closest("[data-base]"), t = e.target.closest("[data-toggle]"), a = e.target.closest("[data-act]");
   if (b) { base = b.dataset.base; store.set("gyf:map-base3", base); applyBase(); }
   else if (t) { show[t.dataset.toggle] = !show[t.dataset.toggle]; applyToggles(); }
-  else if (a && a.dataset.act === "tilt") { stopOrbit(); const flat = map.getPitch() > 20; map.easeTo({ pitch: flat ? 0 : 60, bearing: flat ? 0 : map.getBearing() - 20, zoom: flat ? map.getZoom() : Math.max(map.getZoom(), 15), duration: reduce ? 0 : 900 }); }
+  else if (a && a.dataset.act === "tilt") { stopOrbit(); untouched = false; const flat = map.getPitch() > 20; map.easeTo({ pitch: flat ? 0 : 60, bearing: flat ? 0 : map.getBearing() - 20, zoom: flat ? map.getZoom() : Math.max(map.getZoom(), 15), duration: reduce ? 0 : 900 }); }
   else if (a && a.dataset.act === "country") wholeCountry();
 });
 map.on("pitchend", () => { const b = document.querySelector("[data-act='tilt']"); if (b) b.setAttribute("aria-pressed", String(map.getPitch() > 20)); });
@@ -598,7 +604,7 @@ function openProgram(key, siteIdx, opts) {
   activeKey = si >= 0 ? key + "#" + si : null;
   if (opts && opts.fly && p.sites.length) {
     if (si >= 0) flyIn(p.sites[si].lng, p.sites[si].lat, { zoom: 16, pitch: 58 });
-    else { stopOrbit(); const b = new maplibregl.LngLatBounds(); p.sites.forEach((s) => b.extend([s.lng, s.lat])); map.fitBounds(b, { padding: 80, maxZoom: 13, pitch: 0, bearing: 0, duration: reduce ? 0 : 1400 }); }
+    else { stopOrbit(); untouched = false; const b = new maplibregl.LngLatBounds(); p.sites.forEach((s) => b.extend([s.lng, s.lat])); map.fitBounds(b, { padding: 80, maxZoom: 13, pitch: 0, bearing: 0, duration: reduce ? 0 : 1400 }); }
   }
   settle();
 }
@@ -628,19 +634,21 @@ function showSheet(open) {
 }
 $("sheet-handle").addEventListener("click", () => showSheet(!document.body.classList.contains("sheet-open")));
 
-// ---------- Phone menu (same behavior as the main app) ----------
-const topbar = document.querySelector(".topbar"), navBtn = document.querySelector(".nav-toggle");
-const setNav = (open) => { topbar.classList.toggle("nav-open", open); navBtn.setAttribute("aria-expanded", String(open)); };
-navBtn.addEventListener("click", () => setNav(!topbar.classList.contains("nav-open")));
+// (The phone menu lives in topbar.js.) Close the Layers menu on an outside click.
 document.addEventListener("click", (e) => {
-  if (!e.target.closest(".topbar")) setNav(false);
   const menu = document.querySelector(".layer-menu");
   if (menu && menu.open && !e.target.closest(".layer-menu")) menu.open = false;
 });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") { setNav(false); showSheet(false); stopOrbit(); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { showSheet(false); stopOrbit(); } });
 
-// MapLibre needs to know when its box changes size (menu opening, rotation, sheet).
-if (window.ResizeObserver) new ResizeObserver(() => map.resize()).observe($("map"));
+// MapLibre needs to know when its box changes size (menu opening, rotation, sheet, the bar settling).
+// Until someone moves the map, keep the whole country in view as the box changes.
+// (resize() fires its own movestart, so only a person's drag or zoom, or one of our fly-ins, counts as moving it.)
+map.on("movestart", (e) => { if (e && e.originalEvent) untouched = false; });
+if (window.ResizeObserver) new ResizeObserver(() => {
+  map.resize();
+  if (GL && untouched) map.fitBounds(ISRAEL, { padding: 16, duration: 0 });
+}).observe($("map"));
 
 drawFilters();
 renderPanel();

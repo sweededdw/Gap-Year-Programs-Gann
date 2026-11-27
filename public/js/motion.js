@@ -14,44 +14,7 @@
   const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  // ---------- 1. Sliding nav pill ----------
-  const nav = document.querySelector(".topnav");
-  let pill = null;
-  function placePill(animate) {
-    if (!nav) return;
-    const active = nav.querySelector("a.active");
-    // Phones show the menu as a grid of tiles; the pill only makes sense on the one-row desktop bar.
-    const oneRow = getComputedStyle(nav).display === "flex";
-    if (!active || !oneRow) { if (pill) pill.style.opacity = "0"; if (nav.classList.contains("has-pill")) nav.classList.remove("has-pill"); return; }
-    if (!pill) {
-      pill = document.createElement("span");
-      pill.className = "nav-pill";
-      pill.setAttribute("aria-hidden", "true");
-      nav.prepend(pill);
-      animate = false;
-    }
-    const wasHidden = pill.style.opacity === "0" || !nav.classList.contains("has-pill");
-    if (!animate || wasHidden) pill.classList.add("no-anim");
-    pill.style.width = active.offsetWidth + "px";
-    pill.style.height = active.offsetHeight + "px";
-    pill.style.transform = "translate(" + active.offsetLeft + "px," + active.offsetTop + "px)";
-    pill.style.opacity = "1";
-    if (!nav.classList.contains("has-pill")) nav.classList.add("has-pill");
-    if (pill.classList.contains("no-anim")) { void pill.offsetWidth; pill.classList.remove("no-anim"); }
-  }
-  if (nav) {
-    // app.js toggles .active on the links after each route; follow it.
-    // React only to the links (their .active class, or a link being moved). placePill changes the
-    // pill's and the nav's own classes; reacting to those would loop forever.
-    new MutationObserver((recs) => {
-      const relevant = recs.some((r) => r.type === "attributes" ? r.target.tagName === "A"
-        : [...r.addedNodes, ...r.removedNodes].some((n) => n.tagName === "A"));
-      if (relevant) placePill(true);
-    }).observe(nav, { subtree: true, attributes: true, attributeFilter: ["class"], childList: true });
-    window.addEventListener("resize", () => placePill(false));
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => placePill(false));
-    placePill(false);
-  }
+  // (1. The nav highlight now lives in topbar.js, shared with the map page.)
 
   // ---------- 2. Heart pop ----------
   // app.js redraws the page after a save, so remember what was clicked and animate the fresh button.
@@ -111,6 +74,7 @@
     { t: "Community", s: "Youth groups and student groups", h: "#/community" },
     { t: "Saved programs", s: "Discover › Saved", h: "#/my-list" },
     { t: "Home", s: "", h: "#/" },
+    { t: "Program map", s: "Home › Map, in 3D", h: "/map" },
   ];
   const TYPE = { gap: "Gap year", mechina: "Mechina", university: "University", movement: "Youth movement", service: "Service", aliyah: "Aliyah & IDF", yeshiva: "Yeshiva", seminary: "Seminary" };
   let pal = null, items = [], sel = 0, lastFocus = null;
@@ -197,7 +161,8 @@
   function go(x) {
     if (!x) return;
     close();
-    if (location.hash === x.h) window.dispatchEvent(new HashChangeEvent("hashchange")); else location.hash = x.h;
+    if (x.h.charAt(0) === "/") location.href = x.h; // its own page, not a #/ route
+    else if (location.hash === x.h) window.dispatchEvent(new HashChangeEvent("hashchange")); else location.hash = x.h;
   }
   function open() {
     if (!pal) build();
