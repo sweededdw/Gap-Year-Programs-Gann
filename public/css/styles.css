@@ -1698,3 +1698,6 @@ a { text-underline-offset: .2em; }
   .qnext { min-height: 44px; padding: 0 16px; }
 }
 .pcar .pnums { order: 0; flex-basis: auto; }
+
+/* A redraw lands instantly; motion.js turns this on for one frame while it places highlights. */
+#app.settling *, #app.settling *::before, #app.settling *::after { transition: none !important; }

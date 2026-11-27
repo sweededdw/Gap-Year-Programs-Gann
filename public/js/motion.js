@@ -312,7 +312,14 @@
       car.addEventListener("scroll", () => requestAnimationFrame(mark), { passive: true });
       mark(); setTimeout(mark, 400);
     };
-    const onDraw = () => { liveCount(); subPill(); segPills(); pickEffects(); pipsFollow(); };
+    // While a fresh page settles (highlights placed, selected states applied), transitions are off, so only the
+    // thing you just tapped moves, not every selected option on the page. Keyframe effects still play.
+    const onDraw = () => {
+      app.classList.add("settling");
+      liveCount(); subPill(); segPills(); pickEffects(); pipsFollow();
+      void app.offsetWidth;
+      app.classList.remove("settling");
+    };
     new MutationObserver(onDraw).observe(app, { childList: true });
     onDraw();
     // Typographer's quotes and apostrophes in everything the app draws (program text included). Only text nodes
