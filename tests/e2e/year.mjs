@@ -18,7 +18,23 @@ await go('#/browse'); await ev('localStorage.clear(); true');
 // Aardvark: the deep sections
 await go('#/program/aardvark');
 const tabs = await ev('[...document.querySelectorAll(".tabs a")].map(a=>a.textContent)');
-ok('tabs: Overview, Time breakdown, Daily life, Real cost, Internships & tracks, Student stories, then application', tabs.slice(0,6).join("|")==="Overview|Time breakdown|Daily life|Real cost|Internships & tracks|Student stories" && tabs.includes("Deadlines"));
+ok('menu jumps to Key features, About, The year, Real cost, Application', tabs.join("|")==="Key features|About|The year|Real cost|Application");
+const order = await ev('[...document.querySelectorAll(".sections details.acc")].map(d=>d.dataset.sec).join(",")');
+ok(`drawers in order: overview, the year, real cost, then application (${order.slice(0,60)}…)`, /^overview,time,life,(tracks,)?stories,cost,deadlines,portal/.test(order));
+ok('key features come first, before any drawer', await ev('document.querySelector("#key-features").compareDocumentPosition(document.querySelector("details.acc")) & Node.DOCUMENT_POSITION_FOLLOWING') > 0);
+ok('key features: blurb, highlights and the decision facts', await ev('document.querySelectorAll("#key-features .kf-points li").length') >= 2 && /Real cost, estimated/.test(await txt('#key-features')) && /Next deadline/.test(await txt('#key-features')) && /Israeli peers/.test(await txt('#key-features')) && /Most of the week/.test(await txt('#key-features')));
+await ev('scrollTo(0,0); true'); await sleep(200); { const r=await cmd('Page.captureScreenshot',{format:'png',captureBeyondViewport:true}); (await import('node:fs')).writeFileSync(`${SP}/y-key-features.png`,Buffer.from(r.result.data,'base64')); }
+ok('drawers start closed', await ev('[...document.querySelectorAll("details.acc")].every(d=>!d.open)'));
+await ev('document.querySelector(".kf-tile.link[data-jump=sec-cost]").click(); true'); await sleep(400);
+ok('Real cost tile opens the Real cost drawer', await ev('document.getElementById("sec-cost").open'));
+await ev('document.querySelector("[data-act=acc-all]").click(); true'); await sleep(100);
+ok('Open all opens every drawer', await ev('[...document.querySelectorAll("details.acc")].every(d=>d.open)') && (await txt('[data-act=acc-all]'))==='Close all');
+await ev('document.querySelector("[data-act=acc-all]").click(); true'); await sleep(100);
+ok('Close all closes them', await ev('[...document.querySelectorAll("details.acc")].every(d=>!d.open)'));
+await ev('document.querySelector("#sec-docs > summary").click(); true'); await sleep(100);
+await ev('(()=>{const c=document.querySelector("#sec-docs input[type=checkbox]"); c.click(); return true;})()'); await sleep(300);
+ok('a drawer stays open after checking something inside it (page redraws)', await ev('document.getElementById("sec-docs").open'));
+await ev('(()=>{const c=document.querySelector("#sec-docs input[type=checkbox]"); c.click(); return true;})()'); await sleep(200);
 ok('Daily life: housing near Machane Yehuda, meals budget, 24/7 counselors', /Machane Yehuda/.test(await txt('#sec-life')) && /₪1,000/.test(await txt('#sec-life')) && /24\/7/.test(await txt('#sec-life')));
 ok('Internships: how placements work + 16–20 hours + sectors + 4 tracks', /Placement coordinators/.test(await txt('#sec-tracks')) && /16–20 hours/.test(await txt('#sec-tracks')) && await ev('document.querySelectorAll("#sec-tracks .track").length')===4 && await ev('document.querySelectorAll("#sec-tracks .intern .chip").length')>=8);
 ok('Student stories: testimonial + alumni contact placeholders', /Testimonials coming soon/.test(await txt('#sec-stories')) && /Alumni contacts coming soon/.test(await txt('#sec-stories')));
@@ -43,7 +59,7 @@ await go('#/program/mtva');
 ok('MTVA: women-only seminary label', /Seminary · Women only/.test(await txt('.school-head .type-badge')));
 // FZY: audience + pounds
 await go('#/program/fzy-year-course');
-ok('FZY: "Who it\'s for" callout + priced in pounds', /Who it's for:.*Young Judaea/.test(await txt('#sec-overview')) && /Priced in pounds/.test(await txt('.stats')) && /£23,499/.test(await txt('.stats')));
+ok('FZY: "Who it\'s for" callout + priced in pounds', /Who it's for:.*Young Judaea/.test(await txt('#sec-overview')) && /priced in pounds/.test(await txt('#key-features')) && /£23\.?5?k|£23,499/.test(await txt('#key-features')));
 ok('program header shows the restriction label (UK-specific)', /UK-specific/.test(await txt('.school-head .aud-tag')));
 await shot('y-fzy');
 // Garin Tzabar: null end date doesn't break passport check

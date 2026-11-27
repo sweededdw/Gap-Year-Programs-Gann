@@ -43,5 +43,8 @@ for (const [w,h,name] of [[375,548,'se'],[390,664,'14'],[430,740,'max']]) {
   await ev('scrollTo(0,0); true'); await sleep(200);
   await shot('m-compare-'+name, true);
 }
+await vp(390,844); await ev('location.hash="#/program/year-course"; true'); await sleep(800); await ev('scrollTo(0,0); true');
+ok('program page on a phone: key features fit, no sideways scroll', await ev('document.documentElement.scrollWidth<=innerWidth') && !!(await ev('!!document.querySelector("#key-features .kf-tile")')));
+{ const r=await cmd('Page.captureScreenshot',{format:'png',captureBeyondViewport:true}); writeFileSync(`${SP}/m-program.png`,Buffer.from(r.result.data,'base64')); }
 ok('no JS errors', errs.length===0); if(errs.length) console.log(errs);
 console.log(out.join('\n')); process.exit(0);

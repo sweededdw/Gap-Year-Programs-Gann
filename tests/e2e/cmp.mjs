@@ -17,14 +17,14 @@ await cmd('Page.enable'); await cmd('Runtime.enable'); await vp(1280,1300);
 await go('#/browse'); await ev('localStorage.clear(); true');
 // program page chart
 await go('#/program/torah-tech');
-ok('Time breakdown is the first "The year" section + tab', await ev('document.querySelector(".tabs a:nth-child(2)").textContent')==='Time breakdown' && !!(await ev('!!document.getElementById("sec-time")')));
+ok('Time breakdown is the first "The year" section', await ev('(()=>{const h=document.getElementById("grp-year"); let n=h.nextElementSibling; return n && n.id;})()')==='sec-time');
 ok('5 category bars on one fixed scale, values printed', await ev('document.querySelectorAll("#sec-time .trow").length')===5 && /Internships\s*23 h/.test(await txt('#sec-time .trows')) && /Religious study\s*29 h/.test(await txt('#sec-time .trows')));
 ok('published hours have no ≈, estimates do', !/≈23/.test(await txt('#sec-time .trows')) && /≈2 h/.test(await txt('#sec-time .trows')));
 const w = await ev('[...document.querySelectorAll("#sec-time .tbar")].map(b=>parseFloat(b.style.width))');
 ok(`bar widths match hours / 50 (${w.join(",")})`, Math.abs(w[0]-58)<0.2 && Math.abs(w[2]-46)<0.2);
 ok('total stacked bar with legend percentages', await ev('document.querySelectorAll("#sec-time .tstack .seg").length')===3 && /Religious study 54%/.test(await txt('#sec-time .tlegend')));
 ok('hero total + basis badge', /54/.test(await txt('#sec-time .hero-n')) && /published schedule/.test(await txt('#sec-time .thead .pbadge')));
-await ev('document.getElementById("sec-time").scrollIntoView(); window.scrollBy(0,-90); true'); await sleep(200);
+await ev('document.querySelector("#sec-time > summary").click(); document.getElementById("sec-time").scrollIntoView(); window.scrollBy(0,-90); true'); await sleep(200);
 // hover tooltip
 const r = await ev('(()=>{const b=document.querySelector("#sec-time .tbar.c-intern").getBoundingClientRect(); return {x:b.left+b.width/2,y:b.top+b.height/2}})()');
 await cmd('Input.dispatchMouseEvent',{type:'mouseMoved',x:r.x,y:r.y}); await sleep(150);

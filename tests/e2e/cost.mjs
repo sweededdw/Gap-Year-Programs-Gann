@@ -14,7 +14,7 @@ const out=[]; const ok=(n,c)=>out.push((c?'PASS ':'FAIL ')+n);
 await cmd('Page.enable'); await cmd('Runtime.enable'); await vp(1280,1000);
 await cmd('Page.navigate',{url:B}); await sleep(600);
 await ev('localStorage.clear(); localStorage.setItem("gyf:theme","sunset"); true');
-const go=async h=>{ await ev(`location.hash=${JSON.stringify(h)}; true`); await sleep(500); };
+const go=async h=>{ await ev(`location.hash=${JSON.stringify(h)}; true`); await sleep(500); await ev('(()=>{const d=document.getElementById("sec-cost"); if(d && !d.open) d.querySelector("summary").click(); return true;})()'); await sleep(100); };
 const net=()=>ev('document.querySelector("#sec-cost .cc-net").textContent');
 const has=t=>ev(`document.querySelector("#sec-cost").textContent.includes(${JSON.stringify(t)})`);
 const type=async (k,v)=>{ await ev(`(()=>{const i=document.querySelector('#sec-cost [data-cost="${k}"]'); i.focus(); i.value=${JSON.stringify(v)}; i.dispatchEvent(new Event("input",{bubbles:true})); return true;})()`); await sleep(120); };

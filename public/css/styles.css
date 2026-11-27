@@ -1258,3 +1258,51 @@ a.acct-item { color: var(--text); text-decoration: none; }
   .cc-out { position: static; order: -1; }
 }
 @media (max-width: 520px) { .cc-row { grid-template-columns: 1fr; } .cc-net { font-size: 34px; } }
+
+/* ---------- Program page: key features first, then drawers ---------- */
+.kf { padding: 20px 22px; margin-top: 14px; background: linear-gradient(165deg, var(--gold-soft), var(--surface) 55%); border-color: color-mix(in srgb, var(--gold) 30%, var(--border)); }
+.kf-title { font-family: var(--serif); font-size: 22px; margin: 0 0 12px; }
+.kf-aud { margin-bottom: 14px; }
+.kf-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 22px; align-items: start; }
+.kf-blurb { font-size: 15.5px; line-height: 1.6; margin: 0 0 12px; }
+.kf-points { list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 8px; }
+.kf-points li { position: relative; padding-left: 26px; font-size: 15px; line-height: 1.45; font-weight: 600; }
+.kf-points li::before { content: ""; position: absolute; left: 4px; top: .5em; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 20%, transparent); }
+.kf-fields { display: grid; gap: 6px; }
+.kf-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.kf-tile { display: flex; gap: 10px; align-items: flex-start; padding: 11px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); min-width: 0; }
+.kf-tile.link:hover { text-decoration: none; border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); }
+.kf-ic { flex: none; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-size: 16px; }
+.kf-txt { display: grid; gap: 1px; min-width: 0; }
+.kf-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.kf-value { font-size: 15px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.kf-sub { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+.kf-tile:first-child .kf-value { font-family: var(--serif); font-size: 22px; color: var(--gold); }
+.acc-nav { align-items: center; }
+.acc-nav .acc-all { margin-left: auto; flex: none; }
+details.acc { padding: 0; }
+details.acc > summary.sec-head { list-style: none; cursor: pointer; margin: 0; padding: 15px 18px; display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; border-radius: var(--radius); }
+details.acc > summary::-webkit-details-marker { display: none; }
+details.acc > summary.sec-head h2 { flex: 0 1 auto; font-size: 17px; }
+details.acc > summary .acc-sub { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+details.acc > summary .badge { margin-left: auto; }
+details.acc > summary:hover { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+details.acc > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.acc-chev { margin-left: auto; flex: none; color: var(--muted); display: grid; place-items: center; transition: transform .15s; }
+details.acc > summary .badge + .acc-chev { margin-left: 4px; }
+details.acc[open] > summary .acc-chev { transform: rotate(180deg); }
+details.acc[open] > summary { border-bottom: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0; }
+details.acc > .sec-body { padding: 16px 20px 20px; }
+.sections > .group-h { margin-top: 14px; font-family: var(--serif); }
+.sections > .group-h:first-child { margin-top: 0; }
+.group-h, .kf { scroll-margin-top: calc(var(--bar-h) + 12px); }
+@media (max-width: 900px) { .kf-grid { grid-template-columns: 1fr; } }
+@media (max-width: 520px) {
+  .kf { padding: 16px; }
+  .kf-tiles { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kf-tile { padding: 10px; gap: 8px; }
+  .kf-ic { display: none; }
+  details.acc > summary.sec-head { padding: 13px 14px; }
+  details.acc > summary .acc-sub { display: none; }
+  details.acc > .sec-body { padding: 14px; }
+}

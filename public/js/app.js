@@ -667,8 +667,17 @@
     const t = text || { verified: "Published", partial: "Partly published", missing: "Not published", neutral: "Standard" }[kind];
     return '<span class="badge ' + kind + '">' + esc(t) + "</span>";
   }
+  // Program page sections open and close like drawers. Which ones are open is remembered per program while
+  // you're on the site, so editing a field (which redraws the page) doesn't snap them shut.
+  const openSecs = {};
+  let accFor = null;
+  function acc(key, head, body) {
+    const open = accFor && openSecs[accFor] && openSecs[accFor][key];
+    return '<details class="card sec acc" id="sec-' + key + '" data-sec="' + key + '"' + (open ? " open" : "") + '><summary class="sec-head">' + head +
+      '<span class="acc-chev" aria-hidden="true">' + I("chev") + '</span></summary><div class="sec-body">' + body + "</div></details>";
+  }
   function section(i, key, title, badgeHtml, body) {
-    return '<section class="card sec" id="sec-' + key + '"><div class="sec-head"><span class="sec-num">' + (i + 1) + "</span><h2>" + esc(title) + "</h2>" + badgeHtml + "</div>" + body + "</section>";
+    return acc(key, '<span class="sec-num">' + (i + 1) + "</span><h2>" + esc(title) + "</h2>" + badgeHtml, body);
   }
   function unknown(text) {
     return '<p class="muted">' + esc(text || "Not published. Check the program's application portal.") + "</p>";
@@ -876,7 +885,40 @@
   const STORIES = window.GYF_STORIES || {};
   const COST = window.GYF_COST || null;
   function infoSection(key, title, body, sub) {
-    return '<section class="card sec" id="sec-' + key + '"><div class="sec-head"><h2>' + esc(title) + "</h2>" + (sub ? '<span class="small muted">' + sub + "</span>" : "") + "</div>" + body + "</section>";
+    return acc(key, "<h2>" + esc(title) + "</h2>" + (sub ? '<span class="small muted acc-sub">' + sub + "</span>" : ""), body);
+  }
+  // The first thing on a program page: what stands out, and the facts most people decide on.
+  function keyFeatures(p, nd) {
+    const t = TIME[p.id], d = DETAILS[p.id] || {};
+    const top = t ? TCATS.filter((c) => c[0] !== "other" && (t[c[0]] || 0) > 0).sort((x, y) => (t[y[0]] || 0) - (t[x[0]] || 0)).slice(0, 2) : [];
+    const r = COST ? COST.compute(p, d, ps(p.id).cost) : null;
+    const m = quiz().done ? matches().find((x) => x.p.id === p.id) : null;
+    const listed = p.costUSD != null ? compactCost(p) + " tuition" : /[₪£]|NIS/.test(p.costText) ? compactCost(p) + " tuition" + (p.costText.indexOf("£") >= 0 ? " · priced in pounds" : " · priced in shekels") : "";
+    const tile = (icon, label, value, sub, jump) =>
+      "<" + (jump ? 'a href="#' + jump + '" data-jump="' + jump + '"' : "div") + ' class="kf-tile' + (jump ? " link" : "") + '"><span class="kf-ic">' + I(icon) + '</span><span class="kf-txt"><span class="kf-label">' + label + '</span><span class="kf-value">' + value + "</span>" +
+      (sub ? '<span class="kf-sub">' + sub + "</span>" : "") + "</span></" + (jump ? "a" : "div") + ">";
+    const tiles = [
+      r ? tile("cost", "Real cost, estimated", r.tuitionKnown ? "$" + Math.round(r.net).toLocaleString("en-US") : "Price not published", r.tuitionKnown ? esc(listed || "Tuition") + (r.masa ? " · after Masa grant" : "") + (r.flights ? " · with flights" : "") : "Ask the program", "sec-cost") : "",
+      tile("cal", "Length", esc(p.length.split(" · ")[0].split(" (")[0]), p.semesterOption ? "Semester option" : "Full year"),
+      tile("clock", "Next deadline", nd.kind === "date" ? fmtDate(nd.d.date, { month: "short", day: "numeric" }) : nd.kind === "rolling" ? "Rolling" : "Not posted",
+        nd.kind === "date" ? esc(nd.d.label) + " · " + countdown(nd.d.date) : nd.kind === "rolling" ? "Apply early, it can fill" : "Confirm with the program", "sec-deadlines"),
+      tile("pin", "Where you live", esc(p.base.split(" (")[0]), ""),
+      tile("candle", "Community", esc(L.orientation[p.orientation]), esc(L.gender[p.gender])),
+      tile("users", "Israeli peers", esc(L.israeliPeers[p.israeliPeers]), ""),
+      tile("check", "College credit", p.credit === true ? "Yes" : p.credit === false ? "No" : "Not researched", ""),
+      top.length ? tile("work", "Most of the week", top.map((c) => esc(c[1]) + " " + tVal(t, c[0])).join(" · "), "hours a week", "sec-time") : "",
+      m && m.pct != null ? tile("heart", "Your match", m.pct + "%", "from your quiz answers") : "",
+    ].join("");
+    const picked = quiz().answers.field || [];
+    const fields = Object.keys(p.fields || {});
+    return '<section class="card kf" id="key-features"><h2 class="kf-title">Key features</h2>' +
+      (p.audience ? '<div class="callout warn kf-aud"><span aria-hidden="true">' + I("users") + '</span><div><strong>Who it\'s for:</strong> ' + esc(p.audience) + "</div></div>" : "") +
+      '<div class="kf-grid">' +
+      '<div class="kf-left"><p class="kf-blurb">' + esc(p.blurb) + "</p>" +
+      (p.highlights && p.highlights.length ? '<ul class="kf-points">' + p.highlights.map((h) => "<li>" + esc(h) + "</li>").join("") + "</ul>" : "") +
+      (fields.length ? '<div class="kf-fields"><span class="kf-label">Fields you can explore</span><div class="chips">' + fields.map((k) => '<span class="chip' + (picked.indexOf(k) >= 0 ? " ok" : "") + '">' + (picked.indexOf(k) >= 0 ? "✓ " : "") + esc(L.field[k][1]) + "</span>").join("") + "</div></div>" : "") +
+      "</div>" +
+      '<div class="kf-tiles">' + tiles + "</div></div></section>";
   }
   // Turn a details paragraph into bullets: schedules split on " · " (times in bold), prose by sentence and semicolon.
   function bulletList(t) {
@@ -1097,7 +1139,9 @@
       [dc.release ? badge("verified") : dc.note ? badge("partial") : badge("missing"), decisionBody],
     ];
 
+    accFor = p.id;
     const yearSecs = yearSections(p);
+    const costSec = yearSecs.find((x) => x[0] === "cost"), yearOnly = yearSecs.filter((x) => x[0] !== "cost");
     const det = DETAILS[p.id];
     const allSources = p.sources.concat(det && det.sources ? det.sources.filter((u) => p.sources.indexOf(u) < 0) : []);
     // ---- Sidebar: progress, checklist, timeline, sources
@@ -1126,24 +1170,22 @@
       '<div class="actions"><button class="btn' + (saved ? "" : " primary") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '">' + (saved ? I("heart", true) + " On my list" : I("heart") + " Add to my list") + "</button>" +
       '<button class="btn" data-act="cmp-add" data-id="' + p.id + '">Compare</button>' +
       '<a class="btn" href="' + esc(p.website) + '" target="_blank" rel="noopener">' + (p.websiteLabel ? esc(p.websiteLabel) : "Official website") + " ↗</a></div></header>" +
-      '<div class="card stats">' +
-      '<div class="stat"><div class="label">Tuition</div><div class="value">' + esc(p.costUSD != null ? money(p.costUSD) : /[₪£]/.test(p.costText) ? shortCost(p) : "—") + '</div><div class="sub">' + esc(p.costUSD != null ? shortCost(p) : p.costText.indexOf("₪") >= 0 ? "Priced in shekels" : p.costText.indexOf("£") >= 0 ? "Priced in pounds" : p.costText) + "</div></div>" +
-      '<div class="stat"><div class="label">Length</div><div class="value">' + esc(p.length.split(" · ")[0].split(" (")[0]) + '</div><div class="sub">' + esc(p.semesterOption ? "Semester option available" : "Full year") + "</div></div>" +
-      '<div class="stat"><div class="label">Next deadline</div><div class="value">' + (nd.kind === "date" ? fmtDate(nd.d.date, { month: "short", day: "numeric" }) : nd.kind === "rolling" ? "Rolling" : "Not posted") + '</div><div class="sub">' + (nd.kind === "date" ? esc(nd.d.label) + " · " + countdown(nd.d.date) : nd.kind === "rolling" ? "Apply early, it can fill" : "Confirm with program") + "</div></div>" +
-      '<div class="stat"><div class="label">Your application</div><div class="value">' + pr.pct + '%</div><div class="sub"><div class="progress-bar" style="margin-top:6px"><span style="width:' + pr.pct + '%"></span></div></div></div>' +
-      "</div>" +
-      '<nav class="tabs" aria-label="Page sections"><a href="#sec-overview" data-jump="sec-overview">Overview</a>' +
-      yearSecs.map((x) => '<a href="#sec-' + x[0] + '" data-jump="sec-' + x[0] + '">' + x[1] + "</a>").join("") + SECTIONS.map((x) => '<a href="#sec-' + x[0] + '" data-jump="sec-' + x[0] + '">' + x[1] + "</a>").join("") + "</nav>" +
+      keyFeatures(p, nd) +
+      '<nav class="tabs acc-nav" aria-label="Page sections"><a href="#key-features" data-jump="key-features">Key features</a><a href="#grp-about" data-jump="grp-about">About</a>' +
+      (yearOnly.length ? '<a href="#grp-year" data-jump="grp-year">The year</a>' : "") + (costSec ? '<a href="#sec-cost" data-jump="sec-cost">Real cost</a>' : "") +
+      '<a href="#grp-app" data-jump="grp-app">Application</a><button class="btn ghost sm acc-all" data-act="acc-all" type="button">Open all</button></nav>' +
       '<div class="detail"><div class="sections">' +
-      '<section class="card sec" id="sec-overview"><div class="sec-head"><h2>Overview</h2></div>' +
+      '<h2 class="group-h" id="grp-about">About the program</h2>' +
+      acc("overview", "<h2>Overview</h2>" + '<span class="small muted acc-sub">Facts, fields and how it rates</span>',
       (p.audience ? '<div class="callout warn" style="margin-bottom:12px"><span aria-hidden="true">' + I("users") + '</span><div><strong>Who it\'s for:</strong> ' + esc(p.audience) + "</div></div>" : "") +
       "<p>" + esc(p.blurb) + "</p>" +
       '<div class="facts"><div class="fact"><div class="k">Community</div><div class="v">' + esc(L.orientation[p.orientation]) + '</div></div><div class="fact"><div class="k">Where</div><div class="v">' + esc(p.base) + "</div></div>" +
       '<div class="fact"><div class="k">Tuition</div><div class="v">' + esc(p.costText) + '</div></div><div class="fact"><div class="k">Focus</div><div class="v">' + esc(p.focus.map((f) => L.focus[f]).join(", ")) + "</div></div>" +
       '<div class="fact"><div class="k">College credit</div><div class="v">' + (p.credit === true ? "Yes" : p.credit === false ? "No" : "Not researched") + '</div></div><div class="fact"><div class="k">Israeli peers</div><div class="v">' + esc(L.israeliPeers[p.israeliPeers]) + "</div></div>" +
-      '<div class="fact"><div class="k">Website</div><div class="v"><a href="' + esc(p.website) + '" target="_blank" rel="noopener">' + esc(p.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")) + " ↗</a></div></div></div>" + fieldsBox(p) + ratingsBox(p) + "</section>" +
-      '<h2 class="group-h">The year</h2>' + yearSecs.map((x) => infoSection(x[0], x[1], x[2])).join("") +
-      '<h2 class="group-h">Application</h2>' +
+      '<div class="fact"><div class="k">Website</div><div class="v"><a href="' + esc(p.website) + '" target="_blank" rel="noopener">' + esc(p.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")) + " ↗</a></div></div></div>" + fieldsBox(p) + ratingsBox(p)) +
+      (yearOnly.length ? '<h2 class="group-h" id="grp-year">The year</h2>' + yearOnly.map((x) => infoSection(x[0], x[1], x[2])).join("") : "") +
+      (costSec ? '<h2 class="group-h" id="grp-cost">Cost</h2>' + infoSection(costSec[0], costSec[1], costSec[2], "After grants, with flights and extras") : "") +
+      '<h2 class="group-h" id="grp-app">Application</h2>' +
       sections.map((x, i) => section(i, SECTIONS[i][0], SECTIONS[i][1], x[0], x[1])).join("") +
       "</div>" +
       '<aside class="side">' +
@@ -1747,6 +1789,7 @@
     if (jump) {
       e.preventDefault();
       const t = document.getElementById(jump.dataset.jump);
+      if (t && t.tagName === "DETAILS") t.open = true;
       if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
@@ -1793,6 +1836,12 @@
     if (act === "cmp-top3") { state.compare = matches().slice(0, 3).map((m) => m.p.id); save(); location.hash = "#/compare"; return; }
     if (act === "toggle-filters") { filters().open = !filters().open; save(); return render(); }
     if (act === "toggle-deadlines") { filters().dlOpen = !filters().dlOpen; save(); return render(); }
+    if (act === "acc-all") {
+      const all = [...$app.querySelectorAll("details.acc")], openAll = all.some((d) => !d.open);
+      all.forEach((d) => (d.open = openAll));
+      el.textContent = openAll ? "Close all" : "Open all";
+      return;
+    }
     if (act === "save") {
       state.saved[el.dataset.id] = !state.saved[el.dataset.id];
       if (!state.saved[el.dataset.id]) delete state.saved[el.dataset.id];
@@ -1955,6 +2004,14 @@
   document.addEventListener("click", (e) => { if (!e.target.closest(".topbar") || e.target.closest(".topnav a")) setNav(false); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") setNav(false); });
   window.addEventListener("hashchange", () => { setNav(false); route(); window.scrollTo(0, 0); });
+  // Remember which program-page drawers are open, so a redraw (after any edit) keeps them open.
+  document.addEventListener("toggle", (e) => {
+    const d = e.target;
+    if (!d.classList || !d.classList.contains("acc") || !accFor) return;
+    (openSecs[accFor] = openSecs[accFor] || {})[d.dataset.sec] = d.open;
+    const btn = $app.querySelector('[data-act="acc-all"]');
+    if (btn) btn.textContent = [...$app.querySelectorAll("details.acc")].some((x) => !x.open) ? "Open all" : "Close all";
+  }, true);
   document.getElementById("as-of").textContent = fmtDate(D.asOf);
   document.getElementById("cycle").textContent = D.cycle;
 
