@@ -11,48 +11,60 @@
   font: 600 13px/1 var(--font); cursor: pointer; white-space: nowrap; transition: background-color .2s ease, border-color .2s ease, color .2s ease; }
 .preset:hover { border-color: var(--accent); }
 .preset[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.preset:focus-visible, .tchip:focus-visible, .mf-switch:focus-visible, .prog-row:focus-visible, .mp-back:focus-visible, .pc-site:focus-visible, .sheet-handle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.map-canvas { flex: 1; min-height: 0; }
+.preset:focus-visible, .tchip:focus-visible, .mf-switch:focus-visible, .prog-row:focus-visible, .mp-back:focus-visible, .pc-site:focus-visible, .sheet-handle:focus-visible, .seg button:focus-visible, .tool-btn:focus-visible, .layer-menu > summary:focus-visible, .layer-pop button:focus-visible, .place-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (min-width: 601px) { .map-presets { flex-wrap: wrap; overflow-x: visible; } }
 
-/* ---------- Leaflet, in the site's colors ---------- */
-.leaflet-container { font: 13px/1.4 var(--font); background: var(--surface-2); }
-.leaflet-bar { border: 1px solid var(--border) !important; box-shadow: var(--shadow-pop) !important; }
-.leaflet-bar a, .leaflet-bar a:hover { background: var(--surface); color: var(--text); border-bottom-color: var(--border); width: 34px; height: 34px; line-height: 34px; }
-.leaflet-bar a:hover { background: var(--surface-2); }
-.leaflet-bar a.leaflet-disabled { background: var(--surface); color: var(--muted); opacity: .5; }
-.leaflet-control-layers { background: var(--surface); color: var(--text); border: 1px solid var(--border) !important; border-radius: 10px !important; box-shadow: var(--shadow-pop) !important; }
-.leaflet-control-layers-toggle { width: 40px; height: 40px; background-size: 22px; filter: invert(var(--layers-invert, 1)); }
-:root[data-theme="daylight"] .leaflet-control-layers-toggle { --layers-invert: 0; }
-.leaflet-control-layers-expanded { padding: 10px 12px; }
-.leaflet-control-layers label { display: flex; align-items: center; gap: 6px; min-height: 30px; font-size: 14px; }
-.leaflet-control-layers-separator { border-top-color: var(--border); }
-.leaflet-control-attribution { background: color-mix(in srgb, var(--surface) 88%, transparent) !important; color: var(--muted); font-size: 11px; max-width: 70vw; }
-.leaflet-control-attribution a { color: var(--accent); }
-.biome-tip { background: var(--tip-bg); color: var(--tip-text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600; box-shadow: var(--shadow-pop); padding: 4px 9px; }
-.biome-tip::before { display: none; }
-.leaflet-interactive:focus { outline: none; }
+/* ---------- Map stage: the MapLibre canvas plus the floating toolbar ---------- */
+.map-stage { position: relative; flex: 1; min-height: 0; }
+.map-stage .map-canvas { position: absolute; inset: 0; }
+.maplibregl-map { font: 13px/1.4 var(--font); background: var(--surface-2); }
+.map-tools { position: absolute; z-index: 3; top: 10px; left: 10px; right: 64px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; pointer-events: none; }
+.map-tools > * { pointer-events: auto; }
+.seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: color-mix(in srgb, var(--surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid var(--border); box-shadow: var(--shadow-pop); }
+.seg button { min-height: 34px; padding: 0 12px; border: 0; border-radius: 9px; background: none; color: var(--muted); font: 600 13px/1 var(--font); cursor: pointer; transition: background-color .2s ease, color .2s ease; }
+.seg button:hover { color: var(--text); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.tool-btn, .layer-menu > summary { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--text);
+  font: 600 13px/1 var(--font); cursor: pointer; box-shadow: var(--shadow-pop); list-style: none; transition: border-color .2s ease, background-color .2s ease, color .2s ease; }
+.layer-menu > summary::-webkit-details-marker { display: none; }
+.layer-menu > summary::after { content: ""; width: 6px; height: 6px; margin-left: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); }
+.tool-btn:hover, .layer-menu > summary:hover { border-color: var(--accent); }
+.tool-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.layer-menu { position: relative; }
+.layer-pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 4; min-width: 230px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow-pop); }
+.layer-pop button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; color: var(--text); font: 600 14px/1.2 var(--font); cursor: pointer; text-align: left; }
+.layer-pop button[aria-checked="true"] .sw-track { background: var(--accent); border-color: var(--accent); }
+.layer-pop button[aria-checked="true"] .sw-knob { transform: translateX(16px); background: var(--accent-ink); }
+@media (prefers-reduced-transparency: reduce) { .seg, .tool-btn, .layer-menu > summary { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; } }
 
-/* Pins: colored by type, with the type's letter so color is never the only signal. */
-.pin-wrap { background: none; border: 0; }
-.pin { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--c); color: #120e0a;
+/* MapLibre controls in the site's colors */
+.maplibregl-ctrl-group { background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-pop) !important; border-radius: 12px; overflow: hidden; }
+.maplibregl-ctrl-group button { width: 38px; height: 38px; }
+.maplibregl-ctrl-group button + button { border-top: 1px solid var(--border); }
+.maplibregl-ctrl-group button:not(:disabled):hover { background-color: var(--surface-2); }
+:root:not([data-theme="daylight"]) .maplibregl-ctrl-group .maplibregl-ctrl-icon { filter: invert(1) brightness(1.4); }
+.maplibregl-ctrl-attrib { background: color-mix(in srgb, var(--surface) 88%, transparent) !important; color: var(--muted); font-size: 11px; }
+.maplibregl-ctrl-attrib a { color: var(--accent); }
+.maplibregl-ctrl-scale { background: color-mix(in srgb, var(--surface) 80%, transparent); color: var(--text); border-color: var(--muted); }
+.biome-tip .maplibregl-popup-content { background: var(--tip-bg); color: var(--tip-text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600; box-shadow: var(--shadow-pop); padding: 4px 10px; }
+.biome-tip .maplibregl-popup-tip { display: none; }
+.maplibregl-canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Pins: colored by type, with the type's letter so color is never the only signal. Real buttons, so Tab reaches them. */
+.pin { width: 30px; height: 30px; padding: 0; display: grid; place-items: center; border-radius: 50%; background: var(--c); color: #120e0a; cursor: pointer;
   border: 2px solid #120e0a; box-shadow: 0 0 0 2px rgba(255, 255, 255, .85), 0 3px 8px rgba(0, 0, 0, .45); font: 800 13px/1 var(--font);
   transition: transform .18s ease, box-shadow .18s ease; }
-.pin-wrap:hover .pin, .pin-wrap:focus-visible .pin { transform: scale(1.12); }
-.pin-wrap:focus-visible { outline: none; }
-.pin-wrap:focus-visible .pin { box-shadow: 0 0 0 3px var(--accent), 0 3px 8px rgba(0, 0, 0, .45); }
-.pin-wrap.is-active { z-index: 1000 !important; }
-.pin-wrap.is-active .pin { transform: scale(1.25); box-shadow: 0 0 0 3px var(--accent), 0 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent), 0 3px 8px rgba(0, 0, 0, .45); }
-.pin-cluster { background: none; }
-.pin-cluster span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: var(--surface); color: var(--text);
-  border: 2px solid var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent), 0 3px 10px rgba(0, 0, 0, .45); font: 700 14px/1 var(--font); }
-
-/* Place names (zoom 13+) and the single Armistice Line label. */
-.place-label, .gl-label { background: none; border: 0; pointer-events: none; }
-.place-label span, .gl-label span { position: absolute; left: 0; top: 0; transform: translate(-50%, 14px); white-space: nowrap; font: 600 12px/1.2 var(--font);
-  color: #fff; text-shadow: 0 0 3px #000, 0 0 2px #000, 0 1px 2px #000; letter-spacing: .01em; }
-.place-label.kibbutz span { font-style: italic; }
-.gl-label span { transform: translate(6px, -50%); color: #e4e6e9; font-weight: 500; font-size: 11px; }
+.pin b { pointer-events: none; }
+.pin:hover, .pin:focus-visible { transform: scale(1.12); }
+.pin:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent), 0 3px 8px rgba(0, 0, 0, .45); }
+.pin.is-active { z-index: 5; transform: scale(1.25); box-shadow: 0 0 0 3px var(--accent), 0 0 0 7px color-mix(in srgb, var(--accent) 35%, transparent), 0 3px 8px rgba(0, 0, 0, .45); }
+.maplibregl-marker:has(.pin.is-active) { z-index: 5; }
+.pin-cluster { width: 40px; height: 40px; padding: 0; display: grid; place-items: center; border-radius: 50%; background: var(--surface); color: var(--text); cursor: pointer;
+  border: 2px solid var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent), 0 3px 10px rgba(0, 0, 0, .45); font: 700 14px/1 var(--font); transition: transform .18s ease; }
+.pin-cluster:hover, .pin-cluster:focus-visible { transform: scale(1.08); }
+.pin-cluster:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 /* ---------- Side panel ---------- */
 .map-panel { display: flex; flex-direction: column; min-height: 0; background: var(--surface); border-left: 1px solid var(--border); }
@@ -118,6 +130,22 @@
 .pc-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; }
 .pc-links .btn { min-height: 44px; }
 
+.map-nogl { position: absolute; inset: 0; display: grid; place-content: center; gap: 8px; padding: 24px; text-align: center; background: var(--surface-2); }
+.map-nogl h2 { font-family: var(--serif); font-size: 22px; }
+.map-nogl p { max-width: 420px; margin: 0 auto; color: var(--muted); }
+
+/* Places, camera tools and outside links */
+.place-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.place-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2);
+  color: var(--text); font: 600 13px/1.1 var(--font); cursor: pointer; transition: border-color .2s ease; text-align: left; }
+.place-chip:hover { border-color: var(--accent); }
+.pc-kind { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+.cam-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 2px; }
+.cam-tools .btn, .out-links .btn { min-height: 44px; }
+.cam-tools .btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.out-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.out-note { margin: 8px 0 0; font-size: 12px; }
+
 /* ---------- Phones: the panel becomes a bottom sheet ---------- */
 @media (max-width: 600px) {
   .map-page { display: block; position: relative; }
@@ -133,8 +161,10 @@
   .sheet-grip { width: 40px; height: 5px; border-radius: 3px; background: var(--border); }
   .sheet-title { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .map-filters, .map-panel-content { padding-left: 16px; padding-right: 16px; }
-  .leaflet-control-attribution { max-width: 100vw; }
+  .map-tools { right: 56px; gap: 6px; }
+  .seg button { padding: 0 10px; }
+  .tool-btn[data-act="country"] { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .map-panel, .pin, .preset, .tchip, .sw-track, .sw-knob { transition: none; }
+  .map-panel, .pin, .pin-cluster, .preset, .tchip, .sw-track, .sw-knob, .seg button, .tool-btn { transition: none; }
 }

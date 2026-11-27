@@ -66,6 +66,8 @@ for (const s of suites) {
   rmSync(profile, { recursive: true, force: true });
   const flags = ["--headless=new", "--remote-debugging-port=" + PORT, "--user-data-dir=" + profile, "--allow-file-access-from-files", "--no-first-run", "--disable-gpu", "--hide-scrollbars"];
   if (process.platform === "linux") flags.push("--no-sandbox", "--disable-dev-shm-usage");
+  // The map draws with WebGL2; headless Chrome only offers it through software rendering.
+  if (s === "map") flags.splice(flags.indexOf("--disable-gpu"), 1, "--enable-unsafe-swiftshader");
   browser = spawn(chrome, [...flags, "about:blank"], { stdio: "ignore" });
   for (let i = 0; i < 60; i++) { try { await fetch("http://localhost:" + PORT + "/json/version"); break; } catch { await sleep(250); } }
   res = await run(process.execPath, [path.join(HERE, "e2e", s + ".mjs"), OUT, ROOT]);
