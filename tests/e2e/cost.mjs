@@ -72,7 +72,7 @@ ok('exchange rate box is shown', !!(await ev('!!document.querySelector("#sec-cos
 // Not published: no made-up total
 const nid = await ev('window.GYF_DATA.programs.find(p=>p.costUSD==null && !/[₪£]|NIS/.test(p.costText)).id');
 await go('#/program/'+nid);
-ok(`unpublished price (${nid}): no total until you enter one`, (await net())==='—' && await has("hasn't published its price"));
+ok(`unpublished price (${nid}): no total until you enter one`, (await net())==='—' && await has("hasn\u2019t published its price"));
 
 // Compare shows the Masa grant row
 await go('#/compare/aardvark,year-course,'+yid);

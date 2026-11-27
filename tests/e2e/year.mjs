@@ -59,13 +59,13 @@ await go('#/program/mtva');
 ok('MTVA: women-only seminary label', /Seminary · Women only/.test(await txt('.school-head .type-badge')));
 // FZY: audience + pounds
 await go('#/program/fzy-year-course');
-ok('FZY: "Who it\'s for" callout + priced in pounds', /Who it's for:.*Young Judaea/.test(await txt('#sec-overview')) && /priced in pounds/.test(await txt('#key-features')) && /£23\.?5?k|£23,499/.test(await txt('#key-features')));
+ok('FZY: "Who it\'s for" callout + priced in pounds', /Who it\u2019s for:.*Young Judaea/.test(await txt('#sec-overview')) && /priced in pounds/.test(await txt('#key-features')) && /£23\.?5?k|£23,499/.test(await txt('#key-features')));
 ok('program header shows the restriction label (UK-specific)', /UK-specific/.test(await txt('.school-head .aud-tag')));
 await shot('y-fzy');
 // Garin Tzabar: null end date doesn't break passport check
 await go('#/program/garin-tzabar');
 await ev(`(()=>{const i=document.querySelector('input[type=date][data-bind*="passportExpiry"]'); i.value="2028-01-01"; i.dispatchEvent(new Event("change",{bubbles:true})); return true})()`); await sleep(300);
-ok('no end date -> passport warning instead of a crash', /hasn't published its end date/.test(await txt('#sec-docs')));
+ok('no end date -> passport warning instead of a crash', /hasn\u2019t published its end date/.test(await txt('#sec-docs')));
 // Browse: audience tags + aliyah type
 await go('#/browse');
 ok('browse card shows restriction label (FZY: UK-specific)', /UK-specific/.test(await ev('document.querySelector(\'.bcard[data-href="#/program/fzy-year-course"] .aud-tag\')?.textContent||""')));

@@ -59,7 +59,7 @@ await shot('comm-page');
 await click('[data-act=comm-save]');
 ok('empty name -> message, nothing saved', /Add a name/.test(await text()) && (await T('profiles')).length === 3);
 await ev(`document.getElementById('cp-name').value='Look www.spam.example'; true`); await click('[data-act=comm-save]');
-ok('link in name -> refused', /Links aren't allowed/.test(await text()) && (await T('profiles')).length === 3);
+ok('link in name -> refused', /Links aren\u2019t allowed/.test(await text()) && (await T('profiles')).length === 3);
 await ev(`document.getElementById('cp-name').value='Noa L.'; document.getElementById('cp-school').value='Gann Academy'; document.getElementById('cp-year').value='2027'; document.getElementById('cp-visible').checked=true; true`);
 await click('[data-act=comm-save]');
 let me = (await T('profiles')).find(p=>p.user_id==='uid-me');
@@ -162,9 +162,9 @@ ok('group type includes Camp', (await ev(`[...document.querySelectorAll('#cg-kin
 ok('must agree to the rules', /agree to the community rules/.test(await text()) && !(await T('student_groups')).length);
 ok('form keeps what you typed after an error', await ev(`document.getElementById('cg-name').value`)==='Gann seniors to Israel');
 await ev(`document.getElementById('cg-name').value='N4zi club'; document.getElementById('cg-rules').checked=true; true`); await click('[data-act=comm-group-save]');
-ok('hateful name refused with a clear message', /wording isn't allowed/.test(await text()) && !(await T('student_groups')).length);
+ok('hateful name refused with a clear message', /wording isn\u2019t allowed/.test(await text()) && !(await T('student_groups')).length);
 await ev(`document.getElementById('cg-name').value='Hiking crew'; document.getElementById('cg-desc').value='see www.example.com'; document.getElementById('cg-rules').checked=true; true`); await click('[data-act=comm-group-save]');
-ok('links refused', /Links aren't allowed/.test(await text()) && !(await T('student_groups')).length);
+ok('links refused', /Links aren\u2019t allowed/.test(await text()) && !(await T('student_groups')).length);
 await ev(`document.getElementById('cg-name').value='BBYO Boston seniors'; document.getElementById('cg-desc').value='Seniors from Boston-area chapters'; document.getElementById('cg-kind').value='chapter'; document.getElementById('cg-parent').value='bbyo'; document.getElementById('cg-rules').checked=true; true`);
 await click('[data-act=comm-group-save]');
 let groups = await T('student_groups');
@@ -213,7 +213,7 @@ ok('students can report a profile', (await T('community_reports')).some(r=>r.tar
 // hateful profile name
 await nav(B+'/#/community'); await sleep(200); await click('[data-act=comm-edit]');
 await ev(`document.getElementById('cp-name').value='Hitler fan'; true`); await click('[data-act=comm-save]');
-ok('hateful profile name refused', /wording isn't allowed/.test(await text()) && (await T('profiles')).find(p=>p.user_id==='uid-me').display_name==='Noa L.');
+ok('hateful profile name refused', /wording isn\u2019t allowed/.test(await text()) && (await T('profiles')).find(p=>p.user_id==='uid-me').display_name==='Noa L.');
 await click('[data-act=comm-cancel]');
 // limit 3
 for (const n of ['Second group','Third group']) { await click('[data-act=comm-group-new]'); await ev(`document.getElementById('cg-name').value=${JSON.stringify(n)}; document.getElementById('cg-rules').checked=true; true`); await click('[data-act=comm-group-save]'); }

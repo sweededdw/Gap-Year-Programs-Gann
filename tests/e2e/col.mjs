@@ -57,7 +57,7 @@ const setSel=async (lab,v)=>{ await ev(`(()=>{const e=document.querySelector('.m
 await setSel("Application plan","binding"); await setSel("Application status","accepted");
 ok('accepted -> next step: request deferral by Jul 15', /request your gap year deferral by Jul 15/.test(await ev('document.querySelector(".mycol-next").textContent')));
 await setSel("Deferral status","approved");
-ok('approved -> reminder about no credit courses', /Deferral approved\. Don't take college-credit courses/.test(await ev('document.querySelector(".mycol-next").textContent')));
+ok('approved -> reminder about no credit courses', /Deferral approved\. Don\u2019t take college-credit courses/.test(await ev('document.querySelector(".mycol-next").textContent')));
 await ev(`(()=>{const t=document.querySelector(".mycol textarea"); t.value="Email Ms. Cohen in admissions"; t.dispatchEvent(new Event("input",{bubbles:true})); return true})()`); await sleep(100);
 const st2 = await ev('JSON.parse(localStorage.getItem("gyf:v1")).colleges[0]');
 ok('each school saves its own plan/status/notes', st2.plan==='binding' && st2.app==='accepted' && st2.status==='approved' && /Ms\. Cohen/.test(st2.notes));

@@ -92,7 +92,7 @@ const before = JSON.stringify(await T('programs'));
 await click('[data-adm="save"]', 500);
 ok('validation: save is blocked', JSON.stringify(await T('programs'))===before && /fix the problems/.test(await note()));
 await ev(`(()=>{document.querySelector('[data-adm-json]').value='{not json'; return true})()`); await click('[data-adm="json-apply"]', 200);
-ok('validation: invalid JSON is caught', /isn't valid JSON/.test(await note()));
+ok('validation: invalid JSON is caught', /isn\u2019t valid JSON/.test(await note()));
 await nav(B+'/#/admin/programs/aardvark'); // drop the bad draft
 
 // --- hide / show ---

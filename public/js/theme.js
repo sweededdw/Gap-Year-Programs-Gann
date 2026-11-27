@@ -33,7 +33,11 @@
   }
   function set(t) {
     try { localStorage.setItem(KEY, t); } catch (e) { /* still applies for this visit */ }
+    // No transitions while the colors change, so nothing smears; they come back on the next frame.
+    root.classList.add("theme-switching");
     apply(t);
+    void root.offsetWidth;
+    (window.requestAnimationFrame || setTimeout)(function () { root.classList.remove("theme-switching"); });
   }
   apply(saved());
   document.addEventListener("DOMContentLoaded", function () {

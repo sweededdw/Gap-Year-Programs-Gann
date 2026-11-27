@@ -693,7 +693,7 @@
       '<p class="small muted">' + I("pin") + " " + esc(p.base) + "</p>" +
       '<div class="bcard-facts"><span title="' + esc(p.costText) + '">' + I("cost") + " " + esc(compactCost(p)) + "</span><span>" + I("cal") + " " + esc(p.length.split(" · ")[0].split(" (")[0]) + "</span><span>" + I("clock") + " " + dl + "</span></div>" +
       (saved && pr.done > 0 ? '<div class="progress-bar" title="Your application: ' + pr.pct + '%"><span style="width:' + pr.pct + '%"></span></div>' : "") +
-      '<div class="bcard-actions">' + websiteLink(p, "btn sm") + '<a class="btn ghost sm" href="#/program/' + p.id + '">Details →</a></div>' +
+      '<div class="bcard-actions">' + websiteLink(p, "btn sm") + '<a class="btn ghost sm" href="#/program/' + p.id + '">Details</a></div>' +
       "</div></article>"
     );
   }
@@ -783,7 +783,7 @@
       '<h4 class="viz-h">Total time: how the week splits</h4>' + stackBar(t) +
       '<ul class="tlegend">' + TCATS.filter((c) => t[c[0]]).map((c) => '<li><i class="key c-' + c[0] + '"></i>' + c[1] + " <strong>" + Math.round((t[c[0]] / tot) * 100) + "%</strong></li>").join("") + "</ul>" +
       '<p class="small muted viz-note">' + esc(t.note) + " Free time isn't counted. ≈ = our estimate; numbers without ≈ come from the program's published schedule.</p>" +
-      '<button class="btn sm" data-act="cmp-add" data-id="' + p.id + '">Compare with other programs →</button>' +
+      '<button class="btn sm" data-act="cmp-add" data-id="' + p.id + '">Compare with other programs</button>' +
       "</div>"];
   }
 
@@ -935,20 +935,20 @@
     const top = t ? TCATS.filter((c) => c[0] !== "other" && (t[c[0]] || 0) > 0).sort((x, y) => (t[y[0]] || 0) - (t[x[0]] || 0)).slice(0, 2) : [];
     const r = COST ? COST.compute(p, d, ps(p.id).cost) : null;
     const m = quiz().done ? matches().find((x) => x.p.id === p.id) : null;
-    const listed = p.costUSD != null ? compactCost(p) + " tuition" : /[₪£]|NIS/.test(p.costText) ? compactCost(p) + " tuition" + (p.costText.indexOf("£") >= 0 ? " · priced in pounds" : " · priced in shekels") : "";
+    const listed = p.costUSD != null ? compactCost(p) + " tuition" : /[₪£]|NIS/.test(p.costText) ? compactCost(p) + " tuition" + (p.costText.indexOf("£") >= 0 ? ", priced in pounds" : ", priced in shekels") : "";
     const tile = (icon, label, value, sub, jump) =>
-      "<" + (jump ? 'a href="#' + jump + '" data-jump="' + jump + '"' : "div") + ' class="kf-tile' + (jump ? " link" : "") + '"><span class="kf-ic">' + I(icon) + '</span><span class="kf-txt"><span class="kf-label">' + label + '</span><span class="kf-value">' + value + "</span>" +
+      "<" + (jump ? 'a href="#' + jump + '" data-jump="' + jump + '"' : "div") + ' class="kf-tile' + (jump ? " link" : "") + '"><span class="kf-txt"><span class="kf-label">' + label + '</span><span class="kf-value">' + value + "</span>" +
       (sub ? '<span class="kf-sub">' + sub + "</span>" : "") + "</span></" + (jump ? "a" : "div") + ">";
     const tiles = [
-      r ? tile("cost", "Real cost, estimated", r.tuitionKnown ? "$" + Math.round(r.net).toLocaleString("en-US") : "Price not published", r.tuitionKnown ? esc(listed || "Tuition") + (r.masa ? " · after Masa grant" : "") + (r.flights ? " · with flights" : "") : "Ask the program", "sec-cost") : "",
+      r ? tile("cost", "Real cost, estimated", r.tuitionKnown ? "$" + Math.round(r.net).toLocaleString("en-US") : "Price not published", r.tuitionKnown ? esc(listed || "Tuition") + (r.masa ? ", after the Masa grant" : "") + (r.flights ? ", with flights" : "") : "Ask the program", "sec-cost") : "",
       tile("cal", "Length", esc(p.length.split(" · ")[0].split(" (")[0]), p.semesterOption ? "Semester option" : "Full year"),
       tile("clock", "Next deadline", nd.kind === "date" ? fmtDate(nd.d.date, { month: "short", day: "numeric" }) : nd.kind === "rolling" ? "Rolling" : "Not posted",
-        nd.kind === "date" ? esc(nd.d.label) + " · " + countdown(nd.d.date) : nd.kind === "rolling" ? "Apply early, it can fill" : "Confirm with the program", "sec-deadlines"),
+        nd.kind === "date" ? esc(nd.d.label) + " " + countdown(nd.d.date) : nd.kind === "rolling" ? "Apply early, it can fill" : "Confirm with the program", "sec-deadlines"),
       tile("pin", "Where you live", esc(p.base.split(" (")[0]), ""),
       tile("candle", "Community", esc(L.orientation[p.orientation]), esc(L.gender[p.gender])),
       tile("users", "Israeli peers", esc(L.israeliPeers[p.israeliPeers]), ""),
       tile("check", "College credit", p.credit === true ? "Yes" : p.credit === false ? "No" : "Not researched", ""),
-      top.length ? tile("work", "Most of the week", top.map((c) => esc(c[1]) + " " + tVal(t, c[0])).join(" · "), "hours a week", "sec-time") : "",
+      top.length ? tile("work", "Most of the week", top.map((c) => esc(c[1]) + " " + tVal(t, c[0])).join(", "), "hours a week", "sec-time") : "",
       m && m.pct != null ? tile("heart", "Your match", m.pct + "%", "from your quiz answers") : "",
     ].join("");
     const picked = quiz().answers.field || [];
@@ -1204,10 +1204,10 @@
     $app.innerHTML =
       '<a class="back" href="' + ({ list: "#/my-list", finder: "#/browse", results: "#/results" }[lastListView] || "#/swipe") + '">← ' + ({ list: "Saved programs", finder: "All programs", results: "Your top 3" }[lastListView] || "Back to swiping") + "</a>" +
       (p.photo ? photoBox(p, "detail-banner", "") : "") +
-      '<header class="card school-head' + (p.photo ? " with-banner" : "") + '"><span class="logo o-' + p.orientation + (p.logo ? " has-logo-img" : "") + '">' + (p.logo ? '<img src="' + esc(p.logo) + '" alt="' + esc(p.name) + ' logo" referrerpolicy="no-referrer" data-fallback="1">' : esc(p.short)) + '</span><div class="info">' + typeBadge(p) + "<h1>" + esc(p.name) + "</h1>" +
+      '<header class="card school-head' + (p.photo ? " with-banner" : "") + '">' + (p.logo || !p.photo ? '<span class="logo o-' + p.orientation + (p.logo ? " has-logo-img" : "") + '">' + (p.logo ? '<img src="' + esc(p.logo) + '" alt="' + esc(p.name) + ' logo" referrerpolicy="no-referrer" data-fallback="1">' : esc(p.short)) + "</span>" : "") + '<div class="info"><h1>' + esc(p.name) + "</h1>" +
       (p.audienceTag ? '<p class="aud-tag">' + I("users") + " " + esc(p.audienceTag) + "</p>" : "") +
-      '<p class="muted">' + esc(p.operator) + " · " + esc(p.base) + "</p>" +
-      '<div class="chips"><span class="chip accent">' + esc(L.orientation[p.orientation]) + '</span><span class="chip">' + esc(L.gender[p.gender]) + '</span><span class="chip">' + esc(L.israeliPeers[p.israeliPeers]) + "</span>" +
+      '<p class="muted">' + (p.operator && p.name.toLowerCase().indexOf(p.operator.toLowerCase()) < 0 ? esc(p.operator) + ", " : "") + esc(p.base) + "</p>" +
+      '<div class="chips">' + typeBadge(p) + '<span class="chip accent">' + esc(L.orientation[p.orientation]) + '</span><span class="chip">' + esc(L.gender[p.gender]) + '</span><span class="chip">' + esc(L.israeliPeers[p.israeliPeers]) + "</span>" +
       (p.credit ? '<span class="chip">College credit</span>' : "") + (p.semesterOption ? '<span class="chip">Semester option</span>' : "") + "</div>" +
       (allSources.length ? '<a class="src-line" href="#sources" data-jump="sources">' + I("check") + " Facts from " + allSources.length + " source" + (allSources.length === 1 ? "" : "s") + ", checked " + fmtDate(checkedOn(p.id), { month: "short", day: "numeric" }) + "</a>" : "") + "</div>" +
       '<div class="actions"><button class="btn' + (saved ? "" : " primary") + '" data-act="save" data-id="' + p.id + '" aria-pressed="' + saved + '">' + (saved ? I("heart", true) + " On my list" : I("heart") + " Add to my list") + "</button>" +
@@ -1288,7 +1288,7 @@
   function hillelLine(c) {
     const h = c.hillel;
     if (!h) return "";
-    return '<p class="hillel-line small">' + (h.rank ? "Hillel #" + h.rank + " · " : "") + Number(h.jewish).toLocaleString("en-US") + " Jewish undergrads · " + esc(h.type) + "</p>";
+    return '<p class="hillel-line small">' + Number(h.jewish).toLocaleString("en-US") + " Jewish undergrads" + (h.rank ? ", #" + h.rank + " on Hillel's list" : "") + ", " + esc(String(h.type).toLowerCase()) + "</p>";
   }
   const APP_STATUS = [["", "Planning to apply"], ["applied", "Applied"], ["accepted", "Accepted"], ["waiting", "Waitlisted / deferred"], ["rejected", "Not accepted"], ["committed", "Committed"]];
   const APP_PLAN = [["", "Choose"], ["binding", "Binding"], ["nonbinding", "Non-binding"]];
@@ -1376,9 +1376,11 @@
       results =
         '<p class="results-count" style="margin:2px 0 12px">' + (hits.length + nf.length ? hits.length + nf.length + " match" + (hits.length + nf.length === 1 ? "" : "es") : "No colleges in our list match “" + esc(raw) + "”.") + "</p>" +
         (hits.length ? '<div class="college-grid">' + hits.slice(0, 12).map((c) =>
-          '<article class="card college"><div class="college-head"><div class="college-title"><h3>' + esc(c.name) + "</h3>" + addButton(c.name) + "</div>" + hillelLine(c) +
-          '<div class="chips">' + deferBadge(c) + creditBadge(c) + (c.noApplyingElsewhere ? '<span class="pbadge warn">Can\'t apply elsewhere</span>' : "") + "</div></div>" +
-          policyFacts(c) + "</article>").join("") + "</div>" + (hits.length > 12 ? '<p class="small muted" style="margin-top:8px">Showing 12 of ' + hits.length + ". Keep typing to narrow it down.</p>" : "") : "") +
+          // The card answers three things at a glance (can I defer, will credit count, by when); the full policy opens on a click.
+          '<article class="card college"><div class="college-head"><div class="college-title"><h3>' + esc(c.name) + "</h3>" + addButton(c.name) + "</div>" +
+          '<div class="chips">' + deferBadge(c) + creditBadge(c) + (c.noApplyingElsewhere ? '<span class="pbadge warn">Can\'t apply elsewhere</span>' : "") + "</div>" +
+          (c.deadline ? '<p class="college-by small"><span class="muted">Ask by</span> ' + esc(c.deadline) + (c.deadlineDate ? " " + countdown(c.deadlineDate) : "") + "</p>" : "") + "</div>" +
+          '<details class="college-more"><summary>Full policy' + I("chev") + "</summary>" + hillelLine(c) + policyFacts(c) + "</details></article>").join("") + "</div>" + (hits.length > 12 ? '<p class="small muted" style="margin-top:8px">Showing 12 of ' + hits.length + ". Keep typing to narrow it down.</p>" : "") : "") +
         (nf.length ? '<div class="nf-list">' + nf.map((n) =>
           '<div class="nf-row"><div><strong>' + esc(n.name) + "</strong>" + (n.hillel && n.hillel.rank ? ' <span class="muted small">Hillel #' + n.hillel.rank + "</span>" : "") +
           '<p class="small muted">No published gap year policy found. Ask the admissions office directly.</p></div>' + addButton(n.name) + "</div>").join("") + "</div>" : "") +
@@ -1542,7 +1544,7 @@
         '<section class="quiz quiz-intro">' +
         "<h1>Find your year in Israel</h1>" +
         '<p class="muted">Two quick screens, then your top 3 matches.</p>' +
-        '<button class="btn primary big" data-act="quiz-next">Start →</button>' +
+        '<button class="btn primary big" data-act="quiz-next">Start the quiz</button>' +
         '<p class="small muted">or <a href="#/browse">browse all ' + D.programs.length + " programs</a>" +
         (q.done ? ' · <a href="#/results">back to my top 3</a>' : "") + "</p></section>";
       return;
@@ -1573,7 +1575,7 @@
       body +
       '<div class="quiz-foot"><span class="live-count"><strong>' + count + "</strong> program" + (count === 1 ? "" : "s") + " fit your basics</span>" +
       '<button class="btn primary" data-act="' + (last ? "quiz-finish" : "quiz-next") + '"' + (last && !count ? " disabled" : "") + ">" +
-      (last ? "See my top 3 →" : "Next →") + "</button></div>" +
+      (last ? "See my top 3" : "Next") + "</button></div>" +
       (count === 0 ? '<div class="callout warn" style="margin-top:14px">No programs fit all of these. Try adding a community or raising the budget.</div>' : "") +
       "</section>";
   }
@@ -1608,10 +1610,10 @@
           '<p class="why">' + esc(whyLine(m)) + "</p>" +
           (m.weak.length ? '<p class="small weak">Weaker on ' + esc(listPhrase(m.weak.slice(0, 1).map((x) => catLabel(x.k)))) + ".</p>" : "") +
           (m.parts.length ? '<details class="more"><summary>See breakdown</summary><ul class="blist">' + breakdownRows(m) + "</ul></details>" : "") +
-          '<div class="bcard-actions">' + websiteLink(p, "btn sm") + '<a class="btn sm primary" href="#/program/' + p.id + '">Details →</a></div>' +
+          '<div class="bcard-actions">' + websiteLink(p, "btn sm") + '<a class="btn sm primary" href="#/program/' + p.id + '">Details</a></div>' +
           "</div></article>";
       }).join("") + "</div>" +
-      '<div class="results-foot"><a class="btn primary big" href="#/swipe">Swipe through all ' + all.length + " matches →</a>" +
+      '<div class="results-foot"><a class="btn primary big" href="#/swipe">Swipe through all ' + all.length + " matches</a>" +
       "</div>" +
       "</section>";
   }
@@ -1641,7 +1643,7 @@
       (m.reasons.length ? '<div class="chips">' + m.reasons.slice(0, 5).map((r) => '<span class="chip ok">✓ ' + esc(r) + "</span>").join("") + "</div>" : "") +
       '<div class="scard-links">' +
       '<a class="btn sm" href="' + esc(p.website) + '" target="_blank" rel="noopener" tabindex="' + (i === 0 ? 0 : -1) + '">' + (p.websiteLabel ? esc(p.websiteLabel) : "Visit website") + " ↗</a>" +
-      '<a class="btn ghost sm" href="#/program/' + p.id + '" tabindex="' + (i === 0 ? 0 : -1) + '">Full details →</a></div>' +
+      '<a class="btn ghost sm" href="#/program/' + p.id + '" tabindex="' + (i === 0 ? 0 : -1) + '">Full details</a></div>' +
       "</div></article>"
     );
   }

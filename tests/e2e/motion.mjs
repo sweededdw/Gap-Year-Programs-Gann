@@ -92,19 +92,27 @@ await ev(`location.hash="#/my-list"; true`); await sleep(500);
 ok('empty Saved list points to Browse', await ev(`!!document.querySelector('.card.empty a[href="#/browse"]')`));
 await ev(`location.hash="#/browse"; true`); await sleep(600);
 
-// Responds as you scroll and point: typed headline, blocks that rise into view, no leftover legend text.
+// Craft pass: nothing fades in on scroll or types itself, buttons carry no forward arrows, quotes are typographer's quotes.
 await ev(`location.hash="#/start"; true`); await sleep(500);
-ok('quiz headline types itself with its text intact', await ev(`(()=>{const h=document.querySelector(".quiz-intro h1"); return h.textContent==="Find your year in Israel" && !!h.querySelector(".tw.tw-go")})()`));
+ok('quiz headline is plain text, shown at once', await ev(`(()=>{const h=document.querySelector(".quiz-intro h1"); return h.textContent==="Find your year in Israel" && !h.children.length && getComputedStyle(h).textWrap.indexOf("balance")===0})()`));
+ok('Start button says what it does, with no arrow', await ev(`document.querySelector(".quiz-intro [data-act=quiz-next]").textContent`)==='Start the quiz');
+await ev(`document.querySelector(".quiz-intro [data-act=quiz-next]").click(); true`); await sleep(400);
+ok('quiz text uses curly quotes and apostrophes', await ev(`(()=>{const t=document.querySelector(".quiz").textContent; return /Pick \u201cAny\u201d/.test(t) && /doesn\u2019t matter/.test(t) && !/["']/.test(t)})()`));
 await ev(`location.hash="#/results"; true`); await sleep(600);
 ok('results page has no notation legend', await ev(`!/In a breakdown/.test(document.querySelector("#app").textContent)`));
+ok('no forward arrows on the results buttons', await ev(`[...document.querySelectorAll(".results .btn")].every(b=>!/\u2192/.test(b.textContent))`));
 await ev(`location.hash="#/browse"; true`); await sleep(700);
-const rv = await ev(`(()=>{const c=[...document.querySelectorAll(".bcard")]; return {first:c[0].classList.contains("rv"), last:c[c.length-1].classList.contains("rv"), lastOpacity:getComputedStyle(c[c.length-1]).opacity}})()`);
-ok('cards on screen are left alone, cards below the fold wait '+JSON.stringify(rv), rv.first===false && rv.last===true && rv.lastOpacity==="0");
-await ev(`window.scrollTo(0, document.documentElement.scrollHeight); true`); await sleep(500);
-ok('they rise into view when scrolled to', await ev(`(()=>{const c=[...document.querySelectorAll(".bcard")].pop(); return c.classList.contains("rv-in")})()`));
-await sleep(1100);
-ok('and end up plain cards again', await ev(`(()=>{const c=[...document.querySelectorAll(".bcard")].pop(); return !c.classList.contains("rv") && getComputedStyle(c).opacity==="1"})()`));
-await ev(`window.scrollTo(0,0); true`); await sleep(200);
+const rv = await ev(`(()=>{const c=[...document.querySelectorAll(".bcard")]; const l=c[c.length-1]; return {n:c.length, hidden:c.filter(x=>getComputedStyle(x).opacity!=="1").length, cls:l.className}})()`);
+ok('every card is visible from the start, on screen or below the fold '+JSON.stringify(rv), rv.n>0 && rv.hidden===0 && !/\brv\b/.test(rv.cls));
+const pr = await ev(`(()=>{const b=document.querySelector(".bcard-actions .btn"); const cs=getComputedStyle(b); const d=document.createElement("button"); d.className="btn primary"; document.body.appendChild(d); const img=getComputedStyle(d).backgroundImage; d.remove(); return {dur:cs.transitionDuration, prop:cs.transitionProperty, img}})()`);
+ok('buttons animate only their press, in 150ms, with no shimmer layer '+JSON.stringify(pr), /scale|transform/.test(pr.prop) && /0\.15s/.test(pr.dur) && pr.img==="none");
+await ev(`location.hash="#/program/aardvark"; true`); await sleep(700);
+ok('program header: type label sits in the tag row, under the name', await ev(`(()=>{const h=document.querySelector(".school-head"); const b=h.querySelector(".chips .type-badge"); return !!b && (h.querySelector("h1").compareDocumentPosition(b) & 4)===4})()`));
+ok('key features are plain facts, not boxed tiles', await ev(`(()=>{const t=document.querySelector("#key-features .kf-tile"); const cs=getComputedStyle(t); return !document.querySelector("#key-features .kf-ic") && cs.borderTopWidth==="0px" && cs.textTransform==="none" && getComputedStyle(t.querySelector(".kf-label")).textTransform==="none"})()`));
+await ev(`(()=>{const s=JSON.parse(localStorage.getItem("gyf:v1")); s.collegeQuery="emory"; localStorage.setItem("gyf:v1",JSON.stringify(s)); location.hash="#/colleges"; location.reload(); return true})()`); await sleep(1300);
+const cc = await ev(`(()=>{const c=document.querySelector(".card.college"); const d=c.querySelector("details.college-more"); const shut={open:d.open, factsShown:c.querySelector(".college-facts").checkVisibility(), chips:c.querySelectorAll(".college-head .pbadge").length, by:(c.querySelector(".college-by")||{}).textContent||""}; d.querySelector("summary").click(); return {shut, open:d.open, quote:!!d.querySelector(".college-quote"), source:!!d.querySelector('a[target=_blank]')}})()`);
+ok('college card shows the answer first; the full policy opens on a click '+JSON.stringify(cc), cc.shut.open===false && cc.shut.factsShown===false && cc.shut.chips>=2 && /^Ask by /.test(cc.shut.by) && cc.open===true && cc.source);
+await ev(`(()=>{const s=JSON.parse(localStorage.getItem("gyf:v1")); s.collegeQuery=""; localStorage.setItem("gyf:v1",JSON.stringify(s)); location.hash="#/browse"; location.reload(); return true})()`); await sleep(1300);
 
 // Desktop screenshot, then phone: pill off (menu is a grid), search button fits, no sideways scroll.
 await ev(`document.activeElement && document.activeElement.blur(); true`);
