@@ -403,35 +403,18 @@
     document.getElementById("saved-count").textContent = Object.keys(state.saved).filter((k) => state.saved[k] && byId[k]).length;
   }
 
-  // ---------- Home: a short "about us" (no shortcuts; the menu does the navigating) ----------
+  // ---------- Home: the promo video, with its credits underneath (no shortcuts; the menu does the navigating) ----------
   function renderHome() {
-    const n = D.programs.length;
-    const nColleges = (window.GYF_COLLEGES || { colleges: [] }).colleges.length;
-    const count = (t) => D.programs.filter((p) => p.type === t).length;
-    const kinds = [[count("yeshiva"), "yeshivot"], [count("seminary"), "seminaries"], [count("mechina"), "mechinot"],
-      [count("gap") + count("university") + count("movement") + count("service") + count("aliyah"), "gap year, university, movement and service programs"]];
     $app.innerHTML =
-      '<section class="about-hero">' +
-      '<img class="about-mark" src="static/logo-mark.svg" alt="" width="76" height="76">' +
-      '<p class="about-eyebrow">About us</p>' +
-      "<h1>Every Israel gap year, in one place</h1>" +
-      '<p class="about-lede">Israel Gap Year Finder helps Jewish high school students and their families find, compare and plan a year in Israel for the ' + esc(D.cycle) + " cycle.</p>" +
-      "</section>" +
-      '<section class="about-stats" aria-label="What\'s in the finder">' +
-      '<div class="about-stat gold"><strong>' + n + "</strong><span>Israel gap years</span><small>" + kinds.map((k) => k[0] + " " + k[1]).join(" · ") + "</small></div>" +
-      '<div class="about-stat sea"><strong>' + nColleges + "</strong><span>colleges' gap year rules</span><small>Deferral and credit policies, each from the college's own website</small></div>" +
-      "</section>" +
-      '<section class="about-grid">' +
-      '<div class="about-card"><h2>What it does</h2><ul>' +
-      "<li>Lays out each program's cost, length, deadlines, daily life and who it's for, side by side.</li>" +
-      "<li>Matches programs to what matters to you with a short quiz.</li>" +
-      "<li>Tracks your applications, essays, documents and each college's deferral rule.</li>" +
-      "<li>Shows which programs students from your youth group are looking at.</li>" +
-      "</ul></div>" +
-      '<div class="about-card"><h2>How we research</h2>' +
-      "<p>Facts come from each program's and college's own website, Masa, and Yeshiva University's Israel program lists, and every page lists its sources.</p>" +
-      "<p>Anything a program doesn't publish is left blank, never guessed. Prices and dates change every year, so always confirm with the program.</p>" +
-      "</div></section>";
+      '<section class="home-video">' +
+      '<video class="promo-video" controls playsinline preload="metadata" poster="media/promo-poster.jpg" width="1920" height="1080" aria-label="Israel Gap Year Finder video">' +
+      '<source src="media/israel-gap-year-finder-promo.mp4" type="video/mp4"></video>' +
+      '</section>' +
+      '<section class="video-credits" aria-label="Video credits"><h2>Video credits</h2>' +
+      '<p><strong>Photos</strong> from Unsplash, used under the <a href="https://unsplash.com/license" target="_blank" rel="noopener">Unsplash License</a>: <a href="https://unsplash.com/photos/PiU7uW9ZX9c" target="_blank" rel="noopener">Thomas Vogel</a>, <a href="https://unsplash.com/photos/TgUs0JOtXZA" target="_blank" rel="noopener">Bruno Aguirre</a>, <a href="https://unsplash.com/photos/d_so1tRFKJk" target="_blank" rel="noopener">Sander Crombach</a>, <a href="https://unsplash.com/photos/mNkxc_7yX-o" target="_blank" rel="noopener">Maayan Nemanov</a>, <a href="https://unsplash.com/photos/qgyyK3QVy9g" target="_blank" rel="noopener">menachem weinreb</a>, <a href="https://unsplash.com/photos/iuynaSIE7Tg" target="_blank" rel="noopener">Jonny Gios</a>, <a href="https://unsplash.com/photos/VkZuNpXxdIg" target="_blank" rel="noopener">Robert Bye</a>, <a href="https://unsplash.com/photos/eTa53Uf0StE" target="_blank" rel="noopener">Sammy Leigh Scholl</a>, <a href="https://unsplash.com/photos/j-g3z4-7V3w" target="_blank" rel="noopener">goni nachmani</a>, <a href="https://unsplash.com/photos/X_aF9qf2lIk" target="_blank" rel="noopener">Sylvain Brison</a>, Roi Solomon (<a href="https://unsplash.com/photos/4zfLHZ-g5p4" target="_blank" rel="noopener">1</a>, <a href="https://unsplash.com/photos/7fPQWx4Jkic" target="_blank" rel="noopener">2</a>), <a href="https://unsplash.com/photos/ZQ-e8l9ULVA" target="_blank" rel="noopener">Vera Gorbunova</a>, <a href="https://unsplash.com/photos/6iQYuGo42Uo" target="_blank" rel="noopener">Viktor SOLOMONIK</a>, <a href="https://unsplash.com/photos/IB3ssMDyDSY" target="_blank" rel="noopener">Arno Smit</a>, Micah Camper (<a href="https://unsplash.com/photos/HeOkiMENrw4" target="_blank" rel="noopener">1</a>, <a href="https://unsplash.com/photos/_Ou7g0w3wUU" target="_blank" rel="noopener">2</a>, <a href="https://unsplash.com/photos/jK6Z2dupM3U" target="_blank" rel="noopener">3</a>), PIERRE LEMON (<a href="https://unsplash.com/photos/h_bPuESqmDY" target="_blank" rel="noopener">1</a>, <a href="https://unsplash.com/photos/JvSUjAMKA6s" target="_blank" rel="noopener">2</a>), <a href="https://unsplash.com/photos/aZ8kboPshm8" target="_blank" rel="noopener">Piotr Musioł</a>, <a href="https://unsplash.com/photos/7pkwUyKVNTM" target="_blank" rel="noopener">Noam Cohen</a>, <a href="https://unsplash.com/photos/U-0GzSly-i8" target="_blank" rel="noopener">Levi Meir Clancy</a>, <a href="https://unsplash.com/photos/3k3l2brxmwQ" target="_blank" rel="noopener">Joel Muniz</a>.</p>' +
+      '<p><strong>Video footage:</strong> stock clips of Israel. <strong>Music:</strong> an original score made for this video.</p>' +
+      '<p><strong>Program logos</strong> belong to their organizations (Young Judaea Year Course, Kivunim, Hevruta (Shalom Hartman Institute), Aardvark Israel, Tel Aviv University, FZY, Israel XP at Bar-Ilan University, World Bnei Akiva, the Hebrew University of Jerusalem and Tzofim) and appear only to show programs listed on this site. None of these programs has endorsed Israel Gap Year Finder.</p>' +
+      '</section>';
   }
 
   // ---------- Finder ----------
