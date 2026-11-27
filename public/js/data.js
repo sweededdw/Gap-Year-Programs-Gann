@@ -4148,6 +4148,8 @@
   // Logos from each program's own website (checked by eye on the card background). A logo is shown in place
   // of the photo; the photo is kept as sitePhoto. The second batch (68, added 2026-11-27) came from each
   // site's own logo image; programs listed only on Israel Central Station or Masa have none here.
+  // Third batch (2026-11-27): the World Bnei Akiva emblem for its own programs, and white logos, which end
+  // in "#dark" so they sit on a dark panel (styles.css; the fragment never reaches the server).
   const LOGOS = {
     "migdal-oz": "https://skamigdaloz.org/wp-content/uploads/2020/12/\u05dc\u05d5\u05d2\u05d5-\u05d2\u05e8\u05e4\u05d9\u05e7\u05d4-\u05e6\u05d1\u05e2\u05d5\u05e0\u05d9.png",
     "netiv-aryeh": "https://yna.edu/Assets/img/logo.png?version=3",
@@ -4185,7 +4187,7 @@
     "midreshet-ora": "https://static.wixstatic.com/media/10a9d7_5ffdfa028fc74c889041a1487e0e3f22%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/10a9d7_5ffdfa028fc74c889041a1487e0e3f22%7Emv2.jpg",
     "year-course": "https://cdn.prod.website-files.com/5f6a6806cad13d77e6ac1bb3/660545902721fece98fa0351_logo%20big.png",
     "aardvark": "https://aardvarkisrael.com/wp-content/uploads/2015/09/aardvark-bxl-logo.png",
-    "kivunim": "https://images.squarespace-cdn.com/content/v1/664b714f81d4b81c4c14f51f/01b5a702-d2f1-4d4d-8783-9985952764c3/KIVUNIM+Logo.png?format=1500w",
+    "kivunim": "https://images.squarespace-cdn.com/content/v1/664b714f81d4b81c4c14f51f/01b5a702-d2f1-4d4d-8783-9985952764c3/KIVUNIM+Logo.png?format=1500w#dark",
     "hevruta": "https://www.hartman.org.il/wp-content/uploads/terms-images/program/final-logo-ENG_square.jpg",
     "kol-ami": "https://static.wixstatic.com/media/71579b_3c2faba2b6914a2d9b0342aa47469f53%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/71579b_3c2faba2b6914a2d9b0342aa47469f53%7Emv2.png",
     "habonim-workshop": "https://static.wixstatic.com/media/c88b76_bcfe28e9a81040c9b6827acc1e1acdb0.png/v1/fill/w_39,h_38,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/semel%20(no%20hebrew%20-%20best%20version%20-%20no%20bac.png",
@@ -4251,6 +4253,20 @@
     "aish-gesher-women": "https://aishgesherwomen.com/wp-content/uploads/2023/08/efg-at-aish-logo.png",
     "moreshet-yerushalayim": "https://www.moreshetyerushalayim.com/media/rd/logo.webp",
     "aish-gesher": "https://aishgesherwomen.com/wp-content/uploads/2023/08/efg-at-aish-logo.png",
+    "fzy-year-course": "https://images.squarespace-cdn.com/content/v1/67e169506690c76d7d9e1ebd/ffd332f1-8e2f-4e3c-854b-445c725a0cd4/Untitled+design.png?format=1500w",
+    "derech-institute": "https://derechyeshiva.org/wp-content/uploads/2024/03/Derech-horizontal-logo.svg#dark",
+    "nativ": "https://aardvarkisrael-media.nyc3.digitaloceanspaces.com/Aardvark-_Logo-Variation-Round-Blue.png",
+    "lev-hatorah": "https://levhatorah.org/wp-content/uploads/2025/09/Combined-Logos-white-1.png",
+    "bnei-akiva-mechina": "https://static.wixstatic.com/media/0c7b77_450a0b25374943cfa8f7d7abd7d86de9~mv2.png/v1/fill/w_300,h_300,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/world%20bnei%20akiva%20logo%20-%20official.png",
+    "bnei-akiva-kadima": "https://static.wixstatic.com/media/0c7b77_450a0b25374943cfa8f7d7abd7d86de9~mv2.png/v1/fill/w_300,h_300,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/world%20bnei%20akiva%20logo%20-%20official.png",
+    "ba-torani": "https://static.wixstatic.com/media/0c7b77_450a0b25374943cfa8f7d7abd7d86de9~mv2.png/v1/fill/w_300,h_300,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/world%20bnei%20akiva%20logo%20-%20official.png",
+    "ba-mta": "https://static.wixstatic.com/media/0c7b77_450a0b25374943cfa8f7d7abd7d86de9~mv2.png/v1/fill/w_300,h_300,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/world%20bnei%20akiva%20logo%20-%20official.png",
+    "limmud": "https://static.wixstatic.com/media/0c7b77_450a0b25374943cfa8f7d7abd7d86de9~mv2.png/v1/fill/w_300,h_300,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/world%20bnei%20akiva%20logo%20-%20official.png",
+    "shnat-netzer": "https://wupj.org/wp-content/themes/wupj2023/theme/images/logo-w.png#dark",
+    "reishit": "https://static.wixstatic.com/media/dc6ab4_f7b5617eb1444f2684578197feec5bf9~mv2.png/v1/fill/w_190,h_120,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Reishit%20Logo%20OFFICIAL_wesbite.png#dark",
+    "shapells": "https://images.squarespace-cdn.com/content/v1/6a26e3055159b035dec216ba/1780933407377-9RYH1DMD1T45OQW7XROG/Primary+-+White+%282%29.png?format=1500w#dark",
+    "tomer-devorah": "https://www.tomerdevorah.net/wp-content/uploads/2015/11/TD_logo_w_shadow.png#dark",
+    "rakia": "https://rakia.org.il/wp-content/uploads/2022/09/Rakia-logo_Transperent__White-text-EN-.png#dark",
   };
   programs.forEach(function (p) {
     p.profile = PROFILES[p.id] || prof("- - - - - - - - - - - -", "light");

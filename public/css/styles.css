@@ -39,6 +39,7 @@
   --lose-bar: #54473a;
   --lose-dot: #6a5b4b;
   --logo-panel: #f6f1e7;
+  --logo-panel-dark: #1b2430;
 }
 :root[data-theme="daylight"] {
   color-scheme: light;
@@ -1091,6 +1092,8 @@ a.acct-item { color: var(--text); text-decoration: none; }
 
 /* Logo instead of a photo: centered on a warm light panel (logos are made for light backgrounds) */
 .ph.has-logo { background: var(--logo-panel); }
+/* White logos (their URL ends in #dark, see LOGOS in data.js) sit on a dark panel in every theme. */
+.has-logo:has(img[src$="#dark"]), .has-logo-img:has(img[src$="#dark"]) { background: var(--logo-panel-dark); }
 .ph.has-logo > img.ph-logo { left: 16%; top: 20%; width: 68%; height: 62%; object-fit: contain; }
 .ph.has-logo .type-badge { box-shadow: 0 0 0 1px rgba(16,24,40,.12); }
 .ph.has-logo .ph-mark, .scard-hero.has-logo .scard-mark { display: none; }
