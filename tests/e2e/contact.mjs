@@ -42,6 +42,12 @@ const pill = await ev(`(()=>{const p=document.querySelector('#app .subtabs .sub-
 ok('the sub-tab highlight rests on Contact '+JSON.stringify(pill), pill==='none' || (Math.abs(pill.dx)<2 && Math.abs(pill.dw)<2));
 await shot('contact');
 await ev(`document.querySelector('[data-ct=kind][data-k=program]').click(); true`); await sleep(100);
+const pillOn = (k)=>ev(`(()=>{const p=document.querySelector('.ct-kinds .seg-pill'), a=document.querySelector('.ct-kinds [data-k=${k}]'); if(!p) return 'none'; const pr=p.getBoundingClientRect(), ar=a.getBoundingClientRect(); return Math.abs(pr.left-ar.left)<2 && Math.abs(pr.top-ar.top)<2 && Math.abs(pr.width-ar.width)<2})()`);
+await sleep(400);
+ok('the highlight moves to the picked kind', await pillOn('program')===true);
+await ev(`document.querySelector('[data-ct=kind][data-k=fix]').click(); true`); await sleep(400);
+ok('and moves again on the next pick', await pillOn('fix')===true && await ev(`document.querySelector('[data-k=fix]').classList.contains('on') && !document.querySelector('[data-k=program]').classList.contains('on')`));
+await ev(`document.querySelector('[data-ct=kind][data-k=program]').click(); true`); await sleep(400);
 ok('picking a kind marks it and changes the hint', await ev(`(()=>{const b=document.querySelector('[data-ct=kind][data-k=program]'); return b.classList.contains('on') && b.getAttribute('aria-checked')==='true' && /Which program/.test(document.querySelector('.ct-msg').placeholder) && document.querySelectorAll('[data-ct=kind].on').length===1})()`));
 await fill(''); await send(200);
 ok('an empty suggestion is stopped with a note', /few words/.test(await noteText()) && (await T('suggestions')).length===0);
@@ -73,6 +79,8 @@ await ev(`localStorage.removeItem('gyf:suggest-log'); true`);
 
 // Phone: one column, no sideways scroll.
 await vp(390,844); await nav(B+'/?guest=1#/contact');
+await ev(`document.querySelector('[data-ct=kind][data-k=other]').click(); true`); await sleep(400);
+ok('phone: the highlight follows the pick in the 2-by-2 grid', await pillOn('other')===true);
 ok('phone: cards stack, no sideways scroll', await ev(`(()=>{const a=document.querySelector('.ct-email').getBoundingClientRect(), b=document.querySelector('.ct-suggest').getBoundingClientRect(); return b.top>=a.bottom && document.documentElement.scrollWidth<=390})()`));
 await shot('contact-phone');
 await vp(1280,900);

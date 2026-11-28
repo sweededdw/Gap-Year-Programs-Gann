@@ -75,9 +75,21 @@
     wire($app.querySelector(".contact-page"), ctx || {});
   }
 
+  // motion.js gives the kind buttons one sliding highlight (.seg-pill) but only places it when the page is
+  // drawn; this page doesn't redraw on a pick, so move it to the picked button here (it glides via CSS).
+  function placePill(wrap) {
+    const seg = wrap.querySelector(".ct-kinds"), pill = seg && seg.querySelector(".seg-pill"), on = seg && seg.querySelector(".qchip.on");
+    if (!pill || !on) return;
+    pill.style.width = on.offsetWidth + "px";
+    pill.style.height = on.offsetHeight + "px";
+    pill.style.transform = "translate(" + on.offsetLeft + "px," + on.offsetTop + "px)";
+  }
+
   function wire(root, ctx) {
     const wrap = root.querySelector(".ct-form-wrap");
     const repaint = () => { wrap.innerHTML = formHtml(); };
+    const onResize = () => { if (!root.isConnected) return window.removeEventListener("resize", onResize); placePill(wrap); };
+    window.addEventListener("resize", onResize);
     root.addEventListener("click", (e) => {
       const b = e.target.closest("[data-ct]");
       if (!b) return;
@@ -85,6 +97,7 @@
       if (act === "kind") {
         kind = b.dataset.k;
         wrap.querySelectorAll('[data-ct="kind"]').forEach((x) => { const on = x === b; x.classList.toggle("on", on); x.setAttribute("aria-checked", String(on)); });
+        placePill(wrap);
         const ta = wrap.querySelector(".ct-msg"); if (ta) ta.placeholder = PROMPTS[kind];
       } else if (act === "again") {
         sent = false; repaint();
