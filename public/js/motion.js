@@ -74,7 +74,7 @@
     { t: "Community", s: "Youth groups and student groups", h: "#/community" },
     { t: "Saved programs", s: "Discover › Saved", h: "#/my-list" },
     { t: "Home", s: "", h: "#/" },
-    { t: "Program map", s: "Home › Map, in 3D", h: "/map" },
+    { t: "Contact", s: "Home › Contact, and suggest something to add", h: "#/contact" },
   ];
   const TYPE = { gap: "Gap year", mechina: "Mechina", university: "University", movement: "Youth movement", service: "Service", aliyah: "Aliyah & IDF", yeshiva: "Yeshiva", seminary: "Seminary" };
   let pal = null, items = [], sel = 0, lastFocus = null;

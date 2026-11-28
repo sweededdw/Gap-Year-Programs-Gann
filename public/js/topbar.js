@@ -1,8 +1,8 @@
 /*
- * The top bar, shared by every page that has one (index.html and map.html).
+ * The top bar on index.html (it also ran the parked map page, parked/map/map.html).
  * Modeled on thenextgeninnovators.org's header: the bar slides in, the links sit in one pill,
  * a glowing highlight follows the link under the pointer (and rests on the current page),
- * and a link with sub-pages (Home: Overview, Map) swaps the pill's contents for them, with Back.
+ * and a link with sub-pages (Home: Overview, Contact) swaps the pill's contents for them, with Back.
  * On phones the Menu button opens the bar full screen, and Home expands in place.
  * Motion follows the site's rule: 300ms or less, no overshoot, none at all with reduced motion.
  */
@@ -74,13 +74,13 @@
   window.addEventListener("resize", () => place(false));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => place(false));
 
-  // ---------- 3. Sub-pages: Home -> Overview, Map ----------
-  // Which sub-page is current: the map page, or the homepage.
+  // ---------- 3. Sub-pages: Home -> Overview, Contact ----------
+  // Which sub-page is current: Contact, or the homepage.
   function markSub() {
-    const onMap = /^\/map(\.html)?$/.test(location.pathname);
-    const onHome = !onMap && (location.hash === "" || location.hash === "#" || location.hash === "#/");
+    const onContact = /^#\/contact\/?$/.test(location.hash);
+    const onHome = location.hash === "" || location.hash === "#" || location.hash === "#/";
     nav.querySelectorAll(".nav-sub a[data-sub]").forEach((a) => {
-      const cur = (a.dataset.sub === "map" && onMap) || (a.dataset.sub === "overview" && onHome);
+      const cur = (a.dataset.sub === "contact" && onContact) || (a.dataset.sub === "overview" && onHome);
       if (cur) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
   }

@@ -3,6 +3,9 @@
   "framework": null,
   "outputDirectory": "public",
   "cleanUrls": true,
+  "redirects": [
+    { "source": "/map", "destination": "/", "permanent": false }
+  ],
   "headers": [
     {
       "source": "/(.*)",

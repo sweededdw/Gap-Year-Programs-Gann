@@ -94,7 +94,7 @@ await shot('sec-privacy', 390, 900);
 ok('privacy page fits a phone', !(await ev('document.documentElement.scrollWidth > window.innerWidth + 1')));
 await nav(B+'/login');
 ok('login page links to privacy', await ev(`!!document.querySelector('a[href="/privacy"]')`));
-ok('login page has a contact link', await ev(`!!document.querySelector('a[href="mailto:israelgapyearfinder@gmail.com"]')`));
+ok('login page has a contact link', await ev(`!!document.querySelector('a[href="mailto:israelgapyearfinder@gmail.com"], a[href="#/contact"]')`));
 
 ok('no JS errors', errs.length===0); if(errs.length) console.log(errs.slice(0,5));
 ws.close(); process.exit(0);

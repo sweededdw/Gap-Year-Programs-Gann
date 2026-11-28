@@ -415,6 +415,7 @@
     else if (parts[0] === "colleges") current = { view: "colleges", id: null };
     else if (parts[0] === "admin") current = { view: "admin", id: parts.slice(1).join("/") || null };
     else if (parts[0] === "community") current = { view: "community", id: parts.slice(1).join("/") || null };
+    else if (parts[0] === "contact") current = { view: "contact", id: null };
     else if (parts[0] === "compare") {
       if (parts[1]) { state.compare = parts[1].split(",").filter((id) => byId[id]).slice(0, 3); save(); }
       current = { view: "compare", id: null };
@@ -426,7 +427,7 @@
     if (current.view !== "detail") lastListView = current.view;
     render();
   }
-  const NAV_FOR = { home: "home", quiz: "discover", swipe: "discover", results: "discover", finder: "finder", list: "discover", colleges: "colleges", compare: "compare", community: "community" };
+  const NAV_FOR = { home: "home", quiz: "discover", swipe: "discover", results: "discover", finder: "finder", list: "discover", colleges: "colleges", compare: "compare", community: "community", contact: "home" };
   // Once the quiz is done, Discover moves to the end of the menu (the other pages come first).
   function orderNav() {
     const nav = document.querySelector(".topnav"), disc = nav && nav.querySelector('[data-nav="discover"]');
@@ -435,13 +436,14 @@
     if (quiz().done) { if (disc.nextElementSibling) nav.appendChild(disc); return; }
     const home = nav.querySelector('[data-nav="home"]');
     if (!home) return;
-    // Home's sub-pages (Overview, Map) sit right after it; Discover goes after those.
+    // Home's sub-pages (Overview, Contact) sit right after it; Discover goes after those.
     const anchor = home.nextElementSibling && home.nextElementSibling.classList.contains("nav-sub") ? home.nextElementSibling : home;
     if (disc.previousElementSibling !== anchor) anchor.after(disc);
   }
   function render() {
     orderNav();
-    if (current.view === "home") { renderHome(); $app.insertAdjacentHTML("afterbegin", homeTabs()); return navState(); }
+    if (current.view === "home") { renderHome(); $app.insertAdjacentHTML("afterbegin", homeTabs("overview")); return navState(); }
+    if (current.view === "contact") { $app.innerHTML = ""; window.GYF_CONTACT.render($app, { sb: () => sb }); $app.insertAdjacentHTML("afterbegin", homeTabs("contact")); return navState(); }
     if (current.view === "detail") renderDetail(byId[current.id]);
     else if (current.view === "list") renderList();
     else if (current.view === "quiz") renderQuiz();
@@ -455,9 +457,10 @@
     if (NAV_FOR[current.view] === "discover") $app.insertAdjacentHTML("afterbegin", discoverTabs());
     navState();
   }
-  // Home's sub-tabs: the homepage and the 3D map (map.html, its own page).
-  function homeTabs() {
-    return '<nav class="subtabs" aria-label="Home"><a href="#/" data-sub="overview" class="on" aria-current="page">Overview</a><a href="/map" data-sub="map">Map</a></nav>';
+  // Home's sub-tabs: the homepage and Contact (contact.js). The 3D map is parked in parked/map/.
+  function homeTabs(sub) {
+    return '<nav class="subtabs" aria-label="Home">' + [["overview", "#/", "Overview"], ["contact", "#/contact", "Contact"]].map((t) =>
+      '<a href="' + t[1] + '" data-sub="' + t[0] + '"' + (t[0] === sub ? ' class="on" aria-current="page"' : "") + ">" + t[2] + "</a>").join("") + "</nav>";
   }
   // Discover's sub-tabs. Saved lives here (it used to be its own top-level tab).
   function savedCount() { return Object.keys(state.saved).filter((k) => state.saved[k] && byId[k]).length; }
@@ -470,7 +473,7 @@
       '<a href="' + t[1] + '" data-sub="' + t[0] + '"' + (current.view === t[0] ? ' class="on" aria-current="page"' : "") + ">" + t[2] +
       (t[0] === "list" ? ' <span class="sub-count">' + n + "</span>" : "") + "</a>").join("") + "</nav>";
   }
-  const TITLES = { quiz: "Find your year", swipe: "Discover", results: "Your top 3", finder: "All programs", list: "Saved", colleges: "Colleges", compare: "Compare", community: "Community", admin: "Edit site data" };
+  const TITLES = { quiz: "Find your year", swipe: "Discover", results: "Your top 3", finder: "All programs", list: "Saved", colleges: "Colleges", compare: "Compare", community: "Community", contact: "Contact", admin: "Edit site data" };
   function navState() {
     const pageName = current.view === "detail" && byId[current.id] ? byId[current.id].name : TITLES[current.view];
     document.title = (pageName ? pageName + " · " : "") + "Israel Gap Year Finder";

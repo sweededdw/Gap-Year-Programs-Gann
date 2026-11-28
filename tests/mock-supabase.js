@@ -144,7 +144,7 @@ window.supabase = { createClient: function () {
     }
   };
 
-  // Every other table: programs, colleges (admin-only writes, history on change), content_history, client_errors.
+  // Every other table: programs, colleges (admin-only writes, history on change), content_history, client_errors, suggestions.
   const CONTENT = { programs: 1, colleges: 1 };
   const table = (name) => {
     const q = { op: 'select', filters: [], payload: null, order: null, limit: null };
@@ -153,6 +153,19 @@ window.supabase = { createClient: function () {
       const key = 'mock:t:' + name, all = J(key, '[]');
       const hit = (r) => q.filters.every(([c, v]) => String(r[c]) === String(v));
       if (COMMUNITY[name]) return community(name, q, hit);
+      if (name === 'suggestions') {
+        // Anyone can send; only admins read or delete (0007_suggestions.sql).
+        const admin0 = !!LS.getItem('mock:admin');
+        if (q.op === 'insert') {
+          const m = String(q.payload.message || '').trim();
+          if (m.length < 3 || m.length > 2000) return { data: null, error: { code: '23514', message: 'check constraint' } };
+          all.push(Object.assign({ id: all.length + 1, created_at: stamp(), user_id: uidNow() || null }, q.payload)); W(key, all); return { data: null, error: null };
+        }
+        if (!admin0) return { data: [], error: null };
+        if (q.op === 'delete') { const out = all.filter(hit); W(key, all.filter((r) => !hit(r))); return { data: out, error: null }; }
+        let out = all.filter(hit).slice().reverse();
+        return { data: q.limit != null ? out.slice(0, q.limit) : out, error: null };
+      }
       const admin = !!LS.getItem('mock:admin');
       const history = (old) => { const h = J('mock:t:content_history', '[]'); h.push({ id: h.length + 1, table_name: name, item_id: old.id, data: old.data, changed_at: stamp(), changed_by: uidNow() }); W('mock:t:content_history', h); };
       if (q.op !== 'select' && CONTENT[name] && !admin) return { data: null, error: { code: '42501', message: 'new row violates row-level security policy for table "' + name + '"' } };

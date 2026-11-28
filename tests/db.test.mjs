@@ -73,6 +73,24 @@ await db.exec(`delete from auth.users where email = 'student@x'`);
 ok("deleting a user removes their error rows", (await db.query("select count(*)::int n from client_errors")).rows[0].n === 0);
 ok("admins can't add themselves (no insert grant)", !!(await as("student", `insert into admins (user_id) values ('00000000-0000-0000-0000-00000000000a')`)).error);
 
+// ---- 0007 suggestions (Home › Contact)
+await db.exec(`insert into auth.users values ('00000000-0000-0000-0000-0000000000e1','sg@x')`);
+USERS.sg = '00000000-0000-0000-0000-0000000000e1';
+ok("a guest can send a suggestion", !(await as("anon", `insert into suggestions (kind, message) values ('program', 'Add Midreshet X')`)).error);
+ok("a student can send one as themselves", !(await as("sg", `insert into suggestions (kind, message, contact) values ('feature', 'A map view', 'a@b.co')`)).error);
+ok("can't send as someone else", !!(await as("sg", `insert into suggestions (user_id, message) values ('00000000-0000-0000-0000-00000000000a', 'fake')`)).error);
+ok("a guest can't attach a user", !!(await as("anon", `insert into suggestions (user_id, message) values ('00000000-0000-0000-0000-00000000000a', 'fake')`)).error);
+ok("unknown kind refused", !!(await as("anon", `insert into suggestions (kind, message) values ('spam', 'hello there')`)).error);
+ok("empty or huge message refused", !!(await as("anon", `insert into suggestions (message) values ('  ')`)).error && !!(await as("anon", `insert into suggestions (message) values (repeat('x', 2001))`)).error);
+ok("guests can't read suggestions", !!(await as("anon", "select * from suggestions")).error);
+ok("students can't read suggestions", (await as("sg", "select * from suggestions")).rows?.length === 0);
+ok("admin reads suggestions", (await as("admin", "select * from suggestions")).rows?.length === 2);
+ok("students can't delete suggestions", ((await as("sg", "delete from suggestions returning id")).rows?.length ?? 0) === 0);
+ok("guests can't change a suggestion", !!(await as("anon", "update suggestions set message = 'changed'")).error);
+await db.exec(`delete from auth.users where email = 'sg@x'`);
+ok("deleting the account keeps the suggestion without the user", (await db.query("select count(*)::int n from suggestions where user_id is null")).rows[0].n === 2);
+ok("admin can delete a suggestion", (await as("admin", "delete from suggestions returning id")).rows?.length === 2);
+
 // ---- 0003 community: profiles, groups, interests
 const C = USERS.c, Dd = USERS.d;
 await db.exec(`insert into auth.users values ('${C}','c@x'), ('${Dd}','d@x')`);

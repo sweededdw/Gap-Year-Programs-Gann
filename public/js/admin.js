@@ -19,6 +19,7 @@
   let note = null;           // { kind, text } message shown above the editor
   let history = null;        // earlier versions of the open item
   let errors = null;         // rows from client_errors
+  let ideas = null;          // rows from suggestions (Home › Contact)
   const pendingNew = {};     // new items not saved yet: "programs:<id>" -> data
 
   const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
@@ -97,13 +98,27 @@
     return out;
   }
   const pills = (list) => list.map((x) => '<span class="chip ' + x[0] + '">' + x[1] + "</span>").join(" ");
+  const IDEA_KIND = { program: "Program", feature: "Feature", fix: "Fix", other: "Other" };
+  function ideasView() {
+    if (ideas == null) return '<p class="muted">Loading…</p>';
+    if (ideas.error) return '<div class="callout warn">Couldn\'t load suggestions. If you haven\'t yet, run <code>supabase/migrations/0007_suggestions.sql</code> in the Supabase SQL editor.</div>';
+    return '<p class="muted">What people sent from Home › Contact, newest first.</p>' +
+      '<button class="btn sm" type="button" data-adm="ideas-reload">Refresh</button>' +
+      (ideas.rows.length ? '<ul class="admin-errs admin-ideas">' + ideas.rows.map((r) =>
+        '<li><div class="small muted"><span class="tag">' + C.esc(IDEA_KIND[r.kind] || r.kind) + "</span> " + C.esc(new Date(r.created_at).toLocaleString()) +
+        (r.contact ? ' · Reply to <a href="mailto:' + C.esc(r.contact) + '">' + C.esc(r.contact) + "</a>" : "") + "</div>" +
+        '<p class="admin-idea">' + C.esc(r.message || "") + "</p>" +
+        '<button class="btn sm" type="button" data-adm="idea-del" data-id="' + C.esc(r.id) + '">Delete</button></li>').join("") + "</ul>"
+        : '<p class="muted" style="margin-top:12px">No suggestions yet.</p>');
+  }
+
   const verified = (t, id) => (C.EDITS[t][id] && C.EDITS[t][id].verified_at) || null;
 
   // ---------- Rendering ----------
   function render(ctx, sub) {
     C = ctx;
     const parts = (sub || "").split("/");
-    tab = ["programs", "colleges", "errors"].indexOf(parts[0]) >= 0 ? parts[0] : "programs";
+    tab = ["programs", "colleges", "errors", "suggestions"].indexOf(parts[0]) >= 0 ? parts[0] : "programs";
     openId = parts[1] ? decodeURIComponent(parts.slice(1).join("/")) : null;
     const key = tab + ":" + openId;
     if (openId && draftFor !== key) {
@@ -117,6 +132,7 @@
     }
     if (!openId) { draftFor = null; draft = null; }
     if (tab === "errors" && errors == null) loadErrors();
+    if (tab === "suggestions" && ideas == null) loadIdeas();
     paint();
   }
 
@@ -128,8 +144,8 @@
       '<div class="admin-head"><div><h1>Edit site data</h1>' +
       '<p class="muted">Changes go live for every student as soon as you save. Each save keeps the previous version under History, so nothing is lost.</p></div>' +
       '<button class="btn" type="button" data-adm="export">Download all data</button></div>' +
-      '<nav class="tabs" aria-label="Admin sections">' + tabLink("programs", "Programs (" + counts.programs + ")") + tabLink("colleges", "Colleges (" + counts.colleges + ")") + tabLink("errors", "Errors") + "</nav>" +
-      (tab === "errors" ? errorsView() : openId ? editorView() : listView()) +
+      '<nav class="tabs" aria-label="Admin sections">' + tabLink("programs", "Programs (" + counts.programs + ")") + tabLink("colleges", "Colleges (" + counts.colleges + ")") + tabLink("errors", "Errors") + tabLink("suggestions", "Suggestions") + "</nav>" +
+      (tab === "errors" ? errorsView() : tab === "suggestions" ? ideasView() : openId ? editorView() : listView()) +
       "</div>";
   }
 
@@ -252,6 +268,11 @@
     errors = error ? { error: true } : { rows: data || [] };
     if (tab === "errors") paint();
   }
+  async function loadIdeas() {
+    const { data, error } = await C.sb.from("suggestions").select("id, created_at, kind, message, contact, page").order("created_at", { ascending: false }).limit(100);
+    ideas = error ? { error: true } : { rows: data || [] };
+    if (tab === "suggestions") paint();
+  }
   // Repaint without losing the cursor in the field being typed in.
   function paintSide() {
     const f = document.activeElement;
@@ -371,6 +392,13 @@
     const act = b.dataset.adm;
     if (act === "export") return exportAll();
     if (act === "errors-reload") { errors = null; paint(); return loadErrors(); }
+    if (act === "ideas-reload") { ideas = null; paint(); return loadIdeas(); }
+    if (act === "idea-del") {
+      const id = b.dataset.id;
+      const { error } = await C.sb.from("suggestions").delete().eq("id", id);
+      if (!error && ideas && ideas.rows) ideas.rows = ideas.rows.filter((r) => String(r.id) !== String(id));
+      return paint();
+    }
     if (act === "save") return save();
     if (act === "dl-add") { const app = draft.app || (draft.app = {}); (app.deadlines = app.deadlines || []).push({ label: "", date: null, type: "regular", note: null }); return paintSide(); }
     if (act === "dl-remove") { draft.app.deadlines.splice(+b.dataset.i, 1); return paintSide(); }
